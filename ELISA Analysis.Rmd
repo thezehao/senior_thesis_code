@@ -1,0 +1,885 @@
+---
+title: "ELISA analysis"
+author: "Zehao Wu"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Loading the Libraries
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(janitor)
+library(factoextra)
+library(skimr)
+library(naniar)
+library(ggplot2)
+library(ggpubr)
+library(emmeans)
+library(lme4)
+library(lmerTest)
+library(scales)
+library(haven)
+library(broom.mixed)
+library(readr)
+library(here)
+library(DHARMa) 
+library(rstatix)
+
+```
+
+# Setting the paths
+
+```{r}
+
+base_path <- "/Users/zehao/Documents/Research Projects/Graham Group Thesis Research (Summer 2025)"
+
+data_path <- file.path(base_path, "Metadata", "elisadata")
+
+clean_data_path <- file.path(base_path, "Cleaned data")
+
+figure_path       <- file.path(base_path, "Figures")
+elisa_figure_path <- file.path(figure_path, "ELISA Figures")
+dir.create(elisa_figure_path, showWarnings = FALSE, recursive = TRUE)
+
+```
+
+# Setting up the functions for repeated codes
+
+# Mean calculator
+
+```{r}
+
+mean_calculator <- function(input_data, 
+                            final_concentration, 
+                            cv_data,
+                            groupings = c("mouse_id",
+                                          "treatment", 
+                                          "plate", 
+                                          "strain", 
+                                          "t_muris_dose",
+                                          "lab_or_rw",
+                                          "cohort",
+                                          "experiment",
+                                          "source",
+                                          "experiment_day")) {
+input_data %>%
+  group_by(across(all_of(groupings))) %>% 
+  summarize(
+    mean_concentration = mean({{final_concentration}}, 
+                    na.rm = TRUE),
+    cv_percent = first(na.omit({{cv_data}})),
+    .groups = "drop"
+  )}
+
+```
+
+# Setting the colors (Okabe-Ito palette and IBM palette)
+
+```{r}
+
+color_black      <- "#000000"
+color_mustard    <- "#E69F00"
+color_light_blue <- "#56B4E9"
+color_green      <- "#009E73"
+color_yellow     <- "#F0E442"
+color_dark_blue  <- "#0072B2"
+color_orange     <- "#D55E00"
+color_purple     <- "#CC79A7"
+
+ibm_yellow <- "#ffb000"
+ibm_orange <- "#fe6100"
+ibm_reddish_purple <- "#dc267f"
+ibm_purple <- "#785ef0"
+ibm_blue <- "#648fff"
+
+```
+
+# Basic elisa summary plotter
+
+```{r}
+
+elisa_summary_plotter <- function(input_data, 
+                                  y_label, 
+                                  title = NULL) {
+  ggplot(input_data, aes(x = treatment,
+                        y = mean_concentration,
+                        fill = t_muris_dose)) +
+    geom_boxplot(position = position_dodge(width = 0.75),
+               alpha = 0.8,
+               outlier.shape = NA,
+               width = 0.5,
+               color = "black",
+               linewidth = 0.6) +
+    geom_jitter(position = position_jitterdodge(jitter.width = 0.15,
+                                              dodge.width = 0.75),
+              alpha = 0.8,
+              size = 1.8,
+              shape = 21,
+              color = "black") +
+    facet_wrap(~ lab_or_rw) +
+    scale_fill_manual(values = c("Zero" = color_dark_blue, 
+                               "High" = color_orange),
+                    labels = c("Zero" = "Uninfected", 
+                               "High" = "Infected"),
+                    name = "Infection Status") +
+    scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "High" = color_orange),
+                     labels = c("Zero" = "Uninfected", 
+                                "High" = "Infected"),
+                    name = "Infection Status") +
+    scale_x_discrete(limits = c("CD28", "IgG", "LPS")) +
+    scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
+    theme_minimal() +
+    theme(strip.background = element_rect(fill = "white", 
+                                        color = "black", 
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10, 
+                                  face = "bold"),
+        panel.border = element_rect(color = "black", 
+                                    fill = NA, 
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
+    xlab("Types of Stimulation") +
+    ylab(y_label) +
+    ggtitle(title)
+}
+
+```
+
+# Treatment specific plotter
+
+```{r}
+
+elisa_treatment_plotter <- function(input_data, 
+                                   y_label, 
+                                   title = NULL) {
+  ggplot(input_data, 
+         aes(x = lab_or_rw,
+             y = mean_concentration,
+             fill = t_muris_dose)) + 
+    geom_boxplot(alpha = 0.8,
+                 outlier.shape = NA,
+                 width = 0.5,
+                 color = "black",
+                 linewidth = 0.6,
+                 position = position_dodge(width = 0.6)) +
+    geom_jitter(alpha = 0.8,
+                size = 1.8,
+                shape = 21,
+                color = "black",
+                position = position_jitterdodge(jitter.width = 0.1,
+                                                dodge.width = 0.6)) +
+    scale_fill_manual(values = c("Zero" = color_dark_blue, 
+                                 "High" = color_orange),
+                    labels = c("Zero" = "Uninfected", 
+                               "High" = "Infected"),
+                    name = "Infection Status") +
+    scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "High" = color_orange),
+                     labels = c("Zero" = "Uninfected", 
+                                "High" = "Infected"),
+                     name = "Infection Status") +
+    scale_x_discrete(limits = c("Lab", "RW"),
+                     labels = c("Lab" = "Laboratory", 
+                                "RW" = "Rewilded")) +
+    scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
+    theme_minimal() +
+    theme(strip.background = element_rect(fill = "white", 
+                                        color = "black", 
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10, 
+                                  face = "bold"),
+        panel.border = element_rect(color = "black", 
+                                    fill = NA, 
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
+    xlab("Environment") +
+    ylab(y_label) +
+    ggtitle(title)
+}
+
+
+```
+
+# Emmeans per treatment data frame maker
+# NOTE: emm_treatment function was removed — it contained a bug where
+# filter(treatment == treatment) compared the column to itself (always TRUE).
+# The function was never called anywhere, so it was dead code.
+
+# Plot saver
+
+```{r}
+
+plot_saver <- function(filename,
+                            plot,
+                            path = elisa_figure_path,
+                            width = 6, 
+                            height = 4, 
+                            dpi = 300) {
+  ggsave(filename = filename, 
+       plot = plot, 
+       path = path,
+       width = width, 
+       height = height, 
+       units = "in", 
+       dpi = dpi)
+}
+
+```
+
+# Diagnostics for data
+
+```{r}
+
+qq_plotter <- function(model,
+                       input,
+                       condition) {
+  qqnorm(resid(model))
+  qqline(resid(model))
+  plot(resid(model) ~ input[[condition]])
+}
+
+# NOTE: qq_plotter is no longer used for GLMER diagnostics.
+# DHARMa (simulateResiduals) is used instead in each diagnostics chunk.
+
+```
+
+## Loading the data
+
+```{r}
+
+elisa_ifn_1 <- read_xlsx(file.path(data_path, 
+                                   "IFNg_Plate1_20260121.xlsx"), 
+                         sheet = "Plate 1 Data")
+
+elisa_ifn_2 <- read_xlsx(file.path(data_path,
+                                   "IFNg_Plate2_20260123.xlsx"), 
+                         sheet = "Plate 2 Data")
+
+elisa_tnf_1 <- read_xlsx(file.path(data_path,
+                                   "TNFa_Plate1_20260121.xlsx"), 
+                         sheet = "Plate 1 Data")
+
+elisa_tnf_2 <- read_xlsx(file.path(data_path,
+                                   "TNFa_Plate2_20260123.xlsx"), 
+                         sheet = "Plate 2 Data")
+
+plate1_map <- read_xlsx(file.path(data_path,
+                                  "SF ELISA Plate Mapping.xlsx"), 
+                        sheet = "Plate 1 for both IFN and TNF")
+
+plate2_map <- read_xlsx(file.path(data_path,
+                                  "SF ELISA Plate Mapping.xlsx"), 
+                        sheet = "Plate 2 for both IFN and TNF")
+
+meta_data <- read_csv(file.path(clean_data_path,
+                                "clean_meta_data.csv"))
+
+```
+
+# data cleaning and organization
+
+# Four original cell culture plates, each stimulated on a different day:
+#   Original plate 1 stimulated July 22, 2025 -> experiment_day = 1
+#   Original plate 2 stimulated July 23, 2025 -> experiment_day = 2
+#   Original plate 3 stimulated July 29, 2025 -> experiment_day = 3
+#   Original plate 4 stimulated July 30, 2025 -> experiment_day = 4
+# Each mouse appears on exactly one stimulation plate (one experiment_day).
+# For ELISA detection, original plates were combined into 2 detection plates:
+#   Detection plate 1 = original plates 1 + 2 (July 22 + 23)
+#   Detection plate 2 = original plates 3 + 4 (July 29 + 30)
+# The detection plate number is coded as `plate` in the cleaning chunks below.
+# experiment_day (1-4) must be added as a column in the plate map Excel files
+# so that it joins in automatically via left_join(plate1_map/plate2_map).
+
+# ifn data cleaning for plate 1
+
+```{r}
+
+clean_ifn_1 <- elisa_ifn_1 %>%
+  clean_names() %>% 
+  rename("final_ifn" = "final_if_ng") %>% # cleaner names
+  left_join(plate1_map,  by = "well_id") %>% # join elisa data and mouse number using plate number
+  mutate(plate = 1) %>% # create a new column to signal that this is plate 1
+  left_join(meta_data, by = "mouse_id") %>% # add the rest of the meta data
+  mutate(
+    across(c(concentration, 
+             final_ifn, mean, 
+             std_dev, 
+             cv_percent),
+            # apply the same transformation across these columns
+           ~ case_when(
+              # ~ is like a mini function. case when is checking for a condition and applying the first operation if the first condition matches.
+             str_detect(., "^<") ~ 0,
+             # . is the current value in the column and the rest of the function is asking if this value starts with a <. If yes, then replace it with 0. This is just turning all the <0.0000 values into actual numbers of 0.
+             TRUE ~ as.numeric(str_remove(., "^>"))
+           )) # the TRUE means that if none of the previous conditinos matched, then do these. Same logic applies where we remove > from values if present. The as numeric converts the text to number.
+  ) %>%
+  drop_na(mouse_id)
+
+```
+
+# ifn data cleaning for plate 2
+
+```{r}
+
+clean_ifn_2 <- elisa_ifn_2 %>% #same as before...
+  clean_names() %>%
+  rename("final_ifn" = "final_if_ng") %>%
+  left_join(plate2_map,  by = "well_id") %>%
+  mutate(plate = 2) %>%
+  left_join(meta_data, by = "mouse_id") %>%
+   mutate(
+    across(c(concentration, final_ifn, mean, std_dev, cv_percent),
+           ~ case_when(
+             str_detect(., "^<") ~ 0,
+             TRUE ~ as.numeric(str_remove(., "^>"))
+           ))
+  ) %>%
+  drop_na(mouse_id)
+
+
+total_ifn <- bind_rows(clean_ifn_1, 
+                       clean_ifn_2)
+
+write_csv(total_ifn, file.path(clean_data_path, "combined_ifn_elisa_data.csv"))
+
+```
+
+For now, I just kept all of the values that are over the detection limit 
+without their ">" and all of the small values as zero. Discuss with David.
+
+# tnf data cleaning for plate 1
+
+```{r}
+
+clean_tnf_1 <- elisa_tnf_1 %>% #same as before...
+  clean_names() %>%
+  rename("final_tnf" = "concentration") %>%
+  left_join(plate1_map,  by = "well_id") %>%
+  mutate(plate = 1) %>%
+  left_join(meta_data, by = "mouse_id") %>%
+   mutate(
+    across(c(final_tnf, mean, std_dev, cv_percent),
+           ~ case_when(
+             str_detect(., "^<") ~ 0,
+             TRUE ~ as.numeric(str_remove(., "^>"))
+           ))
+  ) %>%
+  drop_na(mouse_id)
+
+```
+
+# tnf data cleaning for plate 2
+
+```{r}
+
+clean_tnf_2 <- elisa_tnf_2 %>% #same as before...
+  clean_names() %>%
+  rename("final_tnf" = "concentration") %>%
+  left_join(plate2_map,  by = "well_id") %>%
+  mutate(plate = 2) %>%
+  left_join(meta_data, by = "mouse_id") %>%
+   mutate(
+    across(c(final_tnf, mean, std_dev, cv_percent),
+           ~ case_when(
+             str_detect(., "^<") ~ 0,
+             TRUE ~ as.numeric(str_remove(., "^>"))
+           ))
+  ) %>%
+  drop_na(mouse_id)
+
+total_tnf <- bind_rows(clean_tnf_1, 
+                       clean_tnf_2)
+
+write_csv(total_tnf, file.path(clean_data_path, 
+                               "combined_tnf_elisa_data.csv"))
+
+```
+
+# Calculating the mean concentration value
+
+```{r}
+
+ifn_input <- mean_calculator(total_ifn, 
+                             final_ifn, 
+                             cv_percent)
+
+tnf_input <- mean_calculator(total_tnf, 
+                             final_tnf, 
+                             cv_percent)
+
+```
+
+I wonder if I should use the original data points instead of the mean data.
+
+# Filter the data for treatment specific plots
+
+```{r}
+
+ifn_input_cd28 <- ifn_input %>% filter(treatment == "CD28")
+
+ifn_input_lps <- ifn_input %>% filter(treatment == "LPS")
+
+ifn_input_igg <- ifn_input %>% filter(treatment == "IgG")
+
+tnf_input_cd28 <- tnf_input %>% filter(treatment == "CD28")
+
+tnf_input_lps <- tnf_input %>% filter(treatment == "LPS")
+
+tnf_input_igg <- tnf_input %>% filter(treatment == "IgG")
+
+```
+
+# General ifn plot to get an overview
+
+```{r}
+
+ifn_input <- ifn_input %>%
+  mutate(t_muris_dose = factor(t_muris_dose, 
+                               levels = c("Zero", "High")))
+
+ifn_plot <- elisa_summary_plotter(ifn_input, 
+                                  expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
+                                  title = "IFN-gamma concentration by stimulation") 
+
+ifn_plot
+
+plot_saver("general_ifn_plot.png",
+           ifn_plot)
+
+```
+
+# General tnf plots
+
+```{r}
+
+tnf_input <- tnf_input %>%
+  mutate(t_muris_dose = factor(t_muris_dose, 
+                               levels = c("Zero", "High")))
+
+tnf_plot <- elisa_summary_plotter(tnf_input, 
+                                  expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
+                                  title = "Summary TNF-alpha plot for all conditions")
+
+tnf_plot
+
+plot_saver("general_tnf_plot.png",
+           tnf_plot)
+
+```
+
+# Treatment specific plots for ifn: CD28
+
+```{r}
+
+ifn_input_cd28 <- ifn_input_cd28 %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "High")))
+
+ifn_cd28_plot <- elisa_treatment_plotter(ifn_input_cd28,
+                                       expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
+                                       title = "CD28 Stimulation")
+
+ifn_cd28_plot
+
+plot_saver("ifn_cd28_treatment_plot.png",
+           ifn_cd28_plot)
+
+```
+
+# Treatment specific plots for tnf: CD28
+
+```{r}
+
+tnf_input_cd28 <- tnf_input_cd28 %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "High")))
+
+tnf_cd28_plot <- elisa_treatment_plotter(tnf_input_cd28,
+                                       expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
+                                       title = "CD28 Stimulation")
+
+tnf_cd28_plot
+
+plot_saver("tnf_cd28_plot.png",
+           tnf_cd28_plot)
+
+```
+
+# Treatment specific plots for ifn: LPS
+
+```{r}
+
+ifn_input_lps <- ifn_input_lps %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "High")))
+
+ifn_lps_plot <- elisa_treatment_plotter(ifn_input_lps,
+                                       expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
+                                       title = "LPS Stimulation")
+
+ifn_lps_plot
+
+plot_saver("ifn_lps_treatment_plot.png",
+           ifn_lps_plot)
+
+```
+
+# Treatment specific plots for tnf: LP
+
+```{r}
+
+tnf_input_lps <- tnf_input_lps %>%
+  mutate(t_muris_dose = factor(t_muris_dose, 
+                               levels = c("Zero", "High")))
+
+tnf_lps_plot <- elisa_treatment_plotter(tnf_input_lps,
+                                       expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
+                                       title = "LPS Stimulation")
+
+tnf_lps_plot
+
+plot_saver("tnf_lps_plot.png",
+           tnf_lps_plot)
+
+```
+
+# Treatment specifiic plots for ifn: IgG
+
+```{r}
+
+ifn_input_igg <- ifn_input_igg %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "High")))
+
+ifn_igg_plot <- elisa_treatment_plotter(ifn_input_igg,
+                                       expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
+                                       title = "IgG Stimulation")
+
+ifn_igg_plot
+
+plot_saver("ifn_igg_treatment_plot.png",
+           ifn_igg_plot)
+
+```
+
+# Treatment specifiic plots for tnf: IgG
+
+```{r}
+
+tnf_input_igg <- tnf_input_igg %>%
+  mutate(t_muris_dose = factor(t_muris_dose, 
+                               levels = c("Zero", "High")))
+
+tnf_igg_plot <- elisa_treatment_plotter(tnf_input_igg,
+                                       expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
+                                       title = "IgG Stimulation")
+
+tnf_igg_plot
+
+plot_saver("tnf_igg_plot.png",
+           tnf_igg_plot)
+
+```
+
+# Setting reference levels for ifn
+
+# Mixed effect model (gamma) for ifn and diagnostics
+# Note to self: should I just assume that all zeros are at the detection level?
+# Maybe we can just take half of the detection limit (standard practice)
+# Detection level for IFN is 1.797 pg/mL so we use this to handle zero values.
+
+```{r}
+
+ifn_input <- ifn_input %>%
+  mutate(
+    t_muris_dose = relevel(factor(t_muris_dose), ref = "Zero"),
+    treatment = relevel(factor(treatment), ref = "IgG"),
+    lab_or_rw = relevel(factor(lab_or_rw), ref = "Lab")
+  ) 
+
+ifn_glmer_input <- ifn_input %>%
+  mutate(mean_concentration = ifelse(mean_concentration == 0,
+                                     1.797 / 2, 
+                                     mean_concentration))
+
+
+ifn_glmer <- glmer(mean_concentration ~ lab_or_rw *
+                     t_muris_dose *
+                     treatment +
+                     (1 | mouse_id) +
+                     (1 | experiment_day),
+                  family = Gamma(link = "log"),
+                  control = glmerControl(optimizer = "bobyqa",
+                                         optCtrl = list(maxfun = 2e5)),
+                  data = ifn_glmer_input)
+
+summary(ifn_glmer)
+
+```
+
+
+# Diagnostics for ifn
+
+```{r}
+
+# DHARMa simulation-based diagnostics for Gamma GLMER
+ifn_sim_res <- simulateResiduals(fittedModel = ifn_glmer, n = 1000)
+
+# Standard DHARMa panel: uniform QQ plot + residuals vs. fitted
+plot(ifn_sim_res)
+
+# Formal tests
+testUniformity(ifn_sim_res)   # tests whether residuals are uniformly distributed
+testDispersion(ifn_sim_res)   # tests for over/under-dispersion
+testOutliers(ifn_sim_res)     # tests for outliers
+
+# Residuals by each predictor to check group-level misfit
+plotResiduals(ifn_sim_res, form = ifn_glmer_input$lab_or_rw)
+plotResiduals(ifn_sim_res, form = ifn_glmer_input$t_muris_dose)
+plotResiduals(ifn_sim_res, form = ifn_glmer_input$treatment)
+
+ranef(ifn_glmer)
+
+VarCorr(ifn_glmer)
+
+```
+
+# Run emmeans for ifn
+
+```{r}
+
+emm_ifn <- emmeans(ifn_glmer, 
+                   specs = c("t_muris_dose","lab_or_rw"), 
+                   by = c("treatment"),
+                   type = "response")
+emm_ifn
+
+pairs(emm_ifn)
+
+```
+
+# Doing the same thing here
+# The lowest detection level is 3.7 for TNF so halving that.
+
+```{r}
+
+tnf_input <- tnf_input %>%
+  mutate(
+    t_muris_dose = relevel(factor(t_muris_dose), 
+                           ref = "Zero"),
+    treatment = relevel(factor(treatment), 
+                        ref = "IgG"),
+    lab_or_rw = relevel(factor(lab_or_rw), 
+                        ref = "Lab")
+  )
+
+tnf_glmer_input <- tnf_input %>%
+  mutate(mean_concentration = ifelse(mean_concentration == 0,
+                                     3.7 / 2, 
+                                     mean_concentration))
+
+# we want to set the zero dose, IgG and lab groups to be the basis of all our comparisons.
+
+tnf_glmer <- glmer(mean_concentration ~ lab_or_rw *
+                     t_muris_dose *
+                     treatment +
+                     (1 | mouse_id) +
+                     (1 | experiment_day),
+                  family = Gamma(link = "log"),
+                  control = glmerControl(optimizer = "bobyqa",
+                                         optCtrl = list(maxfun = 2e5)),
+                 data = tnf_glmer_input)
+
+summary(tnf_glmer)
+
+```
+
+# Diagnostics for tnf
+
+```{r}
+
+# DHARMa simulation-based diagnostics for Gamma GLMER
+tnf_sim_res <- simulateResiduals(fittedModel = tnf_glmer, n = 1000)
+
+# Standard DHARMa panel: uniform QQ plot + residuals vs. fitted
+plot(tnf_sim_res)
+
+# Formal tests
+testUniformity(tnf_sim_res)   # tests whether residuals are uniformly distributed
+testDispersion(tnf_sim_res)   # tests for over/under-dispersion
+testOutliers(tnf_sim_res)     # tests for outliers
+
+# Residuals by each predictor to check group-level misfit
+plotResiduals(tnf_sim_res, form = tnf_glmer_input$lab_or_rw)
+plotResiduals(tnf_sim_res, form = tnf_glmer_input$t_muris_dose)
+plotResiduals(tnf_sim_res, form = tnf_glmer_input$treatment)
+
+ranef(tnf_glmer)
+
+VarCorr(tnf_glmer)
+
+```
+
+# Run emmeans for tnf
+
+```{r}
+emm_tnf <- emmeans(tnf_glmer, 
+                   specs = c("t_muris_dose"), 
+                   by = c("lab_or_rw", "treatment"),
+                   type = "response")
+emm_tnf
+
+pairs(emm_tnf)
+
+```
+
+# Plot interaction plots for ifn by emmeans (TODO)
+
+```{r}
+
+emm_ifn_df <- as.data.frame(emm_ifn) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("CD28", "LPS", "IgG")))
+
+emm_tnf_df <- as.data.frame(emm_tnf) %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("CD28", "LPS", "IgG")))
+
+```
+
+```{r}
+
+emm_ifn_plot <- ggplot(emm_ifn_df) +
+  geom_point(aes(x = treatment, 
+                 y = response, 
+                 fill = t_muris_dose),
+             position = position_dodge(width = 0.5),
+             alpha = 1,
+             size = 2,
+             shape = 21,
+             color = "black") +
+  geom_errorbar(aes(x = treatment,
+                    ymin = asymp.LCL,
+                    ymax = asymp.UCL,
+                    color = t_muris_dose),
+                width = 0.3,
+             position = position_dodge(width = 0.5),
+             alpha = 0.8) +
+  geom_point(data = ifn_input,
+             aes(x = treatment,
+                 y = mean_concentration,
+                 color = t_muris_dose),
+                 position = position_jitterdodge(jitter.width = 0.1,
+                                                 dodge.width = 0.5),
+                 alpha = 0.3,
+                 size = 1.5) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "High" = color_orange),
+                    name = "Infection Status",
+                    labels = c("Zero" = "Uninfected",
+                              "High" = "Infected")) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "High" = color_orange),
+                     name = "Infection Status",
+                     labels = c("Zero" = "Uninfected",
+                              "High" = "Infected")) +
+  scale_y_continuous(name = expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = "Types of Stimulation") +
+  facet_wrap( ~ lab_or_rw) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white", 
+                                        color = "black", 
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10, 
+                                  face = "bold"),
+        panel.border = element_rect(color = "black", 
+                                    fill = NA, 
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  ggtitle(expression(bold("Estimated Marginal Means of IFN-" * gamma)))
+
+emm_ifn_plot
+
+plot_saver("emm_ifn_plot.png",
+           emm_ifn_plot)
+
+```
+
+
+# run emmeans for tnf
+
+```{r}
+
+emm_tnf_plot <- ggplot(emm_tnf_df) + 
+  geom_point(aes(x = treatment, 
+                 y = response, 
+                 fill = t_muris_dose),
+             position = position_dodge(width = 0.5),
+             alpha = 1,
+             shape = 21,
+             size = 2,
+             color = "black") +
+  geom_errorbar(aes(x = treatment, 
+                    ymin = asymp.LCL,
+                    ymax = asymp.UCL, 
+                color = t_muris_dose), 
+                width = 0.3,
+                alpha = 0.8,
+                position = position_dodge(width = 0.5)) +
+  geom_point(data = tnf_input,
+             aes(x = treatment,
+                 y = mean_concentration,
+                 color = t_muris_dose),
+                 position = position_jitterdodge(jitter.width = 0.1,
+                                                 dodge.width = 0.5),
+                 alpha = 0.3,
+                 size = 1.5) +
+  scale_y_continuous(name = expression(bold("TNF-"*alpha~"(pg mL"^"-1"*")")),
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = "Types of Stimulation") +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "High" = color_orange),
+                    name = "Infection Status",
+                    labels = c("Zero" = "Uninfected",
+                              "High" = "Infected")) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "High" = color_orange),
+                     name = "Infection Status",
+                     labels = c("Zero" = "Uninfected",
+                              "High" = "Infected")) +
+  facet_wrap(~lab_or_rw) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white", 
+                                        color = "black", 
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10, 
+                                  face = "bold"),
+        panel.border = element_rect(color = "black", 
+                                    fill = NA, 
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  ggtitle(expression(bold("Estimated Marginal Means of TNF-" * alpha)))
+
+emm_tnf_plot
+
+plot_saver("emm_tnf_plot.png",
+           emm_tnf_plot)
+
+```
+
