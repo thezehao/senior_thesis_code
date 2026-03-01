@@ -254,13 +254,6 @@ spleen_mass_compiled_data <- clean_meta_data %>%
   mutate(strain = relevel(strain, 
                           ref = "C57BL/6J"))
 
-lym_number_spleen_data <- spleen_mass_compiled_data %>% 
-  left_join(clean_spleen_lym_count, by = "mouse_id") %>%
-  filter(!is.na(total_lym_number))
-
-write_csv(lym_number_spleen_data,
-          file.path(clean_data_path, "lym_number_spleen_data.csv"))
-
 ```
 
 Now I will calculate the spleen-mass ratio (SMR) and make a plot. 
@@ -275,6 +268,13 @@ spleen_mass_compiled_data <- spleen_mass_compiled_data %>%
          log_spleen_mass = log(spleen_mass_g), 
          log_mass = log(mass))
 
+lym_number_spleen_data <- spleen_mass_compiled_data %>% 
+  left_join(clean_spleen_lym_count, by = "mouse_id") %>%
+  filter(!is.na(total_lym_number))
+
+write_csv(lym_number_spleen_data,
+          file.path(clean_data_path, "lym_number_spleen_data.csv"))
+
 write_csv(spleen_mass_compiled_data,
           file.path(clean_data_path, "clean_compiled_spleen_data.csv"))
 
@@ -286,7 +286,7 @@ compiled_data_b10 <- spleen_mass_compiled_data %>%
 
 ```
 
-# Plotting SMR data (Exploratory ONLY)
+# Plotting SMR data
 
 ```{r plotting the data}
 
@@ -442,117 +442,6 @@ plot(spleen_mass_lmer)
 
 ```
 
-# Apply the log scale the spleen and mass data 
-
-From here I will use a more complex method since ratio might cover some biological information.
-
-Log scale is probably better since allometric stuff is usually not to the power of 1.
-
-```{r using log to plot data}
-logscale_spleen_mass_lmer <- lmer(log(spleen_mass_g) ~ log(mass) + 
-                        strain * lab_or_rw * t_muris_dose + 
-                        (1 | cage_wedge), 
-                      data = spleen_mass_compiled_data)
-
-summary(logscale_spleen_mass_lmer)
-```
-# Doing diagnostic
-
-```{r diagnostic check}
-
-qqnorm(resid(logscale_spleen_mass_lmer))
-qqline(resid(logscale_spleen_mass_lmer))
-
-plot(logscale_spleen_mass_lmer)
-
-spleen_mass_compiled_data |>
-  summarise(mean_mass = mean(mass, na.rm = TRUE),
-            median_mass = median(mass, na.rm = TRUE))
-
-```
-Q-Q and the residual vs fitted plot is robust. The median and mean has no big difference.
-
-
-# Calculating the median and adjust the spleen mass
-
-```{r finding the median and adjust the spleen mass}
-
-spleen_mass_reference <- median(spleen_mass_compiled_data$mass, na.rm = TRUE)
-
-spleen_mass_reference 
-
-log_spleen_mass_emm <- emmeans(logscale_spleen_mass_lmer, 
-                               ~ lab_or_rw * 
-                                 t_muris_dose | strain, 
-                               at = list(mass = spleen_mass_reference))
-log_spleen_mass_emm
-
-```
-
-# Saving results from emmeans analysis
-
-```{r emmeans plotting}
-emmeans_data <- as.data.frame(log_spleen_mass_emm) %>%
-  mutate(spleen_mass_g = exp(emmean), 
-         lower = exp(lower.CL), 
-         upper = exp(upper.CL))
-
-```
-
-# Plotting the model adjusted median
-
-```{r plotting the model-adjusted median}
-
-adjusted_spleen_mass_plot <- ggplot(emmeans_data, aes(x = t_muris_dose, 
-                          y = spleen_mass_g, 
-                          fill = lab_or_rw,
-                          color = lab_or_rw,
-                          group = interaction(t_muris_dose, lab_or_rw))) + 
-  geom_point(data = spleen_mass_compiled_data, 
-             aes(y = spleen_mass_g),
-             position = position_dodge(width = 0.35),
-             size = 1.5,
-             alpha = 0.3) +
-  geom_line(position = position_dodge(width = 0.35),
-            aes(group = lab_or_rw), 
-            linewidth = 0.5,
-            alpha = 0.8) +
-  geom_point(position = position_dodge(width = 0.35), 
-             size = 2.5,
-             alpha = 0.9) +
-  geom_errorbar(aes(ymin = lower,
-                    ymax = upper),
-                position = position_dodge(width = 0.35),
-                width = 0.3,
-                alpha = 0.6) + 
-  facet_wrap(~ strain) +
-  scale_fill_manual(values = c("RW" = color_orange, "Lab" = color_dark_blue),
-                    name = "Environment",
-                    labels = c("Lab" = "Lab",
-                               "RW" = "Rewilded")) +
-  scale_color_manual(values = c("RW" = color_orange, "Lab" = color_dark_blue),
-                     name = "Environment",
-                     labels = c("Lab" = "Lab",
-                                "RW" = "Rewilded")) +
-  theme_minimal() +
-  theme(strip.background = element_rect(fill = "white", color = "black", linewidth = 0.8),
-        strip.text = element_text(size = 10, face = "bold"),
-        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8),
-        panel.grid = element_blank(),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold"),
-        plot.title = element_text(hjust = 0.5, face = "bold")) +
-  xlab("T. muris Dosage") +
-  ylab("Adjusted Spleen Mass (g)") +
-  ggtitle("Effects of Infection on Spleen Mass")
-
-adjusted_spleen_mass_plot
-
-plot_saver("adjusted_spleen_mass_lab_rw_high_low_zero.png",
-           adjusted_spleen_mass_plot)
-
-```
-
 Now let's do the lym and the spleen mass calculations
 
 # Modeling splenocyte count and spleen size
@@ -560,9 +449,8 @@ Now let's do the lym and the spleen mass calculations
 
 ```{r modeling the mass and lym relationship}
 
-lym_lmer <- lmer(log(spleen_mass_g) ~ 
-                   log(total_lym_number) + 
-                   log(mass) * 
+lym_lmer <- lmer(log(spleen_mass_ratio) ~ 
+                   log(total_lym_number) +
                    lab_or_rw * 
                    t_muris_dose + 
                    (1 | cage_wedge), 
@@ -589,12 +477,16 @@ plot(lym_lmer)
 spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data, 
                                      aes(x = log(spleen_mass_g),
                                          y = log(total_lym_number),
-                                         color = lab_or_rw)) +
+                                         fill = lab_or_rw)) +
   geom_point(size = 2, 
-             alpha = 0.8) +
+             alpha = 0.8,
+             shape = 21,
+             color = "black") +
   geom_smooth(method = "lm", 
               se = TRUE,
-              aes(group = lab_or_rw),
+              fill = "grey70",
+              aes(group = lab_or_rw,
+                  color = lab_or_rw),
               alpha = 0.2) +
   facet_wrap(~ t_muris_dose,
              labeller = as_labeller(c("Zero" = "Zero Dose",
@@ -604,21 +496,30 @@ spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data,
                      name = "Environment",
                      labels = c("Lab" = "Lab",
                                 "RW" = "Rewilded")) +
+  scale_fill_manual(values = c("Lab" = color_light_blue,
+                               "RW" = color_green),
+                    name = "Environment",
+                    labels = c("Lab" = "Lab",
+                               "RW" = "Rewilded")) +
+  guides(fill = guide_legend(override.aes = list(shape = 21, color = "black")),
+         color = "none") +
   theme_minimal() +
-  theme(strip.background = element_rect(fill = "white", color = "black", linewidth = 0.8),
+  theme(strip.background = element_rect(fill = "white", 
+                                        color = "black", 
+                                        linewidth = 0.8),
         strip.text = element_text(size = 10, face = "bold"),
-        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8),
+        panel.border = element_rect(color = "black",
+                                    fill = NA, 
+                                    linewidth = 0.8),
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
   labs(x = "Log Scale Spleen Mass (g)",
-       y = "Log Scale Lymphocyte Count",
-       title = "Log to Log Scale Spleen Mass and Lymphocyte Count")
+       y = "Log Scale Extracted Lymphocyte Count",
+       title = "Log to Log Spleen Mass and Lymphocyte Count")
 
 spleen_mass_lym_count_plot
-
-plot_saver("log_to_log_spleen_mass_and_lymphocyte_count.png",
+plot_saver("spleen_mass_lymphocyte.png",
            spleen_mass_lym_count_plot)
-
 ```
