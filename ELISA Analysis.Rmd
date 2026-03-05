@@ -121,7 +121,9 @@ elisa_summary_plotter <- function(input_data,
               size = 1.8,
               shape = 21,
               color = "black") +
-    facet_wrap(~ lab_or_rw) +
+    facet_wrap(~ lab_or_rw,
+               labeller = as_labeller(c("Lab" = "Laboratory",
+                                        "RW" = "Rewilded"))) +
     scale_fill_manual(values = c("Zero" = color_dark_blue, 
                                "High" = color_orange),
                     labels = c("Zero" = "Uninfected", 
@@ -452,7 +454,7 @@ ifn_input <- ifn_input %>%
 
 ifn_plot <- elisa_summary_plotter(ifn_input, 
                                   expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
-                                  title = "IFN-gamma concentration by stimulation") 
+                                  title = expression(bold("IFN-"*gamma~"Concentration by Stimulation"))) 
 
 ifn_plot
 
@@ -471,7 +473,7 @@ tnf_input <- tnf_input %>%
 
 tnf_plot <- elisa_summary_plotter(tnf_input, 
                                   expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
-                                  title = "Summary TNF-alpha plot for all conditions")
+                                  title = expression(bold("Summary TNF-"*alpha~"Plot for All Conditions")))
 
 tnf_plot
 
@@ -795,7 +797,9 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
   scale_y_continuous(name = expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
                      expand = expansion(mult = c(0.05, 0.3))) +
   scale_x_discrete(name = "Types of Stimulation") +
-  facet_wrap( ~ lab_or_rw) +
+  facet_wrap(~ lab_or_rw,
+             labeller = as_labeller(c("Lab" = "Laboratory",
+                                      "RW" = "Rewilded"))) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
                                         color = "black", 
@@ -860,7 +864,9 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
                      name = "Infection Status",
                      labels = c("Zero" = "Uninfected",
                               "High" = "Infected")) +
-  facet_wrap(~lab_or_rw) +
+  facet_wrap(~ lab_or_rw,
+             labeller = as_labeller(c("Lab" = "Laboratory",
+                                      "RW" = "Rewilded"))) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
                                         color = "black", 

@@ -139,11 +139,11 @@ cbc_plotter <- function(cbc_data,
   scale_fill_manual(values = c("Zero" = color_dark_blue, 
                                "Low" = color_mustard, 
                                "High" = color_orange),
-                    name = "T. muris Dosage") +
+                    name = expression(italic("T. muris")~"Dosage")) +
   scale_color_manual(values = c("Zero" = color_dark_blue, 
                                "Low" = color_mustard, 
                                "High" = color_orange),
-                     name = "T. muris Dosage") +
+                     name = expression(italic("T. muris")~"Dosage")) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
                                         color = "black", 
@@ -765,7 +765,7 @@ plot_saver <- function(filename,
 ```{r}
 lym_rw_plot <- cbc_plotter(lym_rw_plot_data,
                            standard_error_lym_rw,
-                           "Lymphocyte Count (1000 cells/uL)",
+                           expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
                            "Lymphocyte Count Over Time in Rewilded Mice")
 
 lym_rw_plot
@@ -802,7 +802,7 @@ standard_error_lym_lab <- lym_lab_plot_data %>%
 ```{r}
 lym_lab_plot <- cbc_plotter(lym_lab_plot_data,
                             standard_error_lym_lab,
-                            "Lymphocyte Count (1000 cells/uL)",
+                            expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
                             "Lymphocyte Count Over Time in Lab Mice")
 
 lym_lab_plot
@@ -838,7 +838,7 @@ standard_error_neu_rw <- neu_rw_plot_data %>%
 
 neu_rw_plot <- cbc_plotter(neu_rw_plot_data,
                            standard_error_neu_rw,
-                           "Neutrophil Count (1000 cells/uL)",
+                           expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
                            "Neutrophil Count Over Time in Rewilded Mice")
 
 neu_rw_plot
@@ -874,7 +874,7 @@ standard_error_neu_lab <- neu_lab_plot_data %>%
 
 neu_lab_plot <- cbc_plotter(neu_lab_plot_data,
                             standard_error_neu_lab,
-                            "Neutrophil Count (1000 cells/uL)",
+                            expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
                             "Neutrophil Count Over Time in Lab Control Mice")
 
 neu_lab_plot
@@ -910,7 +910,7 @@ standard_error_mon_rw <- mon_rw_plot_data %>%
 
 mon_rw_plot <- cbc_plotter(mon_rw_plot_data,
                            standard_error_mon_rw,
-                           "Monocyte Count (1000 cells/uL)",
+                           expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
                            "Monocyte Count Over Time in Rewilded Mice")
 
 mon_rw_plot
@@ -945,7 +945,7 @@ standard_error_mon_lab <- mon_lab_plot_data %>%
 
 mon_lab_plot <- cbc_plotter(mon_lab_plot_data,
                             standard_error_mon_lab,
-                            "Monocyte Count (1000 cells/uL)",
+                            expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
                             "Monocyte Count Over Time in Lab Control Mice")
 
 mon_lab_plot
@@ -980,7 +980,7 @@ standard_error_eos_rw <- eos_rw_plot_data %>%
 
 eos_rw_plot <- cbc_plotter(eos_rw_plot_data,
                            standard_error_eos_rw,
-                           "Eosinophil Count (1000 cells/uL)",
+                           expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
                            "Eosinophil Count Over Time in Rewilded Mice")
 
 eos_rw_plot
@@ -1015,7 +1015,7 @@ standard_error_eos_lab <- eos_lab_plot_data %>%
 
 eos_lab_plot <- cbc_plotter(eos_lab_plot_data,
                             standard_error_eos_lab,
-                            "Eosinophil Count (1000 cells/uL)",
+                            expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
                             "Eosinophil Count Over Time in Lab Control Mice")
 
 eos_lab_plot
@@ -1050,7 +1050,7 @@ standard_error_bas_rw <- bas_rw_plot_data %>%
 
 bas_rw_plot <- cbc_plotter(bas_rw_plot_data,
                            standard_error_bas_rw,
-                           "Basophil Count (1000 cells/uL)",
+                           expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
                            "Basophil Count Over Time in Rewilded Mice")
 
 bas_rw_plot
@@ -1085,7 +1085,7 @@ standard_error_bas_lab <- bas_lab_plot_data %>%
 
 bas_lab_plot <- cbc_plotter(bas_lab_plot_data,
                             standard_error_bas_lab,
-                            "Basophil Count (1000 cells/uL)",
+                            expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
                             "Basophil Count Over Time in Lab Control Mice")
 
 bas_lab_plot
