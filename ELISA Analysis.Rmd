@@ -592,59 +592,56 @@ plot_saver("tnf_igg_plot.png",
 
 ```
 
-# Combined treatment panel plots for IFN
+# Combined treatment panel plot for IFN
 
 ```{r}
 
-# Modify individual plots: remove axis labels (will add shared ones)
-# Left panel (CD28): keep y-axis tick labels, remove axis titles
-# Center and right panels (LPS, IgG): also remove y-axis tick labels
-
-# Find shared y-axis range across all three IFN treatments
-ifn_y_max <- max(c(ifn_input_cd28$mean_concentration,
-                   ifn_input_lps$mean_concentration,
-                   ifn_input_igg$mean_concentration), na.rm = TRUE)
-
-ifn_shared_y <- scale_y_continuous(limits = c(0, ifn_y_max),
-                                   expand = expansion(mult = c(0.05, 0.3)))
-
-ifn_cd28_combined <- ifn_cd28_plot +
-  xlab(NULL) + ylab(NULL) + ifn_shared_y +
-  ggtitle(NULL) +
-  facet_wrap(~ treatment,
-             labeller = as_labeller(c("CD28" = "CD28 Stimulation"))) +
-  theme(strip.text = element_text(size = 10, face = "plain"))
-
-ifn_lps_combined <- ifn_lps_plot +
-  xlab(expression(bold("Environment"))) +
-  ylab(NULL) + ifn_shared_y +
-  ggtitle(NULL) +
-  facet_wrap(~ treatment,
-             labeller = as_labeller(c("LPS" = "LPS Stimulation"))) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        strip.text = element_text(size = 10, face = "plain"))
-
-ifn_igg_combined <- ifn_igg_plot +
-  xlab(NULL) + ylab(NULL) + ifn_shared_y +
-  ggtitle(NULL) +
-  facet_wrap(~ treatment,
-             labeller = as_labeller(c("IgG" = "IgG Stimulation"))) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        strip.text = element_text(size = 10, face = "plain"))
-
-combined_ifn_plot <- ggarrange(ifn_cd28_combined,
-                               ifn_lps_combined,
-                               ifn_igg_combined,
-                               ncol = 3,
-                               align = "h",
-                               common.legend = TRUE,
-                               legend = "right") %>%
-  annotate_figure(
-    left = text_grob(expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
-                     rot = 90, size = 11, face = "bold")
-  )
+combined_ifn_plot <- ggplot(ifn_input,
+       aes(x = lab_or_rw,
+           y = mean_concentration,
+           fill = t_muris_dose)) +
+  geom_boxplot(alpha = 0.8,
+               outlier.shape = NA,
+               width = 0.5,
+               color = "black",
+               linewidth = 0.6,
+               position = position_dodge(width = 0.6)) +
+  geom_jitter(alpha = 0.8,
+              size = 1.8,
+              shape = 21,
+              color = "black",
+              position = position_jitterdodge(jitter.width = 0.1,
+                                              dodge.width = 0.6)) +
+  facet_wrap(~ factor(treatment, levels = c("CD28", "LPS", "IgG")),
+             labeller = as_labeller(c("CD28" = "CD28 Stimulation",
+                                      "LPS"  = "LPS Stimulation",
+                                      "IgG"  = "IgG Stimulation"))) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "High" = color_orange),
+                    labels = c("Zero" = "Uninfected",
+                               "High" = "Infected"),
+                    name = "Infection Status") +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "High" = color_orange),
+                     labels = c("Zero" = "Uninfected",
+                                "High" = "Infected"),
+                     name = "Infection Status") +
+  scale_x_discrete(labels = c("Lab" = "Laboratory",
+                               "RW" = "Rewilded")) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10, face = "plain"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  xlab("Environment") +
+  ylab(expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")))
 
 combined_ifn_plot
 
@@ -654,55 +651,56 @@ plot_saver("combined_ifn_treatment_plot.png",
 
 ```
 
-# Combined treatment panel plots for TNF
+# Combined treatment panel plot for TNF
 
 ```{r}
 
-# Find shared y-axis range across all three TNF treatments
-tnf_y_max <- max(c(tnf_input_cd28$mean_concentration,
-                   tnf_input_lps$mean_concentration,
-                   tnf_input_igg$mean_concentration), na.rm = TRUE)
-
-tnf_shared_y <- scale_y_continuous(limits = c(0, tnf_y_max),
-                                   expand = expansion(mult = c(0.05, 0.3)))
-
-tnf_cd28_combined <- tnf_cd28_plot +
-  xlab(NULL) + ylab(NULL) + tnf_shared_y +
-  ggtitle(NULL) +
-  facet_wrap(~ treatment,
-             labeller = as_labeller(c("CD28" = "CD28 Stimulation"))) +
-  theme(strip.text = element_text(size = 10, face = "plain"))
-
-tnf_lps_combined <- tnf_lps_plot +
-  xlab(expression(bold("Environment"))) +
-  ylab(NULL) + tnf_shared_y +
-  ggtitle(NULL) +
-  facet_wrap(~ treatment,
-             labeller = as_labeller(c("LPS" = "LPS Stimulation"))) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        strip.text = element_text(size = 10, face = "plain"))
-
-tnf_igg_combined <- tnf_igg_plot +
-  xlab(NULL) + ylab(NULL) + tnf_shared_y +
-  ggtitle(NULL) +
-  facet_wrap(~ treatment,
-             labeller = as_labeller(c("IgG" = "IgG Stimulation"))) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        strip.text = element_text(size = 10, face = "plain"))
-
-combined_tnf_plot <- ggarrange(tnf_cd28_combined,
-                               tnf_lps_combined,
-                               tnf_igg_combined,
-                               ncol = 3,
-                               align = "h",
-                               common.legend = TRUE,
-                               legend = "right") %>%
-  annotate_figure(
-    left = text_grob(expression(bold("TNF-" * alpha ~ "(pg mL"^"-1"*")")),
-                     rot = 90, size = 11, face = "bold")
-  )
+combined_tnf_plot <- ggplot(tnf_input,
+       aes(x = lab_or_rw,
+           y = mean_concentration,
+           fill = t_muris_dose)) +
+  geom_boxplot(alpha = 0.8,
+               outlier.shape = NA,
+               width = 0.5,
+               color = "black",
+               linewidth = 0.6,
+               position = position_dodge(width = 0.6)) +
+  geom_jitter(alpha = 0.8,
+              size = 1.8,
+              shape = 21,
+              color = "black",
+              position = position_jitterdodge(jitter.width = 0.1,
+                                              dodge.width = 0.6)) +
+  facet_wrap(~ factor(treatment, levels = c("CD28", "LPS", "IgG")),
+             labeller = as_labeller(c("CD28" = "CD28 Stimulation",
+                                      "LPS"  = "LPS Stimulation",
+                                      "IgG"  = "IgG Stimulation"))) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "High" = color_orange),
+                    labels = c("Zero" = "Uninfected",
+                               "High" = "Infected"),
+                    name = "Infection Status") +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "High" = color_orange),
+                     labels = c("Zero" = "Uninfected",
+                                "High" = "Infected"),
+                     name = "Infection Status") +
+  scale_x_discrete(labels = c("Lab" = "Laboratory",
+                               "RW" = "Rewilded")) +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10, face = "plain"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  xlab("Environment") +
+  ylab(expression(bold("TNF-" * alpha ~ "(pg mL"^"-1"*")")))
 
 combined_tnf_plot
 
