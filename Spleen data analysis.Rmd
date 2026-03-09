@@ -360,7 +360,8 @@ summary(smr_lmer)
 
 emm_smr <- emmeans(smr_lmer, 
                    specs = c("t_muris_dose"), 
-                   by = c("lab_or_rw", "strain"))
+                   by = c("lab_or_rw", "strain"),
+                   type = "response")
 emm_smr
 
 pairs(emm_smr)
