@@ -359,8 +359,8 @@ smr_lmer <- lmer(spleen_mass_ratio ~
 summary(smr_lmer)
 
 emm_smr <- emmeans(smr_lmer, 
-                   specs = c("t_muris_dose"), 
-                   by = c("lab_or_rw", "strain"),
+                   specs = c("t_muris_dose", "lab_or_rw"), 
+                   by = c("strain"),
                    type = "response")
 emm_smr
 

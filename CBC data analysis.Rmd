@@ -483,6 +483,9 @@ plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
 plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
 plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$strain)
 
+print(summary(neu_lmer_log),
+      correlation = FALSE)
+
 ranef(neu_lmer_log)
 VarCorr(neu_lmer_log)
 
@@ -515,7 +518,8 @@ lym_lmer_log <- lmer(log(lym_number) ~ lab_or_rw * strain * t_muris_dose +
                    (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
                  data = cleaned_combined_cbc_data)
 
-summary(lym_lmer_log)
+print(summary(lym_lmer_log),
+      correlation = FALSE)
 
 # DHARMa diagnostics for the primary log-transformed lymphocyte model
 lym_log_sim_res <- simulateResiduals(fittedModel = lym_lmer_log, n = 1000)
