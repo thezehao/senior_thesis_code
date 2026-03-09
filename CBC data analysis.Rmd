@@ -54,10 +54,10 @@ ibm_blue <- "#648fff"
 
 ```{r setup_paths}
 
-base_path       <- "/Users/zehao/Documents/Research Projects/Graham Group Thesis Research (Summer 2025)"
-data_path       <- file.path(base_path, "Metadata")
+base_path <- "/Users/zehao/Documents/Research Projects/Graham Group Thesis Research (Summer 2025)"
+data_path <- file.path(base_path, "Metadata")
 clean_data_path <- file.path(base_path, "Cleaned data")
-figure_path     <- file.path(base_path, "Figures")
+figure_path <- file.path(base_path, "Figures")
 cbc_figure_path <- file.path(figure_path, "CBC Figures")
 dir.create(cbc_figure_path, showWarnings = FALSE, recursive = TRUE)
 
@@ -205,10 +205,9 @@ clean_cbc_data_1 <- cbc_data_1 %>%
          `repeat`) %>%
   # I'm selecting all of the important data columns.
   # For some reason the original data set had two of every cbc readings. I only kept on row.
-  rename(neu_percent = neu_percent_2, 
-         lym_percent = lym_percent_2, 
-         mon_percent = mon_percent,
-         eos_percent = eos_percent_2, 
+  rename(neu_percent = neu_percent_2,
+         lym_percent = lym_percent_2,
+         eos_percent = eos_percent_2,
          bas_percent = bas_percent_2) %>%
   # I'm renaming the values. The format is new name = old name
   mutate(week = as.integer(week),
@@ -243,10 +242,9 @@ clean_cbc_data_2 <- cbc_data_2 %>%
          cage_wedge,
          week,
          `repeat`) %>%
-  rename(neu_percent = neu_percent_2, 
-         lym_percent = lym_percent_2, 
-         mon_percent = mon_percent,
-         eos_percent = eos_percent_2, 
+  rename(neu_percent = neu_percent_2,
+         lym_percent = lym_percent_2,
+         eos_percent = eos_percent_2,
          bas_percent = bas_percent_2) %>%
   mutate(week = as.integer(week),
          cage_wedge = factor(cage_wedge),
@@ -266,6 +264,7 @@ cleaned_combined_cbc_data <- bind_rows(clean_cbc_data_1,
                                        clean_cbc_data_2) %>%
   select(-`repeat`) %>%
   left_join(cleaned_meta_data, by = "mouse_id") %>%
+  mutate(cage_wedge = tolower(cage_wedge)) %>%
   mutate(week = as.integer(week),
          strain = factor(strain),
          lab_or_rw = factor(lab_or_rw),
@@ -303,8 +302,7 @@ data_saver(data_name = cleaned_combined_cbc_data,
 ```{r cleaning the human data from CDC NHANES}
 
 cleaned_nhanes_data_2017_18 <- nhanes_data_2017_18 %>%
-  clean_names() %>% 
-  drop_na() %>%
+  clean_names() %>%
   rename(respondent_id = seqn,
          lym_percent = lbxlypct,
          mon_percent = lbxmopct,
@@ -316,16 +314,16 @@ cleaned_nhanes_data_2017_18 <- nhanes_data_2017_18 %>%
          mon_number = lbdmono,
          bas_number = lbdbano,
          eos_number = lbdeono) %>%
-  select(respondent_id, 
-         all_of(cbc_number), 
-         cbc_percent) %>%
+  select(respondent_id,
+         all_of(cbc_number),
+         all_of(cbc_percent)) %>%
+  drop_na() %>%
   mutate(respondent_id = as.character(respondent_id),
          across(all_of(c(cbc_number, cbc_percent)),
                 ~as.numeric(.)))
 
 cleaned_nhanes_data_2021_23 <- nhanes_data_2021_23 %>%
-  clean_names() %>% 
-  drop_na() %>%
+  clean_names() %>%
   rename(respondent_id = seqn,
          lym_percent = lbxlypct,
          mon_percent = lbxmopct,
@@ -337,9 +335,10 @@ cleaned_nhanes_data_2021_23 <- nhanes_data_2021_23 %>%
          mon_number = lbdmono,
          bas_number = lbdbano,
          eos_number = lbdeono) %>%
-  select(respondent_id, 
-         all_of(cbc_number), 
-         cbc_percent) %>%
+  select(respondent_id,
+         all_of(cbc_number),
+         all_of(cbc_percent)) %>%
+  drop_na() %>%
   mutate(respondent_id = as.character(respondent_id),
          across(all_of(c(cbc_number, cbc_percent)),
                 ~as.numeric(.)))
@@ -402,45 +401,6 @@ data_saver(data_name = cleaned_nhanes_data_2021_23_long,
            path = file.path(clean_data_path, "cleaned_nhanes_data_2021_23_long.csv"))
 ```
 
-```{r plot the pca plot}
-
-#For color use these codes
-#000000,
-#E69F00, (Mustard Yellow)
-#56B4E9, (Light Blue)
-#009E73, (Green)
-#F0E442, (Light Yellow)
-#0072B2, (Dark Blue)
-#D55E00, (Orange)
-#CC79A7, (Purple)
-
-```
-
-Writing a function to do diagnostics
-
-```{r}
-
-qq_plotter <- function(model,
-                       input,
-                       condition) { 
-  # I'm stating the variables that I want to input
-  qqnorm(resid(model)) 
-  # I'm saying that the variable model goes into resid() and then ran as qqnorm
-  qqline(resid(model))
-  # same thing is happening here
-  plot(resid(model) ~ input[[condition]])
-  # I'm plotting the resid(model) and split by the conditions given.
-  # So you have two values on the x axis.
-}
-
-```
-
-Note to self: residuals are "leftovers" that the lmer model can't explain.
-Essentially it is actual value - modeled value. 
-Why is it important: the lmer model assumes that all residuals are just noise.
-So, if there are any patterns in the residuals,  then there might be some
-issues with the model.
-
 ```{r running diagnostics in neutrophils}
 
 neu_lmer <- lmer(neu_number ~ lab_or_rw * strain * t_muris_dose +
@@ -460,7 +420,6 @@ plotResiduals(neu_sim_res, form = cleaned_combined_cbc_data$strain)
 
 ranef(neu_lmer)
 VarCorr(neu_lmer)
-summary(neu_lmer)
 
 #Need to do log transform according to the results of the diagnostics
 
@@ -473,6 +432,9 @@ neu_lmer_log <- lmer(log(neu_number) ~ lab_or_rw * strain * t_muris_dose +
                    (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
                  data = cleaned_combined_cbc_data)
 
+print(summary(neu_lmer_log),
+      correlation = FALSE)
+
 # DHARMa diagnostics for the primary log-transformed neutrophil model
 neu_log_sim_res <- simulateResiduals(fittedModel = neu_lmer_log, n = 1000)
 plot(neu_log_sim_res)
@@ -482,9 +444,6 @@ testOutliers(neu_log_sim_res)
 plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
 plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
 plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$strain)
-
-print(summary(neu_lmer_log),
-      correlation = FALSE)
 
 ranef(neu_lmer_log)
 VarCorr(neu_lmer_log)
@@ -561,7 +520,7 @@ VarCorr(mon_lmer)
 
 ```{r log model of the mon}
 
-mon_lmer_log <- lmer(log(mon_number) ~ lab_or_rw + strain * t_muris_dose +
+mon_lmer_log <- lmer(log(mon_number) ~ lab_or_rw * strain * t_muris_dose +
                    (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
                  data = cleaned_combined_cbc_data)
 
@@ -569,7 +528,6 @@ print(summary(mon_lmer_log),
       correlation = FALSE)
 
 # DHARMa diagnostics for the primary log-transformed monocyte model
-# NOTE: mon_lmer_log uses a reduced fixed-effects formula (no 3-way interaction)
 mon_log_sim_res <- simulateResiduals(fittedModel = mon_lmer_log, n = 1000)
 plot(mon_log_sim_res)
 testUniformity(mon_log_sim_res)
@@ -727,10 +685,7 @@ all_coef %>%
 #Filter for the correct data to plot
 lym_rw_plot_data <- cleaned_combined_cbc_data_long %>%
   filter(lab_or_rw == "RW",
-         cell_type == "lym") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+         cell_type == "lym")
 #Calculate the standard error and the mean
 standard_error_lym_rw <- lym_rw_plot_data %>%
   group_by(phase, 
@@ -739,11 +694,7 @@ standard_error_lym_rw <- lym_rw_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", 
-                                          "Low", 
-                                          "High")))
+            se = sd / sqrt(n))
 ```
 
 ```{r}
@@ -784,10 +735,7 @@ plot_saver("lym_number_rw.png",
 
 #Filter for the correct data to plot
 lym_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "lym") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "Lab", cell_type == "lym")
 #Calculate the standard error and the mean
 standard_error_lym_lab <- lym_lab_plot_data %>%
   group_by(phase, 
@@ -796,9 +744,7 @@ standard_error_lym_lab <- lym_lab_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 
 ```
 
@@ -821,10 +767,7 @@ plot_saver("lym_number_lab.png",
 
 #Filter for the correct data to plot
 neu_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW", cell_type == "neu") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "RW", cell_type == "neu")
 #Calculate the standard error and the mean
 standard_error_neu_rw <- neu_rw_plot_data %>%
   group_by(phase, 
@@ -833,9 +776,7 @@ standard_error_neu_rw <- neu_rw_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 ```
 
 ```{r}
@@ -858,10 +799,7 @@ plot_saver("neu_number_rw.png",
 
 #Filter for the correct data to plot
 neu_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "neu") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "Lab", cell_type == "neu")
 #Calculate the standard error and the mean
 standard_error_neu_lab <- neu_lab_plot_data %>%
   group_by(phase,
@@ -870,9 +808,7 @@ standard_error_neu_lab <- neu_lab_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 
 
 
@@ -894,10 +830,7 @@ plot_saver("neu_lab_plot.png",
 
 #Filter for the correct data to plot
 mon_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW", cell_type == "mon") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "RW", cell_type == "mon")
 #Calculate the standard error and the mean
 standard_error_mon_rw <- mon_rw_plot_data %>%
   group_by(phase,
@@ -906,9 +839,7 @@ standard_error_mon_rw <- mon_rw_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 
 
 
@@ -929,10 +860,7 @@ plot_saver("mon_over_time_rw.png",
 
 #Filter for the correct data to plot
 mon_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "mon") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "Lab", cell_type == "mon")
 #Calculate the standard error and the mean
 standard_error_mon_lab <- mon_lab_plot_data %>%
   group_by(phase,
@@ -941,9 +869,7 @@ standard_error_mon_lab <- mon_lab_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 
 
 
@@ -964,10 +890,7 @@ plot_saver("mon_over_time_lab.png",
 
 #Filter for the correct data to plot
 eos_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW", cell_type == "eos") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "RW", cell_type == "eos")
 #Calculate the standard error and the mean
 standard_error_eos_rw <- eos_rw_plot_data %>%
   group_by(phase,
@@ -976,9 +899,7 @@ standard_error_eos_rw <- eos_rw_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 
 
 
@@ -999,10 +920,7 @@ plot_saver("eos_over_time_rw.png",
 
 #Filter for the correct data to plot
 eos_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "eos") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "Lab", cell_type == "eos")
 #Calculate the standard error and the mean
 standard_error_eos_lab <- eos_lab_plot_data %>%
   group_by(phase,
@@ -1011,9 +929,7 @@ standard_error_eos_lab <- eos_lab_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 
 
 
@@ -1034,10 +950,7 @@ plot_saver("eos_lab_plot.png",
 
 #Filter for the correct data to plot
 bas_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW", cell_type == "bas") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "RW", cell_type == "bas")
 #Calculate the standard error and the mean
 standard_error_bas_rw <- bas_rw_plot_data %>%
   group_by(phase,
@@ -1046,9 +959,7 @@ standard_error_bas_rw <- bas_rw_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 
 
 
@@ -1069,10 +980,7 @@ plot_saver("bas_rw_plot.png",
 
 #Filter for the correct data to plot
 bas_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "bas") %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
-         phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")))
+  filter(lab_or_rw == "Lab", cell_type == "bas")
 #Calculate the standard error and the mean
 standard_error_bas_lab <- bas_lab_plot_data %>%
   group_by(phase,
@@ -1081,9 +989,7 @@ standard_error_bas_lab <- bas_lab_plot_data %>%
   summarise(mean = mean(number),
             sd = sd(number),
             n = n(),
-            se = sd / sqrt(n)) %>%
-  mutate(t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")))
+            se = sd / sqrt(n))
 
 
 
