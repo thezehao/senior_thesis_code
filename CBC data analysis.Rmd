@@ -33,20 +33,20 @@ library(readr)
 
 ```{r setup_colors}
 
-color_black      <- "#000000"
-color_mustard    <- "#E69F00"
+color_black <- "#000000"
+color_mustard <- "#E69F00"
 color_light_blue <- "#56B4E9"
-color_green      <- "#009E73"
-color_yellow     <- "#F0E442"
-color_dark_blue  <- "#0072B2"
-color_orange     <- "#D55E00"
-color_purple     <- "#CC79A7"
+color_green <- "#009E73"
+color_yellow <- "#F0E442"
+color_dark_blue <- "#0072B2"
+color_orange <- "#D55E00"
+color_purple <- "#CC79A7"
 
-ibm_yellow          <- "#ffb000"
-ibm_orange          <- "#fe6100"
-ibm_reddish_purple  <- "#dc267f"
-ibm_purple          <- "#785ef0"
-ibm_blue            <- "#648fff"
+ibm_yellow <- "#ffb000"
+ibm_orange <- "#fe6100"
+ibm_reddish_purple <- "#dc267f"
+ibm_purple <- "#785ef0"
+ibm_blue <- "#648fff"
 
 ```
 

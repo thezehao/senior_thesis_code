@@ -853,9 +853,10 @@ VarCorr(tnf_glmer)
 
 ```{r}
 emm_tnf <- emmeans(tnf_glmer, 
-                   specs = c("t_muris_dose"), 
-                   by = c("lab_or_rw", "treatment"),
+                   specs = c("t_muris_dose", "lab_or_rw"), 
+                   by = c("treatment"),
                    type = "response")
+
 emm_tnf
 
 pairs(emm_tnf)
