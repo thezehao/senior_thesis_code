@@ -122,9 +122,9 @@ elisa_summary_plotter <- function(input_data,
               shape = 21,
               color = "black") +
     facet_wrap(~ treatment,
-               labeller = as_labeller(c("CD28" = "CD28 Stimulation",
-                                        "LPS" = "LPS Stimulation",
-                                        "IgG" = "IgG Stimulation"))) +
+               labeller = as_labeller(c("CD28" = "CD28",
+                                        "LPS" = "LPS",
+                                        "IgG" = "IgG"))) +
     scale_fill_manual(values = c("Zero" = color_dark_blue, 
                                "High" = color_orange),
                     labels = c("Zero" = "Uninfected", 
@@ -457,7 +457,7 @@ ifn_input <- ifn_input %>%
 
 ifn_plot <- elisa_summary_plotter(ifn_input, 
                                   expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
-                                  title = expression(bold("IFN-"*gamma~"Concentration by Stimulation"))) 
+                                  title = expression(bold("IFN-"*gamma~"by Stimulation"))) 
 
 ifn_plot
 
@@ -476,7 +476,7 @@ tnf_input <- tnf_input %>%
 
 tnf_plot <- elisa_summary_plotter(tnf_input, 
                                   expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
-                                  title = expression(bold("Summary TNF-"*alpha~"Plot for All Conditions")))
+                                  title = expression(bold("TNF-"*alpha~"by Stimulation")))
 
 tnf_plot
 
