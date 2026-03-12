@@ -139,11 +139,11 @@ cbc_plotter <- function(cbc_data,
   scale_fill_manual(values = c("Zero" = color_dark_blue, 
                                "Low" = color_mustard, 
                                "High" = color_orange),
-                    name = expression(italic("T. muris")~"Dosage")) +
+                    name = expression(bolditalic("T. muris")~bold("Dosage"))) +
   scale_color_manual(values = c("Zero" = color_dark_blue, 
                                "Low" = color_mustard, 
                                "High" = color_orange),
-                     name = expression(italic("T. muris")~"Dosage")) +
+                     name = expression(bolditalic("T. muris")~bold("Dosage"))) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
                                         color = "black", 
@@ -157,7 +157,7 @@ cbc_plotter <- function(cbc_data,
         plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold")) +
-  xlab("Phase of the Experiment") +
+  xlab("Phase") +
   ylab(y_label) +
   ggtitle(title)
 }

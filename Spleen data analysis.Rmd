@@ -314,14 +314,14 @@ spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data,
   scale_fill_manual(values = c("RW" = color_orange,
                                "Lab" = color_dark_blue),
                     name = "Environment",
-                    labels = c("Lab" = "Lab",
+                    labels = c("Lab" = "Laboratory",
                                "RW" = "Rewilded")) +
   scale_color_manual(values = c("RW" = color_orange,
                                 "Lab" = color_dark_blue),
                      name = "Environment",
-                     labels = c("Lab" = "Lab",
+                     labels = c("Lab" = "Laboratory",
                                 "RW" = "Rewilded")) +
-  scale_y_continuous(name = "Spleen to Mass Ratio" ,
+  scale_y_continuous(name = "Spleen to Body Mass Ratio (SMR)",
                      expand = expansion(mult = c(0.05, 0.3))) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
@@ -336,7 +336,7 @@ spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data,
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  xlab(expression(italic("T. muris")~"Dosage")) +
+  xlab(expression(bolditalic("T. muris")~bold("Dosage"))) +
   ylab("Spleen to Body Mass Ratio (SMR)")
 
 spleen_mass_ratio_plot
@@ -394,18 +394,18 @@ emm_smr_plot <- ggplot(emm_smr_df) +
                                              dodge.width = 0.5),
              alpha = 0.3,
              size = 1.5) +
-  scale_y_continuous(name = "Spleen to Mass Ratio" ,
+  scale_y_continuous(name = "Spleen to Body Mass Ratio (SMR)",
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(italic("T. muris")~"Dosage")) +
+  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dosage"))) +
   scale_fill_manual(values = c("Lab" = color_dark_blue,
                                "RW" = color_orange),
                     name = "Environment",
-                    labels = c("Lab" = "Lab",
+                    labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
   scale_color_manual(values = c("Lab" = color_dark_blue,
                                 "RW" = color_orange),
                      name = "Environment",
-                     labels = c("Lab" = "Lab",
+                     labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
   facet_wrap(~strain) +
   theme_minimal() +
@@ -490,17 +490,17 @@ spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data,
                   color = lab_or_rw),
               alpha = 0.2) +
   facet_wrap(~ t_muris_dose,
-             labeller = as_labeller(c("Zero" = "Zero Dose",
-                                      "High" = "High Dose"))) +
+             labeller = as_labeller(c("Zero" = "Zero",
+                                      "High" = "High"))) +
   scale_color_manual(values = c("Lab" = color_light_blue,
                                 "RW" = color_green),
                      name = "Environment",
-                     labels = c("Lab" = "Lab",
+                     labels = c("Lab" = "Laboratory",
                                 "RW" = "Rewilded")) +
   scale_fill_manual(values = c("Lab" = color_light_blue,
                                "RW" = color_green),
                     name = "Environment",
-                    labels = c("Lab" = "Lab",
+                    labels = c("Lab" = "Laboratory",
                                "RW" = "Rewilded")) +
   scale_x_continuous(trans = scales::log_trans(),
                      name = "Spleen Mass (g)") +
