@@ -106,7 +106,7 @@ ibm_blue <- "#648fff"
 elisa_summary_plotter <- function(input_data, 
                                   y_label, 
                                   title = NULL) {
-  ggplot(input_data, aes(x = treatment,
+  ggplot(input_data, aes(x = lab_or_rw,
                         y = mean_concentration,
                         fill = t_muris_dose)) +
     geom_boxplot(position = position_dodge(width = 0.75),
@@ -121,9 +121,10 @@ elisa_summary_plotter <- function(input_data,
               size = 1.8,
               shape = 21,
               color = "black") +
-    facet_wrap(~ lab_or_rw,
-               labeller = as_labeller(c("Lab" = "Laboratory",
-                                        "RW" = "Rewilded"))) +
+    facet_wrap(~ treatment,
+               labeller = as_labeller(c("CD28" = "CD28 Stimulation",
+                                        "LPS" = "LPS Stimulation",
+                                        "IgG" = "IgG Stimulation"))) +
     scale_fill_manual(values = c("Zero" = color_dark_blue, 
                                "High" = color_orange),
                     labels = c("Zero" = "Uninfected", 
@@ -134,7 +135,9 @@ elisa_summary_plotter <- function(input_data,
                      labels = c("Zero" = "Uninfected", 
                                 "High" = "Infected"),
                     name = "Infection Status") +
-    scale_x_discrete(limits = c("CD28", "IgG", "LPS")) +
+    scale_x_discrete(limits = c("Lab", "RW"),
+                     labels = c("Lab" = "Laboratory",
+                                "RW" = "Rewilded")) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
     theme_minimal() +
     theme(strip.background = element_rect(fill = "white", 
@@ -149,7 +152,7 @@ elisa_summary_plotter <- function(input_data,
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-    xlab("Types of Stimulation") +
+    xlab("Environment") +
     ylab(y_label) +
     ggtitle(title)
 }
@@ -491,7 +494,7 @@ ifn_input_cd28 <- ifn_input_cd28 %>%
 
 ifn_cd28_plot <- elisa_treatment_plotter(ifn_input_cd28,
                                        expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
-                                       title = "CD28 Stimulation")
+                                       title = expression(bold("CD28 Stimulation")))
 
 ifn_cd28_plot
 
@@ -509,7 +512,7 @@ tnf_input_cd28 <- tnf_input_cd28 %>%
 
 tnf_cd28_plot <- elisa_treatment_plotter(tnf_input_cd28,
                                        expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
-                                       title = "CD28 Stimulation")
+                                       title = expression(bold("CD28 Stimulation")))
 
 tnf_cd28_plot
 
@@ -527,7 +530,7 @@ ifn_input_lps <- ifn_input_lps %>%
 
 ifn_lps_plot <- elisa_treatment_plotter(ifn_input_lps,
                                        expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
-                                       title = "LPS Stimulation")
+                                       title = expression(bold("LPS Stimulation")))
 
 ifn_lps_plot
 
@@ -546,7 +549,7 @@ tnf_input_lps <- tnf_input_lps %>%
 
 tnf_lps_plot <- elisa_treatment_plotter(tnf_input_lps,
                                        expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
-                                       title = "LPS Stimulation")
+                                       title = expression(bold("LPS Stimulation")))
 
 tnf_lps_plot
 
@@ -564,7 +567,7 @@ ifn_input_igg <- ifn_input_igg %>%
 
 ifn_igg_plot <- elisa_treatment_plotter(ifn_input_igg,
                                        expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
-                                       title = "IgG Stimulation")
+                                       title = expression(bold("IgG Stimulation")))
 
 ifn_igg_plot
 
@@ -583,7 +586,7 @@ tnf_input_igg <- tnf_input_igg %>%
 
 tnf_igg_plot <- elisa_treatment_plotter(tnf_input_igg,
                                        expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
-                                       title = "IgG Stimulation")
+                                       title = expression(bold("IgG Stimulation")))
 
 tnf_igg_plot
 
@@ -613,9 +616,9 @@ combined_ifn_plot <- ggplot(ifn_input,
               position = position_jitterdodge(jitter.width = 0.1,
                                               dodge.width = 0.6)) +
   facet_wrap(~ factor(treatment, levels = c("CD28", "LPS", "IgG")),
-             labeller = as_labeller(c("CD28" = "CD28 Stimulation",
-                                      "LPS"  = "LPS Stimulation",
-                                      "IgG"  = "IgG Stimulation"))) +
+             labeller = as_labeller(c("CD28" = "CD28",
+                                      "LPS"  = "LPS",
+                                      "IgG"  = "IgG"))) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "High" = color_orange),
                     labels = c("Zero" = "Uninfected",
@@ -633,13 +636,14 @@ combined_ifn_plot <- ggplot(ifn_input,
   theme(strip.background = element_rect(fill = "white",
                                         color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, face = "plain"),
+        strip.text = element_text(size = 10, face = "bold"),
         panel.border = element_rect(color = "black",
                                     fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
   xlab("Environment") +
   ylab(expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")))
 
@@ -672,9 +676,9 @@ combined_tnf_plot <- ggplot(tnf_input,
               position = position_jitterdodge(jitter.width = 0.1,
                                               dodge.width = 0.6)) +
   facet_wrap(~ factor(treatment, levels = c("CD28", "LPS", "IgG")),
-             labeller = as_labeller(c("CD28" = "CD28 Stimulation",
-                                      "LPS"  = "LPS Stimulation",
-                                      "IgG"  = "IgG Stimulation"))) +
+             labeller = as_labeller(c("CD28" = "CD28",
+                                      "LPS"  = "LPS",
+                                      "IgG"  = "IgG"))) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "High" = color_orange),
                     labels = c("Zero" = "Uninfected",
@@ -692,13 +696,14 @@ combined_tnf_plot <- ggplot(tnf_input,
   theme(strip.background = element_rect(fill = "white",
                                         color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, face = "plain"),
+        strip.text = element_text(size = 10, face = "bold"),
         panel.border = element_rect(color = "black",
                                     fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
   xlab("Environment") +
   ylab(expression(bold("TNF-" * alpha ~ "(pg mL"^"-1"*")")))
 
@@ -880,15 +885,15 @@ emm_tnf_df <- as.data.frame(emm_tnf) %>%
 ```{r}
 
 emm_ifn_plot <- ggplot(emm_ifn_df) +
-  geom_point(aes(x = treatment, 
-                 y = response, 
+  geom_point(aes(x = lab_or_rw,
+                 y = response,
                  fill = t_muris_dose),
              position = position_dodge(width = 0.5),
              alpha = 1,
              size = 2,
              shape = 21,
              color = "black") +
-  geom_errorbar(aes(x = treatment,
+  geom_errorbar(aes(x = lab_or_rw,
                     ymin = asymp.LCL,
                     ymax = asymp.UCL,
                     color = t_muris_dose),
@@ -896,7 +901,7 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
              position = position_dodge(width = 0.5),
              alpha = 0.8) +
   geom_point(data = ifn_input,
-             aes(x = treatment,
+             aes(x = lab_or_rw,
                  y = mean_concentration,
                  color = t_muris_dose),
                  position = position_jitterdodge(jitter.width = 0.1,
@@ -915,10 +920,10 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
                               "High" = "Infected")) +
   scale_y_continuous(name = expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = "Types of Stimulation") +
-  facet_wrap(~ lab_or_rw,
-             labeller = as_labeller(c("Lab" = "Laboratory",
-                                      "RW" = "Rewilded"))) +
+  scale_x_discrete(name = "Environment",
+                   labels = c("Lab" = "Laboratory",
+                              "RW" = "Rewilded")) +
+  facet_wrap(~ treatment) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
                                         color = "black", 
@@ -946,24 +951,24 @@ plot_saver("emm_ifn_plot.png",
 
 ```{r}
 
-emm_tnf_plot <- ggplot(emm_tnf_df) + 
-  geom_point(aes(x = treatment, 
-                 y = response, 
+emm_tnf_plot <- ggplot(emm_tnf_df) +
+  geom_point(aes(x = lab_or_rw,
+                 y = response,
                  fill = t_muris_dose),
              position = position_dodge(width = 0.5),
              alpha = 1,
              shape = 21,
              size = 2,
              color = "black") +
-  geom_errorbar(aes(x = treatment, 
+  geom_errorbar(aes(x = lab_or_rw,
                     ymin = asymp.LCL,
-                    ymax = asymp.UCL, 
-                color = t_muris_dose), 
+                    ymax = asymp.UCL,
+                color = t_muris_dose),
                 width = 0.3,
                 alpha = 0.8,
                 position = position_dodge(width = 0.5)) +
   geom_point(data = tnf_input,
-             aes(x = treatment,
+             aes(x = lab_or_rw,
                  y = mean_concentration,
                  color = t_muris_dose),
                  position = position_jitterdodge(jitter.width = 0.1,
@@ -972,7 +977,9 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
                  size = 1.5) +
   scale_y_continuous(name = expression(bold("TNF-"*alpha~"(pg mL"^"-1"*")")),
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = "Types of Stimulation") +
+  scale_x_discrete(name = "Environment",
+                   labels = c("Lab" = "Laboratory",
+                              "RW" = "Rewilded")) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "High" = color_orange),
                     name = "Infection Status",
@@ -983,9 +990,7 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
                      name = "Infection Status",
                      labels = c("Zero" = "Uninfected",
                               "High" = "Infected")) +
-  facet_wrap(~ lab_or_rw,
-             labeller = as_labeller(c("Lab" = "Laboratory",
-                                      "RW" = "Rewilded"))) +
+  facet_wrap(~ treatment) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
                                         color = "black", 
