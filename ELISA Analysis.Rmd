@@ -121,10 +121,7 @@ elisa_summary_plotter <- function(input_data,
               size = 1.8,
               shape = 21,
               color = "black") +
-    facet_wrap(~ treatment,
-               labeller = as_labeller(c("CD28" = "CD28",
-                                        "LPS" = "LPS",
-                                        "IgG" = "IgG"))) +
+    facet_wrap(~ treatment) +
     scale_fill_manual(values = c("Zero" = color_dark_blue, 
                                "High" = color_orange),
                     labels = c("Zero" = "Uninfected", 
@@ -417,13 +414,15 @@ write_csv(total_tnf, file.path(clean_data_path,
 
 ```{r}
 
-ifn_input <- mean_calculator(total_ifn, 
-                             final_ifn, 
-                             cv_percent)
+ifn_input <- mean_calculator(total_ifn,
+                             final_ifn,
+                             cv_percent) %>%
+  mutate(treatment = factor(treatment, levels = c("CD28", "LPS", "IgG")))
 
-tnf_input <- mean_calculator(total_tnf, 
-                             final_tnf, 
-                             cv_percent)
+tnf_input <- mean_calculator(total_tnf,
+                             final_tnf,
+                             cv_percent) %>%
+  mutate(treatment = factor(treatment, levels = c("CD28", "LPS", "IgG")))
 
 ```
 
@@ -615,10 +614,7 @@ combined_ifn_plot <- ggplot(ifn_input,
               color = "black",
               position = position_jitterdodge(jitter.width = 0.1,
                                               dodge.width = 0.6)) +
-  facet_wrap(~ factor(treatment, levels = c("CD28", "LPS", "IgG")),
-             labeller = as_labeller(c("CD28" = "CD28",
-                                      "LPS"  = "LPS",
-                                      "IgG"  = "IgG"))) +
+  facet_wrap(~ treatment) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "High" = color_orange),
                     labels = c("Zero" = "Uninfected",
@@ -675,10 +671,7 @@ combined_tnf_plot <- ggplot(tnf_input,
               color = "black",
               position = position_jitterdodge(jitter.width = 0.1,
                                               dodge.width = 0.6)) +
-  facet_wrap(~ factor(treatment, levels = c("CD28", "LPS", "IgG")),
-             labeller = as_labeller(c("CD28" = "CD28",
-                                      "LPS"  = "LPS",
-                                      "IgG"  = "IgG"))) +
+  facet_wrap(~ treatment) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "High" = color_orange),
                     labels = c("Zero" = "Uninfected",
