@@ -883,7 +883,7 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
                  fill = t_muris_dose),
              position = position_dodge(width = 0.5),
              alpha = 1,
-             size = 2,
+             size = 3,
              shape = 21,
              color = "black") +
   geom_errorbar(aes(x = lab_or_rw,
@@ -951,7 +951,7 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
              position = position_dodge(width = 0.5),
              alpha = 1,
              shape = 21,
-             size = 2,
+             size = 3,
              color = "black") +
   geom_errorbar(aes(x = lab_or_rw,
                     ymin = asymp.LCL,
