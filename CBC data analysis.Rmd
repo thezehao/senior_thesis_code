@@ -7,7 +7,9 @@ output:
   html_document: default
 ---
 
-```{r}
+# Libraries
+
+```{r libraries}
 
 library(tidyverse)
 library(readxl)
@@ -29,28 +31,17 @@ library(readr)
 
 ```
 
-# Setting the colors (Okabe-Ito palette and IBM palette)
+# Setup: Colors, Paths, and Vectors
 
 ```{r setup_colors}
 
-color_black <- "#000000"
-color_mustard <- "#E69F00"
-color_light_blue <- "#56B4E9"
-color_green <- "#009E73"
-color_yellow <- "#F0E442"
+color_mustard   <- "#E69F00"
+color_green     <- "#009E73"
 color_dark_blue <- "#0072B2"
-color_orange <- "#D55E00"
-color_purple <- "#CC79A7"
-
-ibm_yellow <- "#ffb000"
-ibm_orange <- "#fe6100"
-ibm_reddish_purple <- "#dc267f"
-ibm_purple <- "#785ef0"
-ibm_blue <- "#648fff"
+color_orange    <- "#D55E00"
+color_purple    <- "#CC79A7"
 
 ```
-
-# Setting the paths
 
 ```{r setup_paths}
 
@@ -59,64 +50,85 @@ data_path <- file.path(base_path, "Metadata")
 clean_data_path <- file.path(base_path, "Cleaned data")
 figure_path <- file.path(base_path, "Figures")
 cbc_figure_path <- file.path(figure_path, "CBC Figures")
-dir.create(cbc_figure_path, showWarnings = FALSE, recursive = TRUE)
+analysis_directory <- file.path(base_path, "Analysis Results")
+
+dir.create(cbc_figure_path, 
+           showWarnings = FALSE, 
+           recursive = TRUE)
 
 ```
 
-Loading the data from my directory
+```{r setup_vectors}
 
-```{r load the data}
-
-# mouse data
-
-cbc_data_1 <- read_excel(file.path(data_path, "DCV_25SF.W-3thruNSF1trapout.XLSX"))
-cbc_data_2 <- read_excel(file.path(data_path, "DCV_25SF.W3_NSF2.XLSX"))
-meta_data  <- read_csv(file.path(data_path, "clean_meta_data.csv"))
-
-# CDC human data
-
-nhanes_data_2017_18 <- read_xpt(file.path(data_path, "CBC_J_NHANES_2017_2018.xpt"))
-nhanes_data_2021_23 <- read_xpt(file.path(data_path, "CBC_L_NHANES_2021_2023.xpt"))
-
-```
-
-Setting vector for cleaner syntax
-
-```{r}
-
-# setting vectors
-# I will use these later instead of typing everyting over and over again.
-
-cbc_number <- c("neu_number", 
-                "lym_number", 
-                "mon_number", 
-                "eos_number", 
+# Cell type name vectors — used throughout for selecting/renaming columns
+cbc_number <- c("neu_number",
+                "lym_number",
+                "mon_number",
+                "eos_number",
                 "bas_number")
 
-cbc_percent <- c("neu_percent", 
-                 "lym_percent", 
-                 "mon_percent", 
-                 "eos_percent", 
+cbc_percent <- c("neu_percent",
+                 "lym_percent",
+                 "mon_percent",
+                 "eos_percent",
                  "bas_percent")
 
 ```
 
-# Writing a plotting function
+# Defining functions
 
-```{r}
+```{r helper_functions}
 
-cbc_plotter <- function(cbc_data, 
-                        cbc_error, 
-                        y_label, 
+# Saves a data frame as a CSV
+data_saver <- function(data_name,
+                       path = "") {
+  write_csv(x = data_name,
+            file = path)
+}
+
+# Saves a ggplot as a PNG
+plot_saver <- function(filename,
+                       plot,
+                       path = cbc_figure_path,
+                       width = 7,
+                       height = 5,
+                       dpi = 300) {
+  ggsave(filename = filename,
+         plot = plot,
+         path = path,
+         width = width,
+         height = height,
+         units = "in",
+         dpi = dpi)
+}
+
+# Summarizes CBC percentages for the composition bar plot
+cbc_summarizer <- function(data,
+                           group_name) {
+  data %>%
+    summarise(neu_percent = mean(neu_percent, na.rm = TRUE) / 100,
+              lym_percent = mean(lym_percent, na.rm = TRUE) / 100,
+              mon_percent = mean(mon_percent, na.rm = TRUE) / 100,
+              eos_percent = mean(eos_percent, na.rm = TRUE) / 100,
+              bas_percent = mean(bas_percent, na.rm = TRUE) / 100) %>%
+    mutate(group = group_name) %>%
+    pivot_longer(cols = neu_percent:bas_percent,
+                 names_to = "cell_type",
+                 values_to = "cbc_percent")
+}
+
+# Longitudinal trajectory plotter (all cell types, faceted by environment x strain)
+cbc_plotter <- function(cbc_data,
+                        cbc_error,
+                        y_label,
                         title = NULL) {
   ggplot(cbc_data, aes(x = phase,
                        y = number,
                        fill = t_muris_dose,
                        color = t_muris_dose,
-                       group = interaction(t_muris_dose, 
-                                           strain))) +
+                       group = t_muris_dose)) +
   geom_point(position = position_dodge(width = 0.5),
-             size = 1.5, 
+             size = 1.5,
              alpha = 0.3) +
   geom_line(data = cbc_error,
             aes(y = mean, group = t_muris_dose),
@@ -133,41 +145,42 @@ cbc_plotter <- function(cbc_data,
                     ymin = mean - se,
                     ymax = mean + se),
                 position = position_dodge(width = 0.5),
-                width = 0.3,
+                width = 0.15,
                 alpha = 0.6) +
-  geom_vline(xintercept = 1.6, 
-             linetype = "dashed", 
+  geom_vline(xintercept = 1.6,
+             linetype = "dashed",
              color = "grey40",
              alpha = 0.6) +
-  annotate("text", 
-           x = 1.6, 
-           y = Inf, 
+  annotate("text",
+           x = 1.6,
+           y = Inf,
            label = "Infection",
-           vjust = 1.5, 
-           hjust = -0.1, 
-           size = 3, 
+           vjust = 1.5,
+           hjust = -0.1,
+           size = 3,
            fontface = "italic",
            alpha = 0.6) +
-  facet_wrap(~ strain) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue, 
-                               "Low" = color_mustard, 
+  facet_grid(lab_or_rw ~ strain) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "Low"  = color_mustard,
                                "High" = color_orange),
                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_color_manual(values = c("Zero" = color_dark_blue, 
-                               "Low" = color_mustard, 
-                               "High" = color_orange),
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "Low"  = color_mustard,
+                                "High" = color_orange),
                      name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
   theme_minimal() +
-  theme(strip.background = element_rect(fill = "white", 
-                                        color = "black", 
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, 
+        strip.text = element_text(size = 10,
                                   face = "bold"),
-        panel.border = element_rect(color = "black", 
-                                    fill = NA, 
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
-        plot.title = element_text(hjust = 0.5, face = "bold"),
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold"),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold")) +
   xlab("Phase") +
@@ -177,82 +190,86 @@ cbc_plotter <- function(cbc_data,
 
 ```
 
-```{r}
+# Loading Data
+
+```{r load_data}
+
+# Mouse CBC data
+cbc_data_1 <- read_excel(file.path(data_path, 
+                                   "DCV_25SF.W-3thruNSF1trapout.XLSX"))
+cbc_data_2 <- read_excel(file.path(data_path,
+                                   "DCV_25SF.W3_NSF2.XLSX"))
+meta_data   <- read_csv(file.path(data_path, 
+                                  "clean_meta_data.csv"))
+
+# CDC NHANES human data
+nhanes_data_2017_18 <- read_xpt(file.path(data_path, 
+                                          "CBC_J_NHANES_2017_2018.xpt"))
+nhanes_data_2021_23 <- read_xpt(file.path(data_path, 
+                                          "CBC_L_NHANES_2021_2023.xpt"))
 
 ```
 
+# Cleaning Mouse CBC Data
 
-Clean data for ease of analysis
+```{r clean_mouse_cbc}
 
-```{r}
-clean_cbc_data_1 <- cbc_data_1 %>% 
+clean_cbc_data_1 <- cbc_data_1 %>%
   clean_names() %>%
-  # clean_names() just makes all the names more R friendly automatically.
-  filter(id != "BG", 
-         !id %in% c("25SF.W5.1330.0.1", 
-                    "25SF.W3.1311.0", 
-                    "25SF.17.1380.-3", 
-                    "25SF.W5.1330.0", 
+  filter(id != "BG",
+         !id %in% c("25SF.W5.1330.0.1",
+                    "25SF.W3.1311.0",
+                    "25SF.17.1380.-3",
+                    "25SF.W5.1330.0",
                     "25SF.W5.1330.2")) %>%
-  # I want to filter out all the background runs we did (BG), and also remove some samples that had no valid readings like ***** or something. 
-  # TODO understand the id != and the !id %in% stuff.
   separate(col = id,
-           into = c("experiment", 
-                    "cage_wedge", 
-                    "mouse_id", 
-                    "week", 
+           into = c("experiment",
+                    "cage_wedge",
+                    "mouse_id",
+                    "week",
                     "repeat"),
            sep = "\\.",
            fill = "right",
            extra = "merge",
            remove = FALSE) %>%
-  # Since we formatted the id names with the experiments, cage/wedge, mouse id, the week of the sample, and whether it is a repeat. I need ot extract that information by telling R that I want to seperate the column id into that string of vectors. I also need to tell that the names are separated by .
-  # TODO understanding what is fill, extra, and remove is about.
-    select(mouse_id, 
-         all_of(cbc_number), 
-         neu_percent_2, 
-         lym_percent_2, 
-         mon_percent, 
-         eos_percent_2, 
+  select(mouse_id,
+         all_of(cbc_number),
+         neu_percent_2,
+         lym_percent_2,
+         mon_percent,
+         eos_percent_2,
          bas_percent_2,
          cage_wedge,
          week,
          `repeat`) %>%
-  # I'm selecting all of the important data columns.
-  # For some reason the original data set had two of every cbc readings. I only kept on row.
   rename(neu_percent = neu_percent_2,
          lym_percent = lym_percent_2,
          eos_percent = eos_percent_2,
          bas_percent = bas_percent_2) %>%
-  # I'm renaming the values. The format is new name = old name
   mutate(week = as.integer(week),
          cage_wedge = factor(cage_wedge),
          mouse_id = as.character(mouse_id),
-         across(all_of(c(cbc_number, cbc_percent)),
-                ~ as.numeric(.)))
-# I'm making sure that the values in each columns are read as the correct data type.
-# TODO figure out what is a factor and character. 
-# TODO figure out what is the last function doing with the ~
+         across(all_of(c(cbc_number, cbc_percent)), ~ as.numeric(.)))
 
-clean_cbc_data_2 <- cbc_data_2 %>% 
+clean_cbc_data_2 <- cbc_data_2 %>%
   clean_names() %>%
   filter(id != "BG") %>%
   separate(col = id,
-           into = c("experiment", 
-                    "cage_wedge", 
-                    "mouse_id", 
-                    "week", 
+           into = c("experiment",
+                    "cage_wedge",
+                    "mouse_id",
+                    "week",
                     "repeat"),
            sep = "\\.",
            fill = "right",
            extra = "merge",
            remove = FALSE) %>%
-    select(mouse_id, 
-         all_of(cbc_number), 
-         neu_percent_2, 
-         lym_percent_2, 
-         mon_percent, 
-         eos_percent_2, 
+  select(mouse_id,
+         all_of(cbc_number),
+         neu_percent_2,
+         lym_percent_2,
+         mon_percent,
+         eos_percent_2,
          bas_percent_2,
          cage_wedge,
          week,
@@ -264,18 +281,18 @@ clean_cbc_data_2 <- cbc_data_2 %>%
   mutate(week = as.integer(week),
          cage_wedge = factor(cage_wedge),
          mouse_id = as.character(mouse_id),
-         across(all_of(c(cbc_number, cbc_percent)),
-                ~as.numeric(.)))
+         across(all_of(c(cbc_number, cbc_percent)), ~ as.numeric(.)))
+
 ```
 
-# Combining all CBC data and added meta data
+# Combining Mouse CBC Data and Adding Metadata
 
-```{r combining all cbc data for mice and add the meta data information}
+```{r combine_and_join}
 
 cleaned_meta_data <- meta_data %>%
   mutate(mouse_id = as.character(mouse_id))
 
-cleaned_combined_cbc_data <- bind_rows(clean_cbc_data_1, 
+cleaned_combined_cbc_data <- bind_rows(clean_cbc_data_1,
                                        clean_cbc_data_2) %>%
   select(-`repeat`) %>%
   left_join(cleaned_meta_data, by = "mouse_id") %>%
@@ -285,7 +302,7 @@ cleaned_combined_cbc_data <- bind_rows(clean_cbc_data_1,
          lab_or_rw = factor(lab_or_rw),
          t_muris_dose = factor(t_muris_dose),
          mouse_id = factor(mouse_id)) %>%
-  mutate(strain = relevel(factor(strain), ref = "C57BL/6J"), 
+  mutate(strain = relevel(factor(strain), ref = "C57BL/6J"),
          t_muris_dose = relevel(factor(t_muris_dose), ref = "Zero")) %>%
   filter(!is.na(lab_or_rw)) %>%
   mutate(phase = case_when(
@@ -293,28 +310,25 @@ cleaned_combined_cbc_data <- bind_rows(clean_cbc_data_1,
     week == 0           ~ "During RW",
     week %in% c(3, 4)   ~ "Post-RW"
   ) %>% factor(levels = c("Pre-RW", "During RW", "Post-RW")))
-  
+
+# Endpoint subset (Post-RW only) — used for all models and emmeans plots
+cbc_endpoint <- cleaned_combined_cbc_data %>%
+  filter(phase == "Post-RW")
+
+# [132, 193] was removed because it has different naming. Check how to fix this issue soon.
+
 ```
 
-```{r writing a function to save the data sets cleaned}
-
-data_saver <- function(data_name,
-                       path = "") {
-  
-write_csv(x = data_name,
-          file = path)
-  }
+```{r save_mouse_cbc}
 
 data_saver(data_name = cleaned_combined_cbc_data,
            path = file.path(clean_data_path, "cleaned_combined_cbc_data.csv"))
 
-#[132, 193] was removed because it has different naming. Check how to fix this issue soon.
-
 ```
 
-# Cleaning CBC's NHANES human data
+# Cleaning NHANES Human Data
 
-```{r cleaning the human data from CDC NHANES}
+```{r clean_nhanes}
 
 cleaned_nhanes_data_2017_18 <- nhanes_data_2017_18 %>%
   clean_names() %>%
@@ -324,18 +338,17 @@ cleaned_nhanes_data_2017_18 <- nhanes_data_2017_18 %>%
          neu_percent = lbxnepct,
          bas_percent = lbxbapct,
          eos_percent = lbxeopct,
-         lym_number = lbdlymno,
-         neu_number = lbdneno,
-         mon_number = lbdmono,
-         bas_number = lbdbano,
-         eos_number = lbdeono) %>%
+         lym_number  = lbdlymno,
+         neu_number  = lbdneno,
+         mon_number  = lbdmono,
+         bas_number  = lbdbano,
+         eos_number  = lbdeono) %>%
   select(respondent_id,
          all_of(cbc_number),
          all_of(cbc_percent)) %>%
   drop_na() %>%
   mutate(respondent_id = as.character(respondent_id),
-         across(all_of(c(cbc_number, cbc_percent)),
-                ~as.numeric(.)))
+         across(all_of(c(cbc_number, cbc_percent)), ~ as.numeric(.)))
 
 cleaned_nhanes_data_2021_23 <- nhanes_data_2021_23 %>%
   clean_names() %>%
@@ -345,24 +358,17 @@ cleaned_nhanes_data_2021_23 <- nhanes_data_2021_23 %>%
          neu_percent = lbxnepct,
          bas_percent = lbxbapct,
          eos_percent = lbxeopct,
-         lym_number = lbdlymno,
-         neu_number = lbdneno,
-         mon_number = lbdmono,
-         bas_number = lbdbano,
-         eos_number = lbdeono) %>%
+         lym_number  = lbdlymno,
+         neu_number  = lbdneno,
+         mon_number  = lbdmono,
+         bas_number  = lbdbano,
+         eos_number  = lbdeono) %>%
   select(respondent_id,
          all_of(cbc_number),
          all_of(cbc_percent)) %>%
   drop_na() %>%
   mutate(respondent_id = as.character(respondent_id),
-         across(all_of(c(cbc_number, cbc_percent)),
-                ~as.numeric(.)))
-
-```
-
-Save the clean data set
-
-```{r saving the data set}
+         across(all_of(c(cbc_number, cbc_percent)), ~ as.numeric(.)))
 
 data_saver(data_name = cleaned_nhanes_data_2017_18,
            path = file.path(clean_data_path, "cleaned_nhanes_data_2017_18.csv"))
@@ -372,125 +378,361 @@ data_saver(data_name = cleaned_nhanes_data_2021_23,
 
 ```
 
-Make the data into long form for ggplot
+# Long-form Pivot (Mouse CBC)
 
-```{r make the columns into long format for all}
+```{r pivot_long}
 
 cleaned_combined_cbc_data_long <- cleaned_combined_cbc_data %>%
-  pivot_longer(cols = c(all_of(cbc_percent), 
+  pivot_longer(cols = c(all_of(cbc_percent),
                         all_of(cbc_number)),
-               names_to = c("cell_type", 
+               names_to = c("cell_type",
                             ".value"),
-               names_pattern = "(.*)_(number|percent)") %>% 
+               names_pattern = "(.*)_(number|percent)") %>%
   filter(!is.na(lab_or_rw))
-
-cleaned_nhanes_data_2017_18_long <- cleaned_nhanes_data_2017_18 %>% 
-  pivot_longer(cols = all_of(cbc_percent),
-               names_to = "cell_type",
-               values_to = "percent") %>%
-  mutate(cell_type = sub("_percent$", 
-                         "",
-                         cell_type))
-  
-cleaned_nhanes_data_2021_23_long <- cleaned_nhanes_data_2021_23 %>% 
-  pivot_longer(cols = all_of(cbc_percent),
-               names_to = "cell_type",
-               values_to = "percent") %>%
-  mutate(cell_type = sub("_percent$", 
-                         "", 
-                         cell_type))
-
-```
-
-# Save the long form
-
-```{r saving}
 
 data_saver(data_name = cleaned_combined_cbc_data_long,
            path = file.path(clean_data_path, "cleaned_combined_cbc_data_long.csv"))
 
-data_saver(data_name = cleaned_nhanes_data_2017_18_long,
-           path = file.path(clean_data_path, "cleaned_nhanes_data_2017_18_long.csv"))
-
-data_saver(data_name = cleaned_nhanes_data_2021_23_long,
-           path = file.path(clean_data_path, "cleaned_nhanes_data_2021_23_long.csv"))
 ```
 
-```{r running diagnostics in neutrophils}
+# Composition Plot (Human vs. Mouse)
+
+```{r composition_plot_data}
+
+human_17_18 <- cbc_summarizer(cleaned_nhanes_data_2017_18, "Human_2017_18") %>%
+  mutate(strain = "Human")
+
+human_21_23 <- cbc_summarizer(cleaned_nhanes_data_2021_23, "Human_2021_23") %>%
+  mutate(strain = "Human")
+
+mean_mouse <- cbc_endpoint %>%
+  group_by(strain, t_muris_dose, lab_or_rw) %>%
+  summarise(neu_percent = mean(neu_percent, na.rm = TRUE) / 100,
+            lym_percent = mean(lym_percent, na.rm = TRUE) / 100,
+            mon_percent = mean(mon_percent, na.rm = TRUE) / 100,
+            eos_percent = mean(eos_percent, na.rm = TRUE) / 100,
+            bas_percent = mean(bas_percent, na.rm = TRUE) / 100,
+            .groups = "drop") %>%
+  mutate(group = paste(strain, t_muris_dose, lab_or_rw)) %>%
+  pivot_longer(cols = neu_percent:bas_percent,
+               names_to = "cell_type",
+               values_to = "cbc_percent")
+
+bar_plot_input <- bind_rows(human_17_18,
+                            human_21_23,
+                            mean_mouse) %>%
+  mutate(group = factor(group,
+                        levels = c(
+                          "Human_2017_18",
+                          "Human_2021_23",
+                          "C57BL/6J Zero Lab",
+                          "B10.BR Zero Lab",
+                          "C57BL/6J Low Lab",
+                          "B10.BR Low Lab",
+                          "C57BL/6J High Lab",
+                          "B10.BR High Lab",
+                          "C57BL/6J Zero RW",
+                          "B10.BR Zero RW",
+                          "C57BL/6J Low RW",
+                          "B10.BR Low RW",
+                          "C57BL/6J High RW",
+                          "B10.BR High RW")),
+         cell_type = factor(cell_type,
+                            levels = c("neu_percent",
+                                       "lym_percent",
+                                       "mon_percent",
+                                       "eos_percent",
+                                       "bas_percent")))
+
+data_saver(data_name = bar_plot_input,
+           path = file.path(clean_data_path, "input_data_cbc_composition.csv"))
+
+```
+
+```{r composition_plot}
+
+comp_plot <- ggplot(bar_plot_input,
+                    aes(x = group,
+                        y = cbc_percent,
+                        fill = cell_type)) +
+  geom_col(position = "stack",
+           color = "black",
+           linewidth = 0.5,
+           alpha = 0.85) +
+  scale_fill_manual(values = c("neu_percent" = color_dark_blue,
+                               "lym_percent" = color_orange,
+                               "mon_percent" = color_green,
+                               "eos_percent" = color_mustard,
+                               "bas_percent" = color_purple),
+                    labels = c("neu_percent" = "Neutrophils",
+                               "lym_percent" = "Lymphocytes",
+                               "mon_percent" = "Monocytes",
+                               "eos_percent" = "Eosinophils",
+                               "bas_percent" = "Basophils"),
+                    name = "Immune Cell Type") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  scale_x_discrete(labels = c("Human_2017_18" = "Human 2017-18",
+                               "Human_2021_23" = "Human 2021-23")) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold"),
+        axis.text.x = element_text(angle = 45,
+                                   hjust = 1,
+                                   size = 8)) +
+  xlab("Population") +
+  ylab("CBC Composition")
+
+comp_plot
+
+plot_saver("cbc_composition_plot.png",
+           plot = comp_plot)
+
+```
+
+# Trajectory Plots (Longitudinal)
+
+```{r lym_trajectory}
+
+lym_plot_data <- cleaned_combined_cbc_data_long %>%
+  filter(cell_type == "lym")
+
+standard_error_lym <- lym_plot_data %>%
+  group_by(phase, t_muris_dose, strain, lab_or_rw) %>%
+  summarise(mean = mean(number),
+            sd = sd(number),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
+
+lym_plot <- cbc_plotter(lym_plot_data,
+                        standard_error_lym,
+                        expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
+                        "Lymphocyte Count Over Time")
+
+lym_plot
+
+plot_saver("lym_number.png", plot = lym_plot)
+
+```
+
+```{r neu_trajectory}
+
+neu_plot_data <- cleaned_combined_cbc_data_long %>%
+  filter(cell_type == "neu")
+
+standard_error_neu <- neu_plot_data %>%
+  group_by(phase, t_muris_dose, strain, lab_or_rw) %>%
+  summarise(mean = mean(number),
+            sd = sd(number),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
+
+neu_plot <- cbc_plotter(neu_plot_data,
+                        standard_error_neu,
+                        expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
+                        "Neutrophil Count Over Time")
+
+neu_plot
+
+plot_saver("neu_number.png", plot = neu_plot)
+
+```
+
+```{r mon_trajectory}
+
+mon_plot_data <- cleaned_combined_cbc_data_long %>%
+  filter(cell_type == "mon")
+
+standard_error_mon <- mon_plot_data %>%
+  group_by(phase, t_muris_dose, strain, lab_or_rw) %>%
+  summarise(mean = mean(number),
+            sd = sd(number),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
+
+mon_plot <- cbc_plotter(mon_plot_data,
+                        standard_error_mon,
+                        expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
+                        "Monocyte Count Over Time")
+
+mon_plot
+
+plot_saver("mon_number.png", plot = mon_plot)
+
+```
+
+```{r eos_trajectory}
+
+eos_plot_data <- cleaned_combined_cbc_data_long %>%
+  filter(cell_type == "eos")
+
+standard_error_eos <- eos_plot_data %>%
+  group_by(phase, t_muris_dose, strain, lab_or_rw) %>%
+  summarise(mean = mean(number),
+            sd = sd(number),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
+
+eos_plot <- cbc_plotter(eos_plot_data,
+                        standard_error_eos,
+                        expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
+                        "Eosinophil Count Over Time")
+
+eos_plot
+
+plot_saver("eos_number.png", plot = eos_plot)
+
+```
+
+```{r bas_trajectory}
+
+bas_plot_data <- cleaned_combined_cbc_data_long %>%
+  filter(cell_type == "bas")
+
+standard_error_bas <- bas_plot_data %>%
+  group_by(phase, t_muris_dose, strain, lab_or_rw) %>%
+  summarise(mean = mean(number),
+            sd = sd(number),
+            n = n(),
+            se = sd / sqrt(n),
+            .groups = "drop")
+
+bas_plot <- cbc_plotter(bas_plot_data,
+                        standard_error_bas,
+                        expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
+                        "Basophil Count Over Time")
+
+bas_plot
+
+plot_saver("bas_number.png", plot = bas_plot)
+
+```
+
+# Endpoint Models and EMM Plots
+
+## Neutrophil
+
+```{r neu_diagnostic}
 
 neu_lmer <- lmer(neu_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                   (1 | cage_wedge) +
+                   (1 | cohort),
+                 data = cbc_endpoint)
 
-# NOTE: This untransformed model is a diagnostic stepping stone only.
-# Run DHARMa to confirm whether log transform is needed (expect non-uniform residuals here).
-neu_sim_res <- simulateResiduals(fittedModel = neu_lmer, n = 1000)
-plot(neu_sim_res)
-testUniformity(neu_sim_res)
-testDispersion(neu_sim_res)
-testOutliers(neu_sim_res)
-plotResiduals(neu_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(neu_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(neu_sim_res, form = cleaned_combined_cbc_data$strain)
+print(summary(neu_lmer),
+      correlation = FALSE)
 
-ranef(neu_lmer)
-VarCorr(neu_lmer)
-
-#Need to do log transform according to the results of the diagnostics
+# Need to do log transform according to the results of the diagnostics
 
 ```
-# Log transforming the neutrophil data
 
-```{r log model of the neu}
+```{r neu_log_model}
 
 neu_lmer_log <- lmer(log(neu_number) ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                       (1 | cage_wedge) + (1 | cohort),
+                     data = cbc_endpoint)
 
 print(summary(neu_lmer_log),
       correlation = FALSE)
 
-# DHARMa diagnostics for the primary log-transformed neutrophil model
-neu_log_sim_res <- simulateResiduals(fittedModel = neu_lmer_log, n = 1000)
-plot(neu_log_sim_res)
-testUniformity(neu_log_sim_res)
-testDispersion(neu_log_sim_res)
-testOutliers(neu_log_sim_res)
-plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(neu_log_sim_res, form = cleaned_combined_cbc_data$strain)
+emm_neu <- emmeans(neu_lmer_log,
+                   specs = c("t_muris_dose", "lab_or_rw"),
+                   by = "strain",
+                   type = "response")
 
-ranef(neu_lmer_log)
-VarCorr(neu_lmer_log)
+emm_neu
+
+pairs(emm_neu)
+
+emm_neu_df <- as.data.frame(emm_neu) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
+
+emm_neu_plot <- ggplot(emm_neu_df) +
+  geom_point(aes(x = t_muris_dose,
+                 y = response,
+                 fill = t_muris_dose),
+             alpha = 1,
+             size = 3,
+             shape = 21,
+             color = "black") +
+  geom_errorbar(aes(x = t_muris_dose,
+                    ymin = lower.CL,
+                    ymax = upper.CL,
+                    color = t_muris_dose),
+                width = 0.15,
+                alpha = 0.8) +
+  geom_point(data = cbc_endpoint,
+             aes(x = t_muris_dose,
+                 y = neu_number,
+                 color = t_muris_dose),
+             position = position_jitter(width = 0.1, height = 0),
+             alpha = 0.3,
+             size = 1.5) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "Low"  = color_mustard,
+                               "High" = color_orange),
+                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "Low"  = color_mustard,
+                                "High" = color_orange),
+                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_y_continuous(name = expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  facet_grid(lab_or_rw ~ strain) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  ggtitle("Estimated Marginal Means of Neutrophil Count with 95% CI")
+
+emm_neu_plot
+
+plot_saver("emm_neu_number.png", emm_neu_plot)
 
 ```
-# Diagonostics to determine whether transformation is needed for lymphocyte
 
-```{r lymphocytes diagnostics}
+## Lymphocyte
+
+```{r lym_diagnostic}
+
 lym_lmer <- lmer(lym_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                   (1 | cage_wedge) + (1 | cohort),
+                 data = cbc_endpoint)
 
-# NOTE: This untransformed model is a diagnostic stepping stone only.
-lym_sim_res <- simulateResiduals(fittedModel = lym_lmer, n = 1000)
-plot(lym_sim_res)
-testUniformity(lym_sim_res)
-testDispersion(lym_sim_res)
-testOutliers(lym_sim_res)
-plotResiduals(lym_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(lym_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(lym_sim_res, form = cleaned_combined_cbc_data$strain)
+print(summary(lym_lmer),
+      correlation = FALSE)
 
-ranef(lym_lmer)
-VarCorr(lym_lmer)
 ```
 
-# Log transforming the lymphocyte data
-```{r log model of the lym}
+```{r lym_log_model}
 
 lym_lmer_log <- lmer(log(lym_number) ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                       (1 | cage_wedge) + (1 | cohort),
+                     data = cbc_endpoint)
 
 print(summary(lym_lmer_log),
       correlation = FALSE)
@@ -501,21 +743,86 @@ plot(lym_log_sim_res)
 testUniformity(lym_log_sim_res)
 testDispersion(lym_log_sim_res)
 testOutliers(lym_log_sim_res)
-plotResiduals(lym_log_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(lym_log_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(lym_log_sim_res, form = cleaned_combined_cbc_data$strain)
+plotResiduals(lym_log_sim_res, form = cbc_endpoint$lab_or_rw)
+plotResiduals(lym_log_sim_res, form = cbc_endpoint$t_muris_dose)
+plotResiduals(lym_log_sim_res, form = cbc_endpoint$strain)
 
 ranef(lym_lmer_log)
 VarCorr(lym_lmer_log)
 
+emm_lym <- emmeans(lym_lmer_log,
+                   specs = c("t_muris_dose", "lab_or_rw"),
+                   by = "strain",
+                   type = "response")
+
+emm_lym
+
+pairs(emm_lym)
+
+emm_lym_df <- as.data.frame(emm_lym) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
+
+emm_lym_plot <- ggplot(emm_lym_df) +
+  geom_point(aes(x = t_muris_dose,
+                 y = response,
+                 fill = t_muris_dose),
+             alpha = 1,
+             size = 3,
+             shape = 21,
+             color = "black") +
+  geom_errorbar(aes(x = t_muris_dose,
+                    ymin = lower.CL,
+                    ymax = upper.CL,
+                    color = t_muris_dose),
+                width = 0.15,
+                alpha = 0.8) +
+  geom_point(data = cbc_endpoint,
+             aes(x = t_muris_dose,
+                 y = lym_number,
+                 color = t_muris_dose),
+             position = position_jitter(width = 0.1, height = 0),
+             alpha = 0.3,
+             size = 1.5) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "Low"  = color_mustard,
+                               "High" = color_orange),
+                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "Low"  = color_mustard,
+                                "High" = color_orange),
+                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_y_continuous(name = expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  facet_grid(lab_or_rw ~ strain) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  ggtitle("Estimated Marginal Means of Lymphocyte Count with 95% CI")
+
+emm_lym_plot
+
+plot_saver("emm_lym_number.png", emm_lym_plot)
+
 ```
 
-# Diagonostics to determine whether transformation is needed for monocytes
+## Monocyte
 
-```{r monocytes diagnostics}
+```{r mon_diagnostic}
+
 mon_lmer <- lmer(mon_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                   (1 | cage_wedge) + (1 | cohort),
+                 data = cbc_endpoint)
 
 # NOTE: This untransformed model is a diagnostic stepping stone only.
 mon_sim_res <- simulateResiduals(fittedModel = mon_lmer, n = 1000)
@@ -523,23 +830,22 @@ plot(mon_sim_res)
 testUniformity(mon_sim_res)
 testDispersion(mon_sim_res)
 testOutliers(mon_sim_res)
-plotResiduals(mon_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(mon_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(mon_sim_res, form = cleaned_combined_cbc_data$strain)
+plotResiduals(mon_sim_res, form = cbc_endpoint$lab_or_rw)
+plotResiduals(mon_sim_res, form = cbc_endpoint$t_muris_dose)
+plotResiduals(mon_sim_res, form = cbc_endpoint$strain)
 
 ranef(mon_lmer)
 VarCorr(mon_lmer)
+
 ```
 
-# Log transforming the monocyte data
-
-```{r log model of the mon}
+```{r mon_log_model}
 
 mon_lmer_log <- lmer(log(mon_number) ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                       (1 | cage_wedge) + (1 | cohort),
+                     data = cbc_endpoint)
 
-print(summary(mon_lmer_log), 
+print(summary(mon_lmer_log),
       correlation = FALSE)
 
 # DHARMa diagnostics for the primary log-transformed monocyte model
@@ -548,22 +854,86 @@ plot(mon_log_sim_res)
 testUniformity(mon_log_sim_res)
 testDispersion(mon_log_sim_res)
 testOutliers(mon_log_sim_res)
-plotResiduals(mon_log_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(mon_log_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(mon_log_sim_res, form = cleaned_combined_cbc_data$strain)
+plotResiduals(mon_log_sim_res, form = cbc_endpoint$lab_or_rw)
+plotResiduals(mon_log_sim_res, form = cbc_endpoint$t_muris_dose)
+plotResiduals(mon_log_sim_res, form = cbc_endpoint$strain)
 
 ranef(mon_lmer_log)
 VarCorr(mon_lmer_log)
 
+emm_mon <- emmeans(mon_lmer_log,
+                   specs = c("t_muris_dose", "lab_or_rw"),
+                   by = "strain",
+                   type = "response")
+
+emm_mon
+
+pairs(emm_mon)
+
+emm_mon_df <- as.data.frame(emm_mon) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
+
+emm_mon_plot <- ggplot(emm_mon_df) +
+  geom_point(aes(x = t_muris_dose,
+                 y = response,
+                 fill = t_muris_dose),
+             alpha = 1,
+             size = 3,
+             shape = 21,
+             color = "black") +
+  geom_errorbar(aes(x = t_muris_dose,
+                    ymin = lower.CL,
+                    ymax = upper.CL,
+                    color = t_muris_dose),
+                width = 0.15,
+                alpha = 0.8) +
+  geom_point(data = cbc_endpoint,
+             aes(x = t_muris_dose,
+                 y = mon_number,
+                 color = t_muris_dose),
+             position = position_jitter(width = 0.1, height = 0),
+             alpha = 0.3,
+             size = 1.5) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "Low"  = color_mustard,
+                               "High" = color_orange),
+                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "Low"  = color_mustard,
+                                "High" = color_orange),
+                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_y_continuous(name = expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  facet_grid(lab_or_rw ~ strain) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  ggtitle("Estimated Marginal Means of Monocyte Count with 95% CI")
+
+emm_mon_plot
+
+plot_saver("emm_mon_number.png", emm_mon_plot)
+
 ```
 
-# Diagonostics to determine whether transformation is needed for eosinophils
+## Eosinophil
 
-```{r eosinophils diagnostics}
+```{r eos_diagnostic}
 
 eos_lmer <- lmer(eos_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                   (1 | cage_wedge) + (1 | cohort),
+                 data = cbc_endpoint)
 
 # NOTE: This untransformed model is a diagnostic stepping stone only.
 eos_sim_res <- simulateResiduals(fittedModel = eos_lmer, n = 1000)
@@ -571,21 +941,20 @@ plot(eos_sim_res)
 testUniformity(eos_sim_res)
 testDispersion(eos_sim_res)
 testOutliers(eos_sim_res)
-plotResiduals(eos_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(eos_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(eos_sim_res, form = cleaned_combined_cbc_data$strain)
+plotResiduals(eos_sim_res, form = cbc_endpoint$lab_or_rw)
+plotResiduals(eos_sim_res, form = cbc_endpoint$t_muris_dose)
+plotResiduals(eos_sim_res, form = cbc_endpoint$strain)
 
 ranef(eos_lmer)
 VarCorr(eos_lmer)
+
 ```
 
-# Log transforming the eosinophil data (log1p to handle zeros)
-
-```{r log model of the eos}
+```{r eos_log_model}
 
 eos_lmer_log <- lmer(log1p(eos_number) ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                       (1 | cage_wedge) + (1 | cohort),
+                     data = cbc_endpoint)
 
 # NOTE: log1p(eos_number) is used instead of log() because eos_number can be zero.
 # TODO use glmer here
@@ -599,21 +968,86 @@ plot(eos_log_sim_res)
 testUniformity(eos_log_sim_res)
 testDispersion(eos_log_sim_res)
 testOutliers(eos_log_sim_res)
-plotResiduals(eos_log_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(eos_log_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(eos_log_sim_res, form = cleaned_combined_cbc_data$strain)
+plotResiduals(eos_log_sim_res, form = cbc_endpoint$lab_or_rw)
+plotResiduals(eos_log_sim_res, form = cbc_endpoint$t_muris_dose)
+plotResiduals(eos_log_sim_res, form = cbc_endpoint$strain)
 
 ranef(eos_lmer_log)
 VarCorr(eos_lmer_log)
 
+emm_eos <- emmeans(eos_lmer_log,
+                   specs = c("t_muris_dose", "lab_or_rw"),
+                   by = "strain",
+                   type = "response")
+
+emm_eos
+
+pairs(emm_eos)
+
+emm_eos_df <- as.data.frame(emm_eos) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
+
+emm_eos_plot <- ggplot(emm_eos_df) +
+  geom_point(aes(x = t_muris_dose,
+                 y = response,
+                 fill = t_muris_dose),
+             alpha = 1,
+             size = 3,
+             shape = 21,
+             color = "black") +
+  geom_errorbar(aes(x = t_muris_dose,
+                    ymin = lower.CL,
+                    ymax = upper.CL,
+                    color = t_muris_dose),
+                width = 0.15,
+                alpha = 0.8) +
+  geom_point(data = cbc_endpoint,
+             aes(x = t_muris_dose,
+                 y = eos_number,
+                 color = t_muris_dose),
+             position = position_jitter(width = 0.1, height = 0),
+             alpha = 0.3,
+             size = 1.5) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "Low"  = color_mustard,
+                               "High" = color_orange),
+                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "Low"  = color_mustard,
+                                "High" = color_orange),
+                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_y_continuous(name = expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  facet_grid(lab_or_rw ~ strain) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  ggtitle("Estimated Marginal Means of Eosinophil Count with 95% CI")
+
+emm_eos_plot
+
+plot_saver("emm_eos_number.png", emm_eos_plot)
+
 ```
 
-# Diagonostics to determine whether transformation is needed for basophils
+## Basophil
 
-```{r basophils}
+```{r bas_diagnostic}
+
 bas_lmer <- lmer(bas_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                   (1 | cage_wedge) + (1 | cohort),
+                 data = cbc_endpoint)
 
 # NOTE: This untransformed model is a diagnostic stepping stone only.
 # bas_number can include zeros, which is why log1p is used in the primary model.
@@ -622,400 +1056,100 @@ plot(bas_sim_res)
 testUniformity(bas_sim_res)
 testDispersion(bas_sim_res)
 testOutliers(bas_sim_res)
-plotResiduals(bas_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(bas_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(bas_sim_res, form = cleaned_combined_cbc_data$strain)
+plotResiduals(bas_sim_res, form = cbc_endpoint$lab_or_rw)
+plotResiduals(bas_sim_res, form = cbc_endpoint$t_muris_dose)
+plotResiduals(bas_sim_res, form = cbc_endpoint$strain)
 
 ranef(bas_lmer)
 VarCorr(bas_lmer)
 
 ```
 
-# Log transforming the basophil data
-
-```{r log model of the bas}
+```{r bas_log_model}
 
 bas_lmer_log <- lmer(log1p(bas_number) ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort) + (1 | mouse_id),
-                 data = cleaned_combined_cbc_data)
+                       (1 | cage_wedge) + (1 | cohort),
+                     data = cbc_endpoint)
 
-print(summary(bas_lmer_log), 
+# NOTE: log1p(bas_number) is used instead of log() because bas_number can be zero.
+print(summary(bas_lmer_log),
       correlation = FALSE)
 
 # DHARMa diagnostics for the primary log1p-transformed basophil model
-# NOTE: log1p(bas_number) is used instead of log() because bas_number can be zero
 bas_log_sim_res <- simulateResiduals(fittedModel = bas_lmer_log, n = 1000)
 plot(bas_log_sim_res)
 testUniformity(bas_log_sim_res)
 testDispersion(bas_log_sim_res)
 testOutliers(bas_log_sim_res)
-plotResiduals(bas_log_sim_res, form = cleaned_combined_cbc_data$lab_or_rw)
-plotResiduals(bas_log_sim_res, form = cleaned_combined_cbc_data$t_muris_dose)
-plotResiduals(bas_log_sim_res, form = cleaned_combined_cbc_data$strain)
+plotResiduals(bas_log_sim_res, form = cbc_endpoint$lab_or_rw)
+plotResiduals(bas_log_sim_res, form = cbc_endpoint$t_muris_dose)
+plotResiduals(bas_log_sim_res, form = cbc_endpoint$strain)
 
 ranef(bas_lmer_log)
 VarCorr(bas_lmer_log)
 
-```
-# Saving the results as a csv file
+emm_bas <- emmeans(bas_lmer_log,
+                   specs = c("t_muris_dose", "lab_or_rw"),
+                   by = "strain",
+                   type = "response")
+
+emm_bas
+
+pairs(emm_bas)
+
+emm_bas_df <- as.data.frame(emm_bas) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
+
+emm_bas_plot <- ggplot(emm_bas_df) +
+  geom_point(aes(x = t_muris_dose,
+                 y = response,
+                 fill = t_muris_dose),
+             alpha = 1,
+             size = 3,
+             shape = 21,
+             color = "black") +
+  geom_errorbar(aes(x = t_muris_dose,
+                    ymin = lower.CL,
+                    ymax = upper.CL,
+                    color = t_muris_dose),
+                width = 0.15,
+                alpha = 0.8) +
+  geom_point(data = cbc_endpoint,
+             aes(x = t_muris_dose,
+                 y = bas_number,
+                 color = t_muris_dose),
+             position = position_jitter(width = 0.1, height = 0),
+             alpha = 0.3,
+             size = 1.5) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "Low"  = color_mustard,
+                               "High" = color_orange),
+                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "Low"  = color_mustard,
+                                "High" = color_orange),
+                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  scale_y_continuous(name = expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+  facet_grid(lab_or_rw ~ strain) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold")) +
+  ggtitle("Estimated Marginal Means of Basophil Count with 95% CI")
+
+emm_bas_plot
+
+plot_saver("emm_bas_number.png", emm_bas_plot)
 
-```{r}
-analysis_directory <- file.path(base_path, "Analysis Results")
-
-models <- list(neu = neu_lmer_log,
-               lym = lym_lmer_log,
-               mon = mon_lmer_log,
-               eos = eos_lmer_log,
-               bas = bas_lmer_log)
-
-all_coef <- lapply(names(models), 
-                   function(cell) 
-                     {all_dat <- tidy(models[[cell]], 
-                                      conf.int = TRUE, 
-                                      effects = "fixed") 
-                     all_dat$cell_type <- cell
-                     return(all_dat)}) %>%
-  bind_rows()
-
-write_csv(all_coef, 
-          file.path(analysis_directory, "cbc_lmer_coefficients.csv"))
-
-
-all_coef %>%
-  group_split(cell_type) %>%
-  lapply(function(individual_cell) { stopifnot(length(unique(individual_cell$cell_type)) == 1)
-    cell <- unique(individual_cell$cell_type)
-    write_csv(individual_cell, 
-              file.path(analysis_directory, 
-                        paste0("cbc_lmer_coefficients_", 
-                               cell, 
-                               ".csv")))})
-
-```
-
-
-# ggplot visualization of lym vs time for rw only
-
-```{r plot the lym over time relationship RW ONLY}
-#Filter for the correct data to plot
-lym_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW",
-         cell_type == "lym")
-#Calculate the standard error and the mean
-standard_error_lym_rw <- lym_rw_plot_data %>%
-  group_by(phase, 
-           t_muris_dose, 
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-```
-
-```{r}
-
-plot_saver <- function(filename,
-                            plot,
-                            path = cbc_figure_path,
-                            width = 6,
-                            height = 4,
-                            dpi = 300) {
-  ggsave(filename = filename,
-         plot = plot,
-         path = path,
-         width = width,
-         height = height,
-         units = "in",
-         dpi = dpi)
-}
-
-```
-
-
-```{r}
-lym_rw_plot <- cbc_plotter(lym_rw_plot_data,
-                           standard_error_lym_rw,
-                           expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
-                           "Lymphocyte Count Over Time in Rewilded Mice")
-
-lym_rw_plot
-
-plot_saver("lym_number_rw.png",
-                plot = lym_rw_plot)
-
-```
-
-# ggplot visualization of lym vs time for lab only
-
-```{r plot lym over time LAB ONLY}
-
-#Filter for the correct data to plot
-lym_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "lym")
-#Calculate the standard error and the mean
-standard_error_lym_lab <- lym_lab_plot_data %>%
-  group_by(phase, 
-           t_muris_dose, 
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-
-```
-
-
-```{r}
-lym_lab_plot <- cbc_plotter(lym_lab_plot_data,
-                            standard_error_lym_lab,
-                            expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
-                            "Lymphocyte Count Over Time in Lab Mice")
-
-lym_lab_plot
-
-plot_saver("lym_number_lab.png",
-                plot = lym_lab_plot)
-```
-
-# ggplot visualization of neu vs time for rw only
-
-```{r neu over time in RW ONLY}
-
-#Filter for the correct data to plot
-neu_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW", cell_type == "neu")
-#Calculate the standard error and the mean
-standard_error_neu_rw <- neu_rw_plot_data %>%
-  group_by(phase, 
-           t_muris_dose, 
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-```
-
-```{r}
-
-neu_rw_plot <- cbc_plotter(neu_rw_plot_data,
-                           standard_error_neu_rw,
-                           expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
-                           "Neutrophil Count Over Time in Rewilded Mice")
-
-neu_rw_plot
-
-plot_saver("neu_number_rw.png",
-                plot = neu_rw_plot)
-```
-
-
-# ggplot visualization of neu vs time for lab only
-
-```{r plot neu over time LAB ONLY}
-
-#Filter for the correct data to plot
-neu_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "neu")
-#Calculate the standard error and the mean
-standard_error_neu_lab <- neu_lab_plot_data %>%
-  group_by(phase,
-           t_muris_dose,
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-
-
-
-neu_lab_plot <- cbc_plotter(neu_lab_plot_data,
-                            standard_error_neu_lab,
-                            expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
-                            "Neutrophil Count Over Time in Lab Control Mice")
-
-neu_lab_plot
-
-plot_saver("neu_lab_plot.png",
-                plot = neu_lab_plot)
-
-```
-
-# ggplot visualization of mon vs time for rw only
-
-```{r plot mon over time RW ONLY}
-
-#Filter for the correct data to plot
-mon_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW", cell_type == "mon")
-#Calculate the standard error and the mean
-standard_error_mon_rw <- mon_rw_plot_data %>%
-  group_by(phase,
-           t_muris_dose,
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-
-
-
-mon_rw_plot <- cbc_plotter(mon_rw_plot_data,
-                           standard_error_mon_rw,
-                           expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
-                           "Monocyte Count Over Time in Rewilded Mice")
-
-mon_rw_plot
-
-plot_saver("mon_over_time_rw.png",
-                plot = mon_rw_plot)
-```
-
-# ggplot visualization of mon vs time for lab only
-
-```{r plot mon over time LAB ONLY}
-
-#Filter for the correct data to plot
-mon_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "mon")
-#Calculate the standard error and the mean
-standard_error_mon_lab <- mon_lab_plot_data %>%
-  group_by(phase,
-           t_muris_dose,
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-
-
-
-mon_lab_plot <- cbc_plotter(mon_lab_plot_data,
-                            standard_error_mon_lab,
-                            expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
-                            "Monocyte Count Over Time in Lab Control Mice")
-
-mon_lab_plot
-
-plot_saver("mon_over_time_lab.png",
-                plot = mon_lab_plot)
-```
-
-# ggplot visualization of eos vs time for rw only
-
-```{r plot eos over time RW ONLY}
-
-#Filter for the correct data to plot
-eos_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW", cell_type == "eos")
-#Calculate the standard error and the mean
-standard_error_eos_rw <- eos_rw_plot_data %>%
-  group_by(phase,
-           t_muris_dose,
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-
-
-
-eos_rw_plot <- cbc_plotter(eos_rw_plot_data,
-                           standard_error_eos_rw,
-                           expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
-                           "Eosinophil Count Over Time in Rewilded Mice")
-
-eos_rw_plot
-
-plot_saver("eos_over_time_rw.png",
-                plot = eos_rw_plot)
-```
-
-# ggplot visualization of eos vs time for lab only
-
-```{r plot eos over time LAB ONLY}
-
-#Filter for the correct data to plot
-eos_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "eos")
-#Calculate the standard error and the mean
-standard_error_eos_lab <- eos_lab_plot_data %>%
-  group_by(phase,
-           t_muris_dose,
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-
-
-
-eos_lab_plot <- cbc_plotter(eos_lab_plot_data,
-                            standard_error_eos_lab,
-                            expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
-                            "Eosinophil Count Over Time in Lab Control Mice")
-
-eos_lab_plot
-
-plot_saver("eos_lab_plot.png",
-                plot = eos_lab_plot)
-```
-
-# ggplot visualization of bas vs time for rw only
-
-```{r plot bas over time RW ONLY}
-
-#Filter for the correct data to plot
-bas_rw_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "RW", cell_type == "bas")
-#Calculate the standard error and the mean
-standard_error_bas_rw <- bas_rw_plot_data %>%
-  group_by(phase,
-           t_muris_dose,
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-
-
-
-bas_rw_plot <- cbc_plotter(bas_rw_plot_data,
-                           standard_error_bas_rw,
-                           expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
-                           "Basophil Count Over Time in Rewilded Mice")
-
-bas_rw_plot
-
-plot_saver("bas_rw_plot.png",
-                plot = bas_rw_plot)
-```
-
-# ggplot visualization of bas vs time for lab only
-
-```{r plot bas over time LAB ONLY}
-
-#Filter for the correct data to plot
-bas_lab_plot_data <- cleaned_combined_cbc_data_long %>%
-  filter(lab_or_rw == "Lab", cell_type == "bas")
-#Calculate the standard error and the mean
-standard_error_bas_lab <- bas_lab_plot_data %>%
-  group_by(phase,
-           t_muris_dose,
-           strain) %>%
-  summarise(mean = mean(number),
-            sd = sd(number),
-            n = n(),
-            se = sd / sqrt(n))
-
-
-
-bas_lab_plot <- cbc_plotter(bas_lab_plot_data,
-                            standard_error_bas_lab,
-                            expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
-                            "Basophil Count Over Time in Lab Control Mice")
-
-bas_lab_plot
-
-plot_saver("bas_lab_plot.png",
-                plot = bas_lab_plot)
 ```
