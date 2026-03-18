@@ -35,11 +35,20 @@ library(readr)
 
 ```{r setup_colors}
 
-color_mustard   <- "#E69F00"
-color_green     <- "#009E73"
-color_dark_blue <- "#0072B2"
-color_orange    <- "#D55E00"
-color_purple    <- "#CC79A7"
+color_black      <- "#000000"
+color_mustard    <- "#E69F00"
+color_light_blue <- "#56B4E9"
+color_green      <- "#009E73"
+color_yellow     <- "#F0E442"
+color_dark_blue  <- "#0072B2"
+color_orange     <- "#D55E00"
+color_purple     <- "#CC79A7"
+
+ibm_yellow <- "#ffb000"
+ibm_orange <- "#fe6100"
+ibm_reddish_purple <- "#dc267f"
+ibm_purple <- "#785ef0"
+ibm_blue <- "#648fff"
 
 ```
 
@@ -60,7 +69,6 @@ dir.create(cbc_figure_path,
 
 ```{r setup_vectors}
 
-# Cell type name vectors — used throughout for selecting/renaming columns
 cbc_number <- c("neu_number",
                 "lym_number",
                 "mon_number",
@@ -79,19 +87,17 @@ cbc_percent <- c("neu_percent",
 
 ```{r helper_functions}
 
-# Saves a data frame as a CSV
 data_saver <- function(data_name,
                        path = "") {
   write_csv(x = data_name,
             file = path)
 }
 
-# Saves a ggplot as a PNG
 plot_saver <- function(filename,
                        plot,
                        path = cbc_figure_path,
-                       width = 7,
-                       height = 5,
+                       width = 6,
+                       height = 4,
                        dpi = 300) {
   ggsave(filename = filename,
          plot = plot,
@@ -102,7 +108,6 @@ plot_saver <- function(filename,
          dpi = dpi)
 }
 
-# Summarizes CBC percentages for the composition bar plot
 cbc_summarizer <- function(data,
                            group_name) {
   data %>%
@@ -117,7 +122,82 @@ cbc_summarizer <- function(data,
                  values_to = "cbc_percent")
 }
 
-# Longitudinal trajectory plotter (all cell types, faceted by environment x strain)
+emm_plotter_long <- function(emm_df,
+                              raw_data,
+                              y_col,
+                              y_label,
+                              title = NULL,
+                              floor_zero = FALSE) {
+  if (floor_zero) {
+    emm_df <- emm_df %>% mutate(lower.CL = pmax(lower.CL, 0))
+  }
+
+  ggplot(emm_df, aes(x = phase,
+                     y = response,
+                     color = t_muris_dose,
+                     fill = t_muris_dose,
+                     group = t_muris_dose)) +
+    geom_point(size = 3,
+               shape = 21,
+               color = "black",
+               position = position_dodge(width = 0.5)) +
+    geom_errorbar(aes(ymin = lower.CL,
+                      ymax = upper.CL),
+                  width = 0.2,
+                  alpha = 0.7,
+                  position = position_dodge(width = 0.5)) +
+    geom_point(data = raw_data,
+               aes(x = phase,
+                   y = .data[[y_col]],
+                   fill = t_muris_dose,
+                   color = t_muris_dose),
+               position = position_jitterdodge(jitter.width = 0.1,
+                                               dodge.width = 0.5),
+               alpha = 0.3,
+               size = 1.2,
+               inherit.aes = FALSE) +
+    geom_vline(xintercept = 1.5,
+               linetype = "dashed",
+               color = "grey40",
+               alpha = 0.6) +
+    annotate("text",
+             x = 1.5,
+             y = Inf,
+             label = "Infection",
+             vjust = 1.5,
+             hjust = -0.1,
+             size = 3,
+             fontface = "italic",
+             alpha = 0.6) +
+    facet_grid(lab_or_rw ~ strain) +
+    scale_fill_manual(values = c("Zero" = color_dark_blue,
+                                 "Low"  = color_mustard,
+                                 "High" = color_orange),
+                      name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+    scale_color_manual(values = c("Zero" = color_dark_blue,
+                                  "Low"  = color_mustard,
+                                  "High" = color_orange),
+                       name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+    scale_y_continuous(name = y_label,
+                       expand = expansion(mult = c(0.05, 0.3))) +
+    theme_minimal() +
+    theme(strip.background = element_rect(fill = "white",
+                                          color = "black",
+                                          linewidth = 0.8),
+          strip.text = element_text(size = 10,
+                                    face = "bold"),
+          panel.border = element_rect(color = "black",
+                                      fill = NA,
+                                      linewidth = 0.8),
+          panel.grid = element_blank(),
+          plot.title = element_text(hjust = 0.5,
+                                    face = "bold"),
+          axis.title.x = element_text(face = "bold"),
+          axis.title.y = element_text(face = "bold")) +
+    xlab("Phase") +
+    ggtitle(title)
+}
+
 cbc_plotter <- function(cbc_data,
                         cbc_error,
                         y_label,
@@ -133,7 +213,7 @@ cbc_plotter <- function(cbc_data,
   geom_line(data = cbc_error,
             aes(y = mean, group = t_muris_dose),
             linewidth = 0.5,
-            alpha = 1,
+            alpha = 0.6,
             position = position_dodge(width = 0.5)) +
   geom_point(data = cbc_error,
              aes(y = mean),
@@ -311,7 +391,6 @@ cleaned_combined_cbc_data <- bind_rows(clean_cbc_data_1,
     week %in% c(3, 4)   ~ "Post-RW"
   ) %>% factor(levels = c("Pre-RW", "During RW", "Post-RW")))
 
-# Endpoint subset (Post-RW only) — used for all models and emmeans plots
 cbc_endpoint <- cleaned_combined_cbc_data %>%
   filter(phase == "Post-RW")
 
@@ -622,92 +701,62 @@ plot_saver("bas_number.png", plot = bas_plot)
 
 ```
 
-# Endpoint Models and EMM Plots
+# Longitudinal Models and EMM Plots (Per Strain)
 
 ## Neutrophil
 
-```{r neu_diagnostic}
+```{r neu_log_models}
 
-neu_lmer <- lmer(neu_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) +
-                   (1 | cohort),
-                 data = cbc_endpoint)
+neu_lmer_log_b6 <- lmer(log(neu_number) ~ lab_or_rw * phase * t_muris_dose +
+                          (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                        data = filter(cleaned_combined_cbc_data, strain == "C57BL/6J"))
 
-print(summary(neu_lmer),
-      correlation = FALSE)
+print(summary(neu_lmer_log_b6), correlation = FALSE)
 
-# Need to do log transform according to the results of the diagnostics
+neu_b6_sim_res <- simulateResiduals(fittedModel = neu_lmer_log_b6, n = 1000)
+plot(neu_b6_sim_res)
+
+emm_neu_b6 <- emmeans(neu_lmer_log_b6,
+                      specs = c("t_muris_dose", "phase"),
+                      by = "lab_or_rw",
+                      type = "response")
+emm_neu_b6
+pairs(emm_neu_b6)
+
+neu_lmer_log_b10 <- lmer(log(neu_number) ~ lab_or_rw * phase * t_muris_dose +
+                           (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                         data = filter(cleaned_combined_cbc_data, strain == "B10.BR"))
+
+print(summary(neu_lmer_log_b10), correlation = FALSE)
+
+neu_b10_sim_res <- simulateResiduals(fittedModel = neu_lmer_log_b10, n = 1000)
+plot(neu_b10_sim_res)
+
+emm_neu_b10 <- emmeans(neu_lmer_log_b10,
+                       specs = c("t_muris_dose", "phase"),
+                       by = "lab_or_rw",
+                       type = "response")
+emm_neu_b10
+pairs(emm_neu_b10)
 
 ```
 
-```{r neu_log_model}
+```{r neu_emm_plot}
 
-neu_lmer_log <- lmer(log(neu_number) ~ lab_or_rw * strain * t_muris_dose +
-                       (1 | cage_wedge) + (1 | cohort),
-                     data = cbc_endpoint)
+emm_neu_combined <- bind_rows(
+  as.data.frame(emm_neu_b6)  %>% mutate(strain = "C57BL/6J"),
+  as.data.frame(emm_neu_b10) %>% mutate(strain = "B10.BR")
+) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")))
 
-print(summary(neu_lmer_log),
-      correlation = FALSE)
-
-emm_neu <- emmeans(neu_lmer_log,
-                   specs = c("t_muris_dose", "lab_or_rw"),
-                   by = "strain",
-                   type = "response")
-
-emm_neu
-
-pairs(emm_neu)
-
-emm_neu_df <- as.data.frame(emm_neu) %>%
-  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
-
-emm_neu_plot <- ggplot(emm_neu_df) +
-  geom_point(aes(x = t_muris_dose,
-                 y = response,
-                 fill = t_muris_dose),
-             alpha = 1,
-             size = 3,
-             shape = 21,
-             color = "black") +
-  geom_errorbar(aes(x = t_muris_dose,
-                    ymin = lower.CL,
-                    ymax = upper.CL,
-                    color = t_muris_dose),
-                width = 0.15,
-                alpha = 0.8) +
-  geom_point(data = cbc_endpoint,
-             aes(x = t_muris_dose,
-                 y = neu_number,
-                 color = t_muris_dose),
-             position = position_jitter(width = 0.1, height = 0),
-             alpha = 0.3,
-             size = 1.5) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "Low"  = color_mustard,
-                               "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "Low"  = color_mustard,
-                                "High" = color_orange),
-                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_y_continuous(name = expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
-                     expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  facet_grid(lab_or_rw ~ strain) +
-  theme_minimal() +
-  theme(strip.background = element_rect(fill = "white",
-                                        color = "black",
-                                        linewidth = 0.8),
-        strip.text = element_text(size = 10,
-                                  face = "bold"),
-        panel.border = element_rect(color = "black",
-                                    fill = NA,
-                                    linewidth = 0.8),
-        panel.grid = element_blank(),
-        plot.title = element_text(hjust = 0.5, face = "bold"),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
-  ggtitle("Estimated Marginal Means of Neutrophil Count with 95% CI")
+emm_neu_plot <- emm_plotter_long(
+  emm_df   = emm_neu_combined,
+  raw_data = cleaned_combined_cbc_data,
+  y_col    = "neu_number",
+  y_label  = expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
+  title    = "Estimated Marginal Means of Neutrophil Count with 95% CI"
+)
 
 emm_neu_plot
 
@@ -717,98 +766,58 @@ plot_saver("emm_neu_number.png", emm_neu_plot)
 
 ## Lymphocyte
 
-```{r lym_diagnostic}
+```{r lym_log_models}
 
-lym_lmer <- lmer(lym_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort),
-                 data = cbc_endpoint)
+lym_lmer_log_b6 <- lmer(log(lym_number) ~ lab_or_rw * phase * t_muris_dose +
+                          (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                        data = filter(cleaned_combined_cbc_data, strain == "C57BL/6J"))
 
-print(summary(lym_lmer),
-      correlation = FALSE)
+print(summary(lym_lmer_log_b6), correlation = FALSE)
+
+lym_b6_sim_res <- simulateResiduals(fittedModel = lym_lmer_log_b6, n = 1000)
+plot(lym_b6_sim_res)
+
+emm_lym_b6 <- emmeans(lym_lmer_log_b6,
+                      specs = c("t_muris_dose", "phase"),
+                      by = "lab_or_rw",
+                      type = "response")
+emm_lym_b6
+pairs(emm_lym_b6)
+
+lym_lmer_log_b10 <- lmer(log(lym_number) ~ lab_or_rw * phase * t_muris_dose +
+                           (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                         data = filter(cleaned_combined_cbc_data, strain == "B10.BR"))
+
+print(summary(lym_lmer_log_b10), correlation = FALSE)
+
+lym_b10_sim_res <- simulateResiduals(fittedModel = lym_lmer_log_b10, n = 1000)
+plot(lym_b10_sim_res)
+
+emm_lym_b10 <- emmeans(lym_lmer_log_b10,
+                       specs = c("t_muris_dose", "phase"),
+                       by = "lab_or_rw",
+                       type = "response")
+emm_lym_b10
+pairs(emm_lym_b10)
 
 ```
 
-```{r lym_log_model}
+```{r lym_emm_plot}
 
-lym_lmer_log <- lmer(log(lym_number) ~ lab_or_rw * strain * t_muris_dose +
-                       (1 | cage_wedge) + (1 | cohort),
-                     data = cbc_endpoint)
+emm_lym_combined <- bind_rows(
+  as.data.frame(emm_lym_b6)  %>% mutate(strain = "C57BL/6J"),
+  as.data.frame(emm_lym_b10) %>% mutate(strain = "B10.BR")
+) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")))
 
-print(summary(lym_lmer_log),
-      correlation = FALSE)
-
-# DHARMa diagnostics for the primary log-transformed lymphocyte model
-lym_log_sim_res <- simulateResiduals(fittedModel = lym_lmer_log, n = 1000)
-plot(lym_log_sim_res)
-testUniformity(lym_log_sim_res)
-testDispersion(lym_log_sim_res)
-testOutliers(lym_log_sim_res)
-plotResiduals(lym_log_sim_res, form = cbc_endpoint$lab_or_rw)
-plotResiduals(lym_log_sim_res, form = cbc_endpoint$t_muris_dose)
-plotResiduals(lym_log_sim_res, form = cbc_endpoint$strain)
-
-ranef(lym_lmer_log)
-VarCorr(lym_lmer_log)
-
-emm_lym <- emmeans(lym_lmer_log,
-                   specs = c("t_muris_dose", "lab_or_rw"),
-                   by = "strain",
-                   type = "response")
-
-emm_lym
-
-pairs(emm_lym)
-
-emm_lym_df <- as.data.frame(emm_lym) %>%
-  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
-
-emm_lym_plot <- ggplot(emm_lym_df) +
-  geom_point(aes(x = t_muris_dose,
-                 y = response,
-                 fill = t_muris_dose),
-             alpha = 1,
-             size = 3,
-             shape = 21,
-             color = "black") +
-  geom_errorbar(aes(x = t_muris_dose,
-                    ymin = lower.CL,
-                    ymax = upper.CL,
-                    color = t_muris_dose),
-                width = 0.15,
-                alpha = 0.8) +
-  geom_point(data = cbc_endpoint,
-             aes(x = t_muris_dose,
-                 y = lym_number,
-                 color = t_muris_dose),
-             position = position_jitter(width = 0.1, height = 0),
-             alpha = 0.3,
-             size = 1.5) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "Low"  = color_mustard,
-                               "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "Low"  = color_mustard,
-                                "High" = color_orange),
-                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_y_continuous(name = expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
-                     expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  facet_grid(lab_or_rw ~ strain) +
-  theme_minimal() +
-  theme(strip.background = element_rect(fill = "white",
-                                        color = "black",
-                                        linewidth = 0.8),
-        strip.text = element_text(size = 10,
-                                  face = "bold"),
-        panel.border = element_rect(color = "black",
-                                    fill = NA,
-                                    linewidth = 0.8),
-        panel.grid = element_blank(),
-        plot.title = element_text(hjust = 0.5, face = "bold"),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
-  ggtitle("Estimated Marginal Means of Lymphocyte Count with 95% CI")
+emm_lym_plot <- emm_plotter_long(
+  emm_df   = emm_lym_combined,
+  raw_data = cleaned_combined_cbc_data,
+  y_col    = "lym_number",
+  y_label  = expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
+  title    = "Estimated Marginal Means of Lymphocyte Count with 95% CI"
+)
 
 emm_lym_plot
 
@@ -818,108 +827,58 @@ plot_saver("emm_lym_number.png", emm_lym_plot)
 
 ## Monocyte
 
-```{r mon_diagnostic}
+```{r mon_log_models}
 
-mon_lmer <- lmer(mon_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort),
-                 data = cbc_endpoint)
+mon_lmer_log_b6 <- lmer(log(mon_number) ~ lab_or_rw * phase * t_muris_dose +
+                          (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                        data = filter(cleaned_combined_cbc_data, strain == "C57BL/6J"))
 
-# NOTE: This untransformed model is a diagnostic stepping stone only.
-mon_sim_res <- simulateResiduals(fittedModel = mon_lmer, n = 1000)
-plot(mon_sim_res)
-testUniformity(mon_sim_res)
-testDispersion(mon_sim_res)
-testOutliers(mon_sim_res)
-plotResiduals(mon_sim_res, form = cbc_endpoint$lab_or_rw)
-plotResiduals(mon_sim_res, form = cbc_endpoint$t_muris_dose)
-plotResiduals(mon_sim_res, form = cbc_endpoint$strain)
+print(summary(mon_lmer_log_b6), correlation = FALSE)
 
-ranef(mon_lmer)
-VarCorr(mon_lmer)
+mon_b6_sim_res <- simulateResiduals(fittedModel = mon_lmer_log_b6, n = 1000)
+plot(mon_b6_sim_res)
+
+emm_mon_b6 <- emmeans(mon_lmer_log_b6,
+                      specs = c("t_muris_dose", "phase"),
+                      by = "lab_or_rw",
+                      type = "response")
+emm_mon_b6
+pairs(emm_mon_b6)
+
+mon_lmer_log_b10 <- lmer(log(mon_number) ~ lab_or_rw * phase * t_muris_dose +
+                           (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                         data = filter(cleaned_combined_cbc_data, strain == "B10.BR"))
+
+print(summary(mon_lmer_log_b10), correlation = FALSE)
+
+mon_b10_sim_res <- simulateResiduals(fittedModel = mon_lmer_log_b10, n = 1000)
+plot(mon_b10_sim_res)
+
+emm_mon_b10 <- emmeans(mon_lmer_log_b10,
+                       specs = c("t_muris_dose", "phase"),
+                       by = "lab_or_rw",
+                       type = "response")
+emm_mon_b10
+pairs(emm_mon_b10)
 
 ```
 
-```{r mon_log_model}
+```{r mon_emm_plot}
 
-mon_lmer_log <- lmer(log(mon_number) ~ lab_or_rw * strain * t_muris_dose +
-                       (1 | cage_wedge) + (1 | cohort),
-                     data = cbc_endpoint)
+emm_mon_combined <- bind_rows(
+  as.data.frame(emm_mon_b6)  %>% mutate(strain = "C57BL/6J"),
+  as.data.frame(emm_mon_b10) %>% mutate(strain = "B10.BR")
+) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")))
 
-print(summary(mon_lmer_log),
-      correlation = FALSE)
-
-# DHARMa diagnostics for the primary log-transformed monocyte model
-mon_log_sim_res <- simulateResiduals(fittedModel = mon_lmer_log, n = 1000)
-plot(mon_log_sim_res)
-testUniformity(mon_log_sim_res)
-testDispersion(mon_log_sim_res)
-testOutliers(mon_log_sim_res)
-plotResiduals(mon_log_sim_res, form = cbc_endpoint$lab_or_rw)
-plotResiduals(mon_log_sim_res, form = cbc_endpoint$t_muris_dose)
-plotResiduals(mon_log_sim_res, form = cbc_endpoint$strain)
-
-ranef(mon_lmer_log)
-VarCorr(mon_lmer_log)
-
-emm_mon <- emmeans(mon_lmer_log,
-                   specs = c("t_muris_dose", "lab_or_rw"),
-                   by = "strain",
-                   type = "response")
-
-emm_mon
-
-pairs(emm_mon)
-
-emm_mon_df <- as.data.frame(emm_mon) %>%
-  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
-
-emm_mon_plot <- ggplot(emm_mon_df) +
-  geom_point(aes(x = t_muris_dose,
-                 y = response,
-                 fill = t_muris_dose),
-             alpha = 1,
-             size = 3,
-             shape = 21,
-             color = "black") +
-  geom_errorbar(aes(x = t_muris_dose,
-                    ymin = lower.CL,
-                    ymax = upper.CL,
-                    color = t_muris_dose),
-                width = 0.15,
-                alpha = 0.8) +
-  geom_point(data = cbc_endpoint,
-             aes(x = t_muris_dose,
-                 y = mon_number,
-                 color = t_muris_dose),
-             position = position_jitter(width = 0.1, height = 0),
-             alpha = 0.3,
-             size = 1.5) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "Low"  = color_mustard,
-                               "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "Low"  = color_mustard,
-                                "High" = color_orange),
-                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_y_continuous(name = expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
-                     expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  facet_grid(lab_or_rw ~ strain) +
-  theme_minimal() +
-  theme(strip.background = element_rect(fill = "white",
-                                        color = "black",
-                                        linewidth = 0.8),
-        strip.text = element_text(size = 10,
-                                  face = "bold"),
-        panel.border = element_rect(color = "black",
-                                    fill = NA,
-                                    linewidth = 0.8),
-        panel.grid = element_blank(),
-        plot.title = element_text(hjust = 0.5, face = "bold"),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
-  ggtitle("Estimated Marginal Means of Monocyte Count with 95% CI")
+emm_mon_plot <- emm_plotter_long(
+  emm_df   = emm_mon_combined,
+  raw_data = cleaned_combined_cbc_data,
+  y_col    = "mon_number",
+  y_label  = expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
+  title    = "Estimated Marginal Means of Monocyte Count with 95% CI"
+)
 
 emm_mon_plot
 
@@ -929,111 +888,59 @@ plot_saver("emm_mon_number.png", emm_mon_plot)
 
 ## Eosinophil
 
-```{r eos_diagnostic}
+```{r eos_log_models}
 
-eos_lmer <- lmer(eos_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort),
-                 data = cbc_endpoint)
+eos_lmer_log_b6 <- lmer(log1p(eos_number) ~ lab_or_rw * phase * t_muris_dose +
+                          (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                        data = filter(cleaned_combined_cbc_data, strain == "C57BL/6J"))
 
-# NOTE: This untransformed model is a diagnostic stepping stone only.
-eos_sim_res <- simulateResiduals(fittedModel = eos_lmer, n = 1000)
-plot(eos_sim_res)
-testUniformity(eos_sim_res)
-testDispersion(eos_sim_res)
-testOutliers(eos_sim_res)
-plotResiduals(eos_sim_res, form = cbc_endpoint$lab_or_rw)
-plotResiduals(eos_sim_res, form = cbc_endpoint$t_muris_dose)
-plotResiduals(eos_sim_res, form = cbc_endpoint$strain)
+print(summary(eos_lmer_log_b6), correlation = FALSE)
 
-ranef(eos_lmer)
-VarCorr(eos_lmer)
+eos_b6_sim_res <- simulateResiduals(fittedModel = eos_lmer_log_b6, n = 1000)
+plot(eos_b6_sim_res)
+
+emm_eos_b6 <- emmeans(eos_lmer_log_b6,
+                      specs = c("t_muris_dose", "phase"),
+                      by = "lab_or_rw",
+                      type = "response")
+emm_eos_b6
+pairs(emm_eos_b6)
+
+eos_lmer_log_b10 <- lmer(log1p(eos_number) ~ lab_or_rw * phase * t_muris_dose +
+                           (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                         data = filter(cleaned_combined_cbc_data, strain == "B10.BR"))
+
+print(summary(eos_lmer_log_b10), correlation = FALSE)
+
+eos_b10_sim_res <- simulateResiduals(fittedModel = eos_lmer_log_b10, n = 1000)
+plot(eos_b10_sim_res)
+
+emm_eos_b10 <- emmeans(eos_lmer_log_b10,
+                       specs = c("t_muris_dose", "phase"),
+                       by = "lab_or_rw",
+                       type = "response")
+emm_eos_b10
+pairs(emm_eos_b10)
 
 ```
 
-```{r eos_log_model}
+```{r eos_emm_plot}
 
-eos_lmer_log <- lmer(log1p(eos_number) ~ lab_or_rw * strain * t_muris_dose +
-                       (1 | cage_wedge) + (1 | cohort),
-                     data = cbc_endpoint)
+emm_eos_combined <- bind_rows(
+  as.data.frame(emm_eos_b6)  %>% mutate(strain = "C57BL/6J"),
+  as.data.frame(emm_eos_b10) %>% mutate(strain = "B10.BR")
+) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")))
 
-# NOTE: log1p(eos_number) is used instead of log() because eos_number can be zero.
-# TODO use glmer here
-
-print(summary(eos_lmer_log),
-      correlation = FALSE)
-
-# DHARMa diagnostics for the primary log1p-transformed eosinophil model
-eos_log_sim_res <- simulateResiduals(fittedModel = eos_lmer_log, n = 1000)
-plot(eos_log_sim_res)
-testUniformity(eos_log_sim_res)
-testDispersion(eos_log_sim_res)
-testOutliers(eos_log_sim_res)
-plotResiduals(eos_log_sim_res, form = cbc_endpoint$lab_or_rw)
-plotResiduals(eos_log_sim_res, form = cbc_endpoint$t_muris_dose)
-plotResiduals(eos_log_sim_res, form = cbc_endpoint$strain)
-
-ranef(eos_lmer_log)
-VarCorr(eos_lmer_log)
-
-emm_eos <- emmeans(eos_lmer_log,
-                   specs = c("t_muris_dose", "lab_or_rw"),
-                   by = "strain",
-                   type = "response")
-
-emm_eos
-
-pairs(emm_eos)
-
-emm_eos_df <- as.data.frame(emm_eos) %>%
-  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
-
-emm_eos_plot <- ggplot(emm_eos_df) +
-  geom_point(aes(x = t_muris_dose,
-                 y = response,
-                 fill = t_muris_dose),
-             alpha = 1,
-             size = 3,
-             shape = 21,
-             color = "black") +
-  geom_errorbar(aes(x = t_muris_dose,
-                    ymin = lower.CL,
-                    ymax = upper.CL,
-                    color = t_muris_dose),
-                width = 0.15,
-                alpha = 0.8) +
-  geom_point(data = cbc_endpoint,
-             aes(x = t_muris_dose,
-                 y = eos_number,
-                 color = t_muris_dose),
-             position = position_jitter(width = 0.1, height = 0),
-             alpha = 0.3,
-             size = 1.5) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "Low"  = color_mustard,
-                               "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "Low"  = color_mustard,
-                                "High" = color_orange),
-                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_y_continuous(name = expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
-                     expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  facet_grid(lab_or_rw ~ strain) +
-  theme_minimal() +
-  theme(strip.background = element_rect(fill = "white",
-                                        color = "black",
-                                        linewidth = 0.8),
-        strip.text = element_text(size = 10,
-                                  face = "bold"),
-        panel.border = element_rect(color = "black",
-                                    fill = NA,
-                                    linewidth = 0.8),
-        panel.grid = element_blank(),
-        plot.title = element_text(hjust = 0.5, face = "bold"),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
-  ggtitle("Estimated Marginal Means of Eosinophil Count with 95% CI")
+emm_eos_plot <- emm_plotter_long(
+  emm_df     = emm_eos_combined,
+  raw_data   = cleaned_combined_cbc_data,
+  y_col      = "eos_number",
+  y_label    = expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
+  title      = "Estimated Marginal Means of Eosinophil Count with 95% CI",
+  floor_zero = TRUE
+)
 
 emm_eos_plot
 
@@ -1043,110 +950,59 @@ plot_saver("emm_eos_number.png", emm_eos_plot)
 
 ## Basophil
 
-```{r bas_diagnostic}
+```{r bas_log_models}
 
-bas_lmer <- lmer(bas_number ~ lab_or_rw * strain * t_muris_dose +
-                   (1 | cage_wedge) + (1 | cohort),
-                 data = cbc_endpoint)
+bas_lmer_log_b6 <- lmer(log1p(bas_number) ~ lab_or_rw * phase * t_muris_dose +
+                          (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                        data = filter(cleaned_combined_cbc_data, strain == "C57BL/6J"))
 
-# NOTE: This untransformed model is a diagnostic stepping stone only.
-# bas_number can include zeros, which is why log1p is used in the primary model.
-bas_sim_res <- simulateResiduals(fittedModel = bas_lmer, n = 1000)
-plot(bas_sim_res)
-testUniformity(bas_sim_res)
-testDispersion(bas_sim_res)
-testOutliers(bas_sim_res)
-plotResiduals(bas_sim_res, form = cbc_endpoint$lab_or_rw)
-plotResiduals(bas_sim_res, form = cbc_endpoint$t_muris_dose)
-plotResiduals(bas_sim_res, form = cbc_endpoint$strain)
+print(summary(bas_lmer_log_b6), correlation = FALSE)
 
-ranef(bas_lmer)
-VarCorr(bas_lmer)
+bas_b6_sim_res <- simulateResiduals(fittedModel = bas_lmer_log_b6, n = 1000)
+plot(bas_b6_sim_res)
+
+emm_bas_b6 <- emmeans(bas_lmer_log_b6,
+                      specs = c("t_muris_dose", "phase"),
+                      by = "lab_or_rw",
+                      type = "response")
+emm_bas_b6
+pairs(emm_bas_b6)
+
+bas_lmer_log_b10 <- lmer(log1p(bas_number) ~ lab_or_rw * phase * t_muris_dose +
+                           (1 | mouse_id) + (1 | cage_wedge) + (1 | cohort),
+                         data = filter(cleaned_combined_cbc_data, strain == "B10.BR"))
+
+print(summary(bas_lmer_log_b10), correlation = FALSE)
+
+bas_b10_sim_res <- simulateResiduals(fittedModel = bas_lmer_log_b10, n = 1000)
+plot(bas_b10_sim_res)
+
+emm_bas_b10 <- emmeans(bas_lmer_log_b10,
+                       specs = c("t_muris_dose", "phase"),
+                       by = "lab_or_rw",
+                       type = "response")
+emm_bas_b10
+pairs(emm_bas_b10)
 
 ```
 
-```{r bas_log_model}
+```{r bas_emm_plot}
 
-bas_lmer_log <- lmer(log1p(bas_number) ~ lab_or_rw * strain * t_muris_dose +
-                       (1 | cage_wedge) + (1 | cohort),
-                     data = cbc_endpoint)
+emm_bas_combined <- bind_rows(
+  as.data.frame(emm_bas_b6)  %>% mutate(strain = "C57BL/6J"),
+  as.data.frame(emm_bas_b10) %>% mutate(strain = "B10.BR")
+) %>%
+  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")))
 
-# NOTE: log1p(bas_number) is used instead of log() because bas_number can be zero.
-print(summary(bas_lmer_log),
-      correlation = FALSE)
-
-# DHARMa diagnostics for the primary log1p-transformed basophil model
-bas_log_sim_res <- simulateResiduals(fittedModel = bas_lmer_log, n = 1000)
-plot(bas_log_sim_res)
-testUniformity(bas_log_sim_res)
-testDispersion(bas_log_sim_res)
-testOutliers(bas_log_sim_res)
-plotResiduals(bas_log_sim_res, form = cbc_endpoint$lab_or_rw)
-plotResiduals(bas_log_sim_res, form = cbc_endpoint$t_muris_dose)
-plotResiduals(bas_log_sim_res, form = cbc_endpoint$strain)
-
-ranef(bas_lmer_log)
-VarCorr(bas_lmer_log)
-
-emm_bas <- emmeans(bas_lmer_log,
-                   specs = c("t_muris_dose", "lab_or_rw"),
-                   by = "strain",
-                   type = "response")
-
-emm_bas
-
-pairs(emm_bas)
-
-emm_bas_df <- as.data.frame(emm_bas) %>%
-  mutate(t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")))
-
-emm_bas_plot <- ggplot(emm_bas_df) +
-  geom_point(aes(x = t_muris_dose,
-                 y = response,
-                 fill = t_muris_dose),
-             alpha = 1,
-             size = 3,
-             shape = 21,
-             color = "black") +
-  geom_errorbar(aes(x = t_muris_dose,
-                    ymin = lower.CL,
-                    ymax = upper.CL,
-                    color = t_muris_dose),
-                width = 0.15,
-                alpha = 0.8) +
-  geom_point(data = cbc_endpoint,
-             aes(x = t_muris_dose,
-                 y = bas_number,
-                 color = t_muris_dose),
-             position = position_jitter(width = 0.1, height = 0),
-             alpha = 0.3,
-             size = 1.5) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "Low"  = color_mustard,
-                               "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "Low"  = color_mustard,
-                                "High" = color_orange),
-                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  scale_y_continuous(name = expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
-                     expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-  facet_grid(lab_or_rw ~ strain) +
-  theme_minimal() +
-  theme(strip.background = element_rect(fill = "white",
-                                        color = "black",
-                                        linewidth = 0.8),
-        strip.text = element_text(size = 10,
-                                  face = "bold"),
-        panel.border = element_rect(color = "black",
-                                    fill = NA,
-                                    linewidth = 0.8),
-        panel.grid = element_blank(),
-        plot.title = element_text(hjust = 0.5, face = "bold"),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
-  ggtitle("Estimated Marginal Means of Basophil Count with 95% CI")
+emm_bas_plot <- emm_plotter_long(
+  emm_df     = emm_bas_combined,
+  raw_data   = cleaned_combined_cbc_data,
+  y_col      = "bas_number",
+  y_label    = expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
+  title      = "Estimated Marginal Means of Basophil Count with 95% CI",
+  floor_zero = TRUE
+)
 
 emm_bas_plot
 
