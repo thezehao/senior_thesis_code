@@ -183,8 +183,8 @@ emm_plotter_long <- function(emm_df,
                                   "Low"  = color_yellow,
                                   "High" = color_orange),
                        name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
-    scale_y_continuous(name = y_label,
-                       expand = expansion(mult = c(0.05, 0.3))) +
+    scale_y_continuous(name = y_label) + 
+    # add expand = expansion(mult = c(0.05, 0.3)) if adding sig astrix.
     theme_minimal() +
     theme(strip.background = element_rect(fill = "white",
                                           color = "black",

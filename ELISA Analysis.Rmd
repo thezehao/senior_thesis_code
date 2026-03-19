@@ -128,15 +128,17 @@ elisa_summary_plotter <- function(input_data,
                                  "RW"  = color_green),
                     labels = c("Lab" = "Laboratory",
                                "RW"  = "Rewilded"),
-                    name = "Environment") +
+                    name = expression(bold("Environment"))) +
     scale_color_manual(values = c("Lab" = color_mustard,
                                   "RW"  = color_green),
                      labels = c("Lab" = "Laboratory",
                                 "RW"  = "Rewilded"),
-                    name = "Environment") +
+                    name = expression(bold("Environment"))) +
     scale_x_discrete(limits = c("Zero", "High"),
-                     labels = c("Zero" = "Uninfected",
-                                "High" = "Infected")) +
+                     labels = c("Zero" = "Zero",
+                                "High" = "High"),
+                     name = expression(bolditalic("T. muris") ~ 
+                                         bold("Infection Dosage"))) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
     theme_minimal() +
     theme(strip.background = element_rect(fill = "white",
@@ -151,7 +153,6 @@ elisa_summary_plotter <- function(input_data,
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-    xlab("Infection Status") +
     ylab(y_label) +
     ggtitle(title)
 }
@@ -185,15 +186,17 @@ elisa_treatment_plotter <- function(input_data,
                                  "RW"  = color_green),
                     labels = c("Lab" = "Laboratory",
                                "RW"  = "Rewilded"),
-                    name = "Environment") +
+                    name = expression(bold("Environment"))) +
     scale_color_manual(values = c("Lab" = color_mustard,
                                   "RW"  = color_green),
                      labels = c("Lab" = "Laboratory",
                                 "RW"  = "Rewilded"),
-                     name = "Environment") +
+                     name = expression(bold("Environment"))) +
     scale_x_discrete(limits = c("Zero", "High"),
-                     labels = c("Zero" = "Uninfected",
-                                "High" = "Infected")) +
+                     labels = c("Zero" = "Zero",
+                                "High" = "High"),
+                     name = expression(bolditalic("T. muris") ~ 
+                                         bold("Infection Dosage"))) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
     theme_minimal() +
     theme(strip.background = element_rect(fill = "white",
@@ -208,7 +211,6 @@ elisa_treatment_plotter <- function(input_data,
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-    xlab("Infection Status") +
     ylab(y_label) +
     ggtitle(title)
 }
@@ -791,20 +793,21 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
              color = "black") +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW"  = color_green),
-                    name = "Environment",
+                    name = expression(bold("Environment")),
                     labels = c("Lab" = "Laboratory",
                               "RW"  = "Rewilded")) +
   scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW"  = color_green),
-                     name = "Environment",
+                     name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                               "RW"  = "Rewilded")) +
   scale_y_continuous(name = expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = "Infection Status",
+  scale_x_discrete(name = expression(bolditalic("T. muris") ~ 
+                                              bold("Infection Dosage")),
                    limits = c("Zero", "High"),
-                   labels = c("Zero" = "Uninfected",
-                              "High" = "Infected")) +
+                   labels = c("Zero" = "Zero",
+                              "High" = "High")) +
   facet_wrap(~ treatment) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
@@ -859,18 +862,19 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
              color = "black") +
   scale_y_continuous(name = expression(bold("TNF-"*alpha~"(pg mL"^"-1"*")")),
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = "Infection Status",
+  scale_x_discrete(name = expression(bolditalic("T. muris") ~
+                                       bold("Infection Dosage")),
                    limits = c("Zero", "High"),
-                   labels = c("Zero" = "Uninfected",
-                              "High" = "Infected")) +
+                   labels = c("Zero" = "Zero",
+                              "High" = "High")) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW"  = color_green),
-                    name = "Environment",
+                    name = expression(bold("Environment")),
                     labels = c("Lab" = "Laboratory",
                               "RW"  = "Rewilded")) +
   scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW"  = color_green),
-                     name = "Environment",
+                     name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                               "RW"  = "Rewilded")) +
   facet_wrap(~ treatment) +
