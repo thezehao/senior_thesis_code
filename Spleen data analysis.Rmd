@@ -410,12 +410,12 @@ emm_smr_plot <- ggplot(emm_smr_df) +
   scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dosage"))) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
-                    name = "Environment",
+                    name = expression(bold("Environment")),
                     labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
   scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW" = color_green),
-                     name = "Environment",
+                     name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
   facet_wrap(~strain) +
