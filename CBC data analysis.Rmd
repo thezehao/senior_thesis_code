@@ -44,11 +44,13 @@ color_dark_blue  <- "#0072B2"
 color_orange     <- "#D55E00"
 color_purple     <- "#CC79A7"
 
-ibm_yellow <- "#ffb000"
-ibm_orange <- "#fe6100"
-ibm_reddish_purple <- "#dc267f"
-ibm_purple <- "#785ef0"
-ibm_blue <- "#648fff"
+color_grey <- "#BBBBBB"
+color_dark_purple <- "#AA3377"
+color_light_purple <- "#EE6677"
+color_sand <- "#CCBB44"
+color_cyan <- "#66CCEE"
+color_olive <- "#228833"
+color_navy <- "#4477AA"
 
 ```
 
@@ -96,7 +98,7 @@ data_saver <- function(data_name,
 plot_saver <- function(filename,
                        plot,
                        path = cbc_figure_path,
-                       width = 6,
+                       width = 8,
                        height = 4,
                        dpi = 300) {
   ggsave(filename = filename,
@@ -137,15 +139,6 @@ emm_plotter_long <- function(emm_df,
                      color = t_muris_dose,
                      fill = t_muris_dose,
                      group = t_muris_dose)) +
-    geom_point(size = 3,
-               shape = 21,
-               color = "black",
-               position = position_dodge(width = 0.5)) +
-    geom_errorbar(aes(ymin = lower.CL,
-                      ymax = upper.CL),
-                  width = 0.2,
-                  alpha = 0.7,
-                  position = position_dodge(width = 0.5)) +
     geom_point(data = raw_data,
                aes(x = phase,
                    y = .data[[y_col]],
@@ -156,12 +149,24 @@ emm_plotter_long <- function(emm_df,
                alpha = 0.3,
                size = 1.2,
                inherit.aes = FALSE) +
-    geom_vline(xintercept = 1.5,
+    geom_line(position = position_dodge(width = 0.5),
+              linewidth = 0.7,
+              alpha = 0.7) +
+    geom_errorbar(aes(ymin = lower.CL,
+                      ymax = upper.CL),
+                  width = 0.2,
+                  alpha = 0.7,
+                  position = position_dodge(width = 0.5)) +
+    geom_point(size = 3,
+               shape = 21,
+               color = "black",
+               position = position_dodge(width = 0.5)) +
+    geom_vline(xintercept = 2.5,
                linetype = "dashed",
                color = "grey40",
                alpha = 0.6) +
     annotate("text",
-             x = 1.5,
+             x = 2.5,
              y = Inf,
              label = "Infection",
              vjust = 1.5,
@@ -171,11 +176,11 @@ emm_plotter_long <- function(emm_df,
              alpha = 0.6) +
     facet_grid(lab_or_rw ~ strain) +
     scale_fill_manual(values = c("Zero" = color_dark_blue,
-                                 "Low"  = color_mustard,
+                                 "Low"  = color_yellow,
                                  "High" = color_orange),
                       name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
     scale_color_manual(values = c("Zero" = color_dark_blue,
-                                  "Low"  = color_mustard,
+                                  "Low"  = color_yellow,
                                   "High" = color_orange),
                        name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
     scale_y_continuous(name = y_label,
@@ -227,12 +232,12 @@ cbc_plotter <- function(cbc_data,
                 position = position_dodge(width = 0.5),
                 width = 0.15,
                 alpha = 0.6) +
-  geom_vline(xintercept = 1.6,
+  geom_vline(xintercept = 2.5,
              linetype = "dashed",
              color = "grey40",
              alpha = 0.6) +
   annotate("text",
-           x = 1.6,
+           x = 2.5,
            y = Inf,
            label = "Infection",
            vjust = 1.5,
@@ -242,11 +247,11 @@ cbc_plotter <- function(cbc_data,
            alpha = 0.6) +
   facet_grid(lab_or_rw ~ strain) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "Low"  = color_mustard,
+                               "Low"  = color_yellow,
                                "High" = color_orange),
                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
   scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "Low"  = color_mustard,
+                                "Low"  = color_yellow,
                                 "High" = color_orange),
                      name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
   theme_minimal() +
@@ -382,8 +387,16 @@ cleaned_combined_cbc_data <- bind_rows(clean_cbc_data_1,
          lab_or_rw = factor(lab_or_rw),
          t_muris_dose = factor(t_muris_dose),
          mouse_id = factor(mouse_id)) %>%
-  mutate(strain = relevel(factor(strain), ref = "C57BL/6J"),
-         t_muris_dose = relevel(factor(t_muris_dose), ref = "Zero")) %>%
+  mutate(strain = factor(strain, 
+                         levels = c("C57BL/6J",
+                                    "B10.BR")),
+         lab_or_rw = factor(lab_or_rw,
+                            levels = c("Lab",
+                                       "RW")),
+         t_muris_dose = factor(t_muris_dose,
+                               levels = c("Zero",
+                                          "Low",
+                                          "High"))) %>%
   filter(!is.na(lab_or_rw)) %>%
   mutate(phase = case_when(
     week %in% c(-4, -3) ~ "Pre-RW",
@@ -538,11 +551,11 @@ comp_plot <- ggplot(bar_plot_input,
            color = "black",
            linewidth = 0.5,
            alpha = 0.85) +
-  scale_fill_manual(values = c("neu_percent" = color_dark_blue,
-                               "lym_percent" = color_orange,
-                               "mon_percent" = color_green,
-                               "eos_percent" = color_mustard,
-                               "bas_percent" = color_purple),
+  scale_fill_manual(values = c("neu_percent" = color_light_purple,
+                               "lym_percent" = color_dark_purple,
+                               "mon_percent" = color_sand,
+                               "eos_percent" = color_cyan,
+                               "bas_percent" = color_grey),
                     labels = c("neu_percent" = "Neutrophils",
                                "lym_percent" = "Lymphocytes",
                                "mon_percent" = "Monocytes",
@@ -570,7 +583,8 @@ comp_plot <- ggplot(bar_plot_input,
                                    hjust = 1,
                                    size = 8)) +
   xlab("Population") +
-  ylab("CBC Composition")
+  ylab("CBC Composition") +
+  ggtitle("CBC Composition Between Mice and Humans")
 
 comp_plot
 

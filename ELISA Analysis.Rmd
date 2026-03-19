@@ -78,24 +78,26 @@ input_data %>%
 
 ```
 
-# Setting the colors (Okabe-Ito palette and IBM palette)
+# Setting the colors (Okabe-Ito palette and Paul Tol's Bright)
 
 ```{r}
 
-color_black      <- "#000000"
-color_mustard    <- "#E69F00"
+color_black <- "#000000"
+color_mustard <- "#E69F00"
 color_light_blue <- "#56B4E9"
-color_green      <- "#009E73"
-color_yellow     <- "#F0E442"
-color_dark_blue  <- "#0072B2"
-color_orange     <- "#D55E00"
-color_purple     <- "#CC79A7"
+color_green <- "#009E73"
+color_yellow <- "#F0E442"
+color_dark_blue <- "#0072B2"
+color_orange <- "#D55E00"
+color_purple <- "#CC79A7"
 
-ibm_yellow <- "#ffb000"
-ibm_orange <- "#fe6100"
-ibm_reddish_purple <- "#dc267f"
-ibm_purple <- "#785ef0"
-ibm_blue <- "#648fff"
+color_grey <- "#BBBBBB"
+color_dark_purple <- "#AA3377"
+color_light_purple <- "#EE6677"
+color_sand <- "#CCBB44"
+color_cyan <- "#66CCEE"
+color_olive <- "#228833"
+color_navy <- "#4477AA"
 
 ```
 
@@ -103,12 +105,12 @@ ibm_blue <- "#648fff"
 
 ```{r}
 
-elisa_summary_plotter <- function(input_data, 
-                                  y_label, 
+elisa_summary_plotter <- function(input_data,
+                                  y_label,
                                   title = NULL) {
-  ggplot(input_data, aes(x = lab_or_rw,
+  ggplot(input_data, aes(x = t_muris_dose,
                         y = mean_concentration,
-                        fill = t_muris_dose)) +
+                        fill = lab_or_rw)) +
     geom_boxplot(position = position_dodge(width = 0.75),
                alpha = 0.8,
                outlier.shape = NA,
@@ -122,34 +124,34 @@ elisa_summary_plotter <- function(input_data,
               shape = 21,
               color = "black") +
     facet_wrap(~ treatment) +
-    scale_fill_manual(values = c("Zero" = color_dark_blue, 
-                               "High" = color_orange),
-                    labels = c("Zero" = "Uninfected", 
-                               "High" = "Infected"),
-                    name = "Infection Status") +
-    scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "High" = color_orange),
-                     labels = c("Zero" = "Uninfected", 
-                                "High" = "Infected"),
-                    name = "Infection Status") +
-    scale_x_discrete(limits = c("Lab", "RW"),
+    scale_fill_manual(values = c("Lab" = color_mustard,
+                                 "RW"  = color_green),
+                    labels = c("Lab" = "Laboratory",
+                               "RW"  = "Rewilded"),
+                    name = "Environment") +
+    scale_color_manual(values = c("Lab" = color_mustard,
+                                  "RW"  = color_green),
                      labels = c("Lab" = "Laboratory",
-                                "RW" = "Rewilded")) +
+                                "RW"  = "Rewilded"),
+                    name = "Environment") +
+    scale_x_discrete(limits = c("Zero", "High"),
+                     labels = c("Zero" = "Uninfected",
+                                "High" = "Infected")) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
     theme_minimal() +
-    theme(strip.background = element_rect(fill = "white", 
-                                        color = "black", 
+    theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, 
+        strip.text = element_text(size = 10,
                                   face = "bold"),
-        panel.border = element_rect(color = "black", 
-                                    fill = NA, 
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-    xlab("Environment") +
+    xlab("Infection Status") +
     ylab(y_label) +
     ggtitle(title)
 }
@@ -160,13 +162,13 @@ elisa_summary_plotter <- function(input_data,
 
 ```{r}
 
-elisa_treatment_plotter <- function(input_data, 
-                                   y_label, 
+elisa_treatment_plotter <- function(input_data,
+                                   y_label,
                                    title = NULL) {
-  ggplot(input_data, 
-         aes(x = lab_or_rw,
+  ggplot(input_data,
+         aes(x = t_muris_dose,
              y = mean_concentration,
-             fill = t_muris_dose)) + 
+             fill = lab_or_rw)) +
     geom_boxplot(alpha = 0.8,
                  outlier.shape = NA,
                  width = 0.5,
@@ -179,34 +181,34 @@ elisa_treatment_plotter <- function(input_data,
                 color = "black",
                 position = position_jitterdodge(jitter.width = 0.1,
                                                 dodge.width = 0.6)) +
-    scale_fill_manual(values = c("Zero" = color_dark_blue, 
-                                 "High" = color_orange),
-                    labels = c("Zero" = "Uninfected", 
-                               "High" = "Infected"),
-                    name = "Infection Status") +
-    scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "High" = color_orange),
-                     labels = c("Zero" = "Uninfected", 
-                                "High" = "Infected"),
-                     name = "Infection Status") +
-    scale_x_discrete(limits = c("Lab", "RW"),
-                     labels = c("Lab" = "Laboratory", 
-                                "RW" = "Rewilded")) +
+    scale_fill_manual(values = c("Lab" = color_mustard,
+                                 "RW"  = color_green),
+                    labels = c("Lab" = "Laboratory",
+                               "RW"  = "Rewilded"),
+                    name = "Environment") +
+    scale_color_manual(values = c("Lab" = color_mustard,
+                                  "RW"  = color_green),
+                     labels = c("Lab" = "Laboratory",
+                                "RW"  = "Rewilded"),
+                     name = "Environment") +
+    scale_x_discrete(limits = c("Zero", "High"),
+                     labels = c("Zero" = "Uninfected",
+                                "High" = "Infected")) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
     theme_minimal() +
-    theme(strip.background = element_rect(fill = "white", 
-                                        color = "black", 
+    theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, 
+        strip.text = element_text(size = 10,
                                   face = "bold"),
-        panel.border = element_rect(color = "black", 
-                                    fill = NA, 
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-    xlab("Environment") +
+    xlab("Infection Status") +
     ylab(y_label) +
     ggtitle(title)
 }
@@ -594,120 +596,6 @@ plot_saver("tnf_igg_plot.png",
 
 ```
 
-# Combined treatment panel plot for IFN
-
-```{r}
-
-combined_ifn_plot <- ggplot(ifn_input,
-       aes(x = lab_or_rw,
-           y = mean_concentration,
-           fill = t_muris_dose)) +
-  geom_boxplot(alpha = 0.8,
-               outlier.shape = NA,
-               width = 0.5,
-               color = "black",
-               linewidth = 0.6,
-               position = position_dodge(width = 0.6)) +
-  geom_jitter(alpha = 0.8,
-              size = 1.8,
-              shape = 21,
-              color = "black",
-              position = position_jitterdodge(jitter.width = 0.1,
-                                              dodge.width = 0.6)) +
-  facet_wrap(~ treatment) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "High" = color_orange),
-                    labels = c("Zero" = "Uninfected",
-                               "High" = "Infected"),
-                    name = "Infection Status") +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "High" = color_orange),
-                     labels = c("Zero" = "Uninfected",
-                                "High" = "Infected"),
-                     name = "Infection Status") +
-  scale_x_discrete(labels = c("Lab" = "Laboratory",
-                               "RW" = "Rewilded")) +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
-  theme_minimal() +
-  theme(strip.background = element_rect(fill = "white",
-                                        color = "black",
-                                        linewidth = 0.8),
-        strip.text = element_text(size = 10, face = "bold"),
-        panel.border = element_rect(color = "black",
-                                    fill = NA,
-                                    linewidth = 0.8),
-        panel.grid = element_blank(),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold"),
-        plot.title = element_text(hjust = 0.5, face = "bold")) +
-  xlab("Environment") +
-  ylab(expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")))
-
-combined_ifn_plot
-
-plot_saver("combined_ifn_treatment_plot.png",
-           combined_ifn_plot,
-           width = 10, height = 4)
-
-```
-
-# Combined treatment panel plot for TNF
-
-```{r}
-
-combined_tnf_plot <- ggplot(tnf_input,
-       aes(x = lab_or_rw,
-           y = mean_concentration,
-           fill = t_muris_dose)) +
-  geom_boxplot(alpha = 0.8,
-               outlier.shape = NA,
-               width = 0.5,
-               color = "black",
-               linewidth = 0.6,
-               position = position_dodge(width = 0.6)) +
-  geom_jitter(alpha = 0.8,
-              size = 1.8,
-              shape = 21,
-              color = "black",
-              position = position_jitterdodge(jitter.width = 0.1,
-                                              dodge.width = 0.6)) +
-  facet_wrap(~ treatment) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "High" = color_orange),
-                    labels = c("Zero" = "Uninfected",
-                               "High" = "Infected"),
-                    name = "Infection Status") +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "High" = color_orange),
-                     labels = c("Zero" = "Uninfected",
-                                "High" = "Infected"),
-                     name = "Infection Status") +
-  scale_x_discrete(labels = c("Lab" = "Laboratory",
-                               "RW" = "Rewilded")) +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
-  theme_minimal() +
-  theme(strip.background = element_rect(fill = "white",
-                                        color = "black",
-                                        linewidth = 0.8),
-        strip.text = element_text(size = 10, face = "bold"),
-        panel.border = element_rect(color = "black",
-                                    fill = NA,
-                                    linewidth = 0.8),
-        panel.grid = element_blank(),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold"),
-        plot.title = element_text(hjust = 0.5, face = "bold")) +
-  xlab("Environment") +
-  ylab(expression(bold("TNF-" * alpha ~ "(pg mL"^"-1"*")")))
-
-combined_tnf_plot
-
-plot_saver("combined_tnf_treatment_plot.png",
-           combined_tnf_plot,
-           width = 10, height = 4)
-
-```
-
 # Setting reference levels for ifn
 
 # Mixed effect model (gamma) for ifn and diagnostics
@@ -878,44 +766,45 @@ emm_tnf_df <- as.data.frame(emm_tnf) %>%
 ```{r}
 
 emm_ifn_plot <- ggplot(emm_ifn_df) +
-  geom_point(aes(x = lab_or_rw,
+  geom_point(data = ifn_input,
+             aes(x = t_muris_dose,
+                 y = mean_concentration,
+                 color = lab_or_rw),
+                 position = position_jitterdodge(jitter.width = 0.1,
+                                                 dodge.width = 0.5),
+                 alpha = 0.3,
+                 size = 1.5) +
+  geom_errorbar(aes(x = t_muris_dose,
+                    ymin = asymp.LCL,
+                    ymax = asymp.UCL,
+                    color = lab_or_rw),
+                width = 0.3,
+             position = position_dodge(width = 0.5),
+             alpha = 0.8) +
+  geom_point(aes(x = t_muris_dose,
                  y = response,
-                 fill = t_muris_dose),
+                 fill = lab_or_rw),
              position = position_dodge(width = 0.5),
              alpha = 1,
              size = 3,
              shape = 21,
              color = "black") +
-  geom_errorbar(aes(x = lab_or_rw,
-                    ymin = asymp.LCL,
-                    ymax = asymp.UCL,
-                    color = t_muris_dose),
-                width = 0.3,
-             position = position_dodge(width = 0.5),
-             alpha = 0.8) +
-  geom_point(data = ifn_input,
-             aes(x = lab_or_rw,
-                 y = mean_concentration,
-                 color = t_muris_dose),
-                 position = position_jitterdodge(jitter.width = 0.1,
-                                                 dodge.width = 0.5),
-                 alpha = 0.3,
-                 size = 1.5) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "High" = color_orange),
-                    name = "Infection Status",
-                    labels = c("Zero" = "Uninfected",
-                              "High" = "Infected")) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "High" = color_orange),
-                     name = "Infection Status",
-                     labels = c("Zero" = "Uninfected",
-                              "High" = "Infected")) +
+  scale_fill_manual(values = c("Lab" = color_mustard,
+                               "RW"  = color_green),
+                    name = "Environment",
+                    labels = c("Lab" = "Laboratory",
+                              "RW"  = "Rewilded")) +
+  scale_color_manual(values = c("Lab" = color_mustard,
+                                "RW"  = color_green),
+                     name = "Environment",
+                     labels = c("Lab" = "Laboratory",
+                              "RW"  = "Rewilded")) +
   scale_y_continuous(name = expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = "Environment",
-                   labels = c("Lab" = "Laboratory",
-                              "RW" = "Rewilded")) +
+  scale_x_discrete(name = "Infection Status",
+                   limits = c("Zero", "High"),
+                   labels = c("Zero" = "Uninfected",
+                              "High" = "Infected")) +
   facet_wrap(~ treatment) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 
@@ -945,44 +834,45 @@ plot_saver("emm_ifn_plot.png",
 ```{r}
 
 emm_tnf_plot <- ggplot(emm_tnf_df) +
-  geom_point(aes(x = lab_or_rw,
+  geom_point(data = tnf_input,
+             aes(x = t_muris_dose,
+                 y = mean_concentration,
+                 color = lab_or_rw),
+                 position = position_jitterdodge(jitter.width = 0.1,
+                                                 dodge.width = 0.5),
+                 alpha = 0.3,
+                 size = 1.5) +
+  geom_errorbar(aes(x = t_muris_dose,
+                    ymin = asymp.LCL,
+                    ymax = asymp.UCL,
+                color = lab_or_rw),
+                width = 0.3,
+                alpha = 0.8,
+                position = position_dodge(width = 0.5)) +
+  geom_point(aes(x = t_muris_dose,
                  y = response,
-                 fill = t_muris_dose),
+                 fill = lab_or_rw),
              position = position_dodge(width = 0.5),
              alpha = 1,
              shape = 21,
              size = 3,
              color = "black") +
-  geom_errorbar(aes(x = lab_or_rw,
-                    ymin = asymp.LCL,
-                    ymax = asymp.UCL,
-                color = t_muris_dose),
-                width = 0.3,
-                alpha = 0.8,
-                position = position_dodge(width = 0.5)) +
-  geom_point(data = tnf_input,
-             aes(x = lab_or_rw,
-                 y = mean_concentration,
-                 color = t_muris_dose),
-                 position = position_jitterdodge(jitter.width = 0.1,
-                                                 dodge.width = 0.5),
-                 alpha = 0.3,
-                 size = 1.5) +
   scale_y_continuous(name = expression(bold("TNF-"*alpha~"(pg mL"^"-1"*")")),
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = "Environment",
-                   labels = c("Lab" = "Laboratory",
-                              "RW" = "Rewilded")) +
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "High" = color_orange),
-                    name = "Infection Status",
-                    labels = c("Zero" = "Uninfected",
+  scale_x_discrete(name = "Infection Status",
+                   limits = c("Zero", "High"),
+                   labels = c("Zero" = "Uninfected",
                               "High" = "Infected")) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "High" = color_orange),
-                     name = "Infection Status",
-                     labels = c("Zero" = "Uninfected",
-                              "High" = "Infected")) +
+  scale_fill_manual(values = c("Lab" = color_mustard,
+                               "RW"  = color_green),
+                    name = "Environment",
+                    labels = c("Lab" = "Laboratory",
+                              "RW"  = "Rewilded")) +
+  scale_color_manual(values = c("Lab" = color_mustard,
+                                "RW"  = color_green),
+                     name = "Environment",
+                     labels = c("Lab" = "Laboratory",
+                              "RW"  = "Rewilded")) +
   facet_wrap(~ treatment) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white", 

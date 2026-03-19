@@ -88,11 +88,14 @@ color_yellow     <- "#F0E442"
 color_dark_blue  <- "#0072B2"
 color_orange     <- "#D55E00"
 color_purple     <- "#CC79A7"
-ibm_yellow <- "#ffb000"
-ibm_orange <- "#fe6100"
-ibm_reddish_purple <- "#dc267f"
-ibm_purple <- "#785ef0"
-ibm_blue <- "#648fff"
+
+color_grey <- "#BBBBBB"
+color_dark_purple <- "#AA3377"
+color_light_purple <- "#EE6677"
+color_sand <- "#CCBB44"
+color_cyan <- "#66CCEE"
+color_olive <- "#228833"
+color_navy <- "#4477AA"
 
 ```
 
@@ -250,9 +253,16 @@ spleen_mass_compiled_data <- clean_meta_data %>%
          cage_wedge,
          source,
          cohort) %>%
-  mutate(strain = factor(strain)) %>%
-  mutate(strain = relevel(strain, 
-                          ref = "C57BL/6J"))
+  mutate(strain = factor(strain),
+         strain = relevel(strain, 
+                          ref = "C57BL/6J"),
+         t_muris_dose = factor(t_muris_dose,
+                               levels = c("Zero",
+                                          "Low",
+                                          "High")),
+         lab_or_rw = factor(lab_or_rw,
+                            levels = c("Lab",
+                                       "RW")))
 
 ```
 
@@ -311,33 +321,34 @@ spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data,
              shape = 21,
              color = "black") + 
   facet_wrap(~ strain) + 
-  scale_fill_manual(values = c("RW" = color_orange,
-                               "Lab" = color_dark_blue),
-                    name = "Environment",
+  scale_fill_manual(values = c("RW" = color_green,
+                               "Lab" = color_mustard),
+                    name = expression(bold("Environment")),
                     labels = c("Lab" = "Laboratory",
                                "RW" = "Rewilded")) +
-  scale_color_manual(values = c("RW" = color_orange,
-                                "Lab" = color_dark_blue),
-                     name = "Environment",
+  scale_color_manual(values = c("RW" = color_green,
+                                "Lab" = color_mustard),
+                     name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                                 "RW" = "Rewilded")) +
   scale_y_continuous(name = "Spleen to Body Mass Ratio (SMR)",
                      expand = expansion(mult = c(0.05, 0.3))) +
   theme_minimal() +
-  theme(strip.background = element_rect(fill = "white", 
-                                        color = "black", 
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, 
+        strip.text = element_text(size = 10,
                                   face = "bold"),
-        panel.border = element_rect(color = "black", 
-                                    fill = NA, 
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
   xlab(expression(bolditalic("T. muris")~bold("Dosage"))) +
-  ylab("Spleen to Body Mass Ratio (SMR)")
+  ylab("Spleen to Body Mass Ratio (SMR)") +
+  ggtitle("Estimated Marginal Means of SMR With 95% CI")
 
 spleen_mass_ratio_plot
 
@@ -397,13 +408,13 @@ emm_smr_plot <- ggplot(emm_smr_df) +
   scale_y_continuous(name = "Spleen to Body Mass Ratio (SMR)",
                      expand = expansion(mult = c(0.05, 0.3))) +
   scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dosage"))) +
-  scale_fill_manual(values = c("Lab" = color_dark_blue,
-                               "RW" = color_orange),
+  scale_fill_manual(values = c("Lab" = color_mustard,
+                               "RW" = color_green),
                     name = "Environment",
                     labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_dark_blue,
-                                "RW" = color_orange),
+  scale_color_manual(values = c("Lab" = color_mustard,
+                                "RW" = color_green),
                      name = "Environment",
                      labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
@@ -420,7 +431,10 @@ emm_smr_plot <- ggplot(emm_smr_df) +
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
-        plot.title = element_text(hjust = 0.5, face = "bold"))
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
+  xlab(expression(bolditalic("T. muris")~bold("Dosage"))) +
+  ylab("Spleen to Body Mass Ratio (SMR)") +
+  ggtitle("Estimated Marginal Means of SMR with 95% CI")
 
 emm_smr_plot
 
@@ -492,12 +506,12 @@ spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data,
   facet_wrap(~ t_muris_dose,
              labeller = as_labeller(c("Zero" = "Zero",
                                       "High" = "High"))) +
-  scale_color_manual(values = c("Lab" = color_light_blue,
+  scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW" = color_green),
                      name = "Environment",
                      labels = c("Lab" = "Laboratory",
                                 "RW" = "Rewilded")) +
-  scale_fill_manual(values = c("Lab" = color_light_blue,
+  scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = "Environment",
                     labels = c("Lab" = "Laboratory",
