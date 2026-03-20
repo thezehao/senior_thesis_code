@@ -123,7 +123,10 @@ elisa_summary_plotter <- function(input_data,
               size = 1.8,
               shape = 21,
               color = "black") +
-    facet_wrap(~ treatment) +
+    facet_wrap(~ treatment,
+               labeller = as_labeller(c("CD28" = "CD28",
+                                        "LPS" = "LPS",
+                                        "IgG" = "IgG1"))) +
     scale_fill_manual(values = c("Lab" = color_mustard,
                                  "RW"  = color_green),
                     labels = c("Lab" = "Laboratory",
@@ -137,7 +140,7 @@ elisa_summary_plotter <- function(input_data,
     scale_x_discrete(limits = c("Zero", "High"),
                      labels = c("Zero" = "Zero",
                                 "High" = "High"),
-                     name = expression(bolditalic("T. muris") ~ 
+                     name = expression(bolditalic("T. muris") ~
                                          bold("Infection Dosage"))) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
     theme_minimal() +
@@ -542,7 +545,7 @@ plot_saver("ifn_lps_treatment_plot.png",
 
 ```
 
-# Treatment specific plots for tnf: LP
+# Treatment specific plots for tnf: LPS
 
 ```{r}
 
@@ -561,7 +564,7 @@ plot_saver("tnf_lps_plot.png",
 
 ```
 
-# Treatment specifiic plots for ifn: IgG
+# Treatment specific plots for ifn: IgG
 
 ```{r}
 
@@ -570,7 +573,7 @@ ifn_input_igg <- ifn_input_igg %>%
 
 ifn_igg_plot <- elisa_treatment_plotter(ifn_input_igg,
                                        expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
-                                       title = expression(bold("IgG Stimulation")))
+                                       title = expression(bold("IgG1 Stimulation")))
 
 ifn_igg_plot
 
@@ -579,7 +582,7 @@ plot_saver("ifn_igg_treatment_plot.png",
 
 ```
 
-# Treatment specifiic plots for tnf: IgG
+# Treatment specific plots for tnf: IgG
 
 ```{r}
 
@@ -589,7 +592,7 @@ tnf_input_igg <- tnf_input_igg %>%
 
 tnf_igg_plot <- elisa_treatment_plotter(tnf_input_igg,
                                        expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
-                                       title = expression(bold("IgG Stimulation")))
+                                       title = expression(bold("IgG1 Stimulation")))
 
 tnf_igg_plot
 
@@ -756,11 +759,11 @@ pairs(emm_tnf)
 ```{r}
 
 emm_ifn_df <- as.data.frame(emm_ifn) %>%
-  mutate(treatment = factor(treatment, 
+  mutate(treatment = factor(treatment,
                             levels = c("CD28", "LPS", "IgG")))
 
 emm_tnf_df <- as.data.frame(emm_tnf) %>%
-  mutate(treatment = factor(treatment, 
+  mutate(treatment = factor(treatment,
                             levels = c("CD28", "LPS", "IgG")))
 
 ```
@@ -808,15 +811,18 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
                    limits = c("Zero", "High"),
                    labels = c("Zero" = "Zero",
                               "High" = "High")) +
-  facet_wrap(~ treatment) +
+  facet_wrap(~ treatment,
+             labeller = as_labeller(c("CD28" = "CD28",
+                                      "LPS" = "LPS",
+                                      "IgG" = "IgG1"))) +
   theme_minimal() +
-  theme(strip.background = element_rect(fill = "white", 
-                                        color = "black", 
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, 
+        strip.text = element_text(size = 10,
                                   face = "bold"),
-        panel.border = element_rect(color = "black", 
-                                    fill = NA, 
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
         plot.title = element_text(hjust = 0.5, face = "bold"),
@@ -877,15 +883,18 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                               "RW"  = "Rewilded")) +
-  facet_wrap(~ treatment) +
+  facet_wrap(~ treatment,
+             labeller = as_labeller(c("CD28" = "CD28",
+                                      "LPS" = "LPS",
+                                      "IgG" = "IgG1"))) +
   theme_minimal() +
-  theme(strip.background = element_rect(fill = "white", 
-                                        color = "black", 
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, 
+        strip.text = element_text(size = 10,
                                   face = "bold"),
-        panel.border = element_rect(color = "black", 
-                                    fill = NA, 
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
         plot.title = element_text(hjust = 0.5, face = "bold"),

@@ -28,7 +28,7 @@ library(scales)
 
 # Setting the paths
 
-```{r setup_paths}
+```{r}
 
 base_path <- "/Users/zehao/Documents/Research Projects/Graham Group Thesis Research (Summer 2025)"
 
@@ -42,7 +42,7 @@ dir.create(spleen_figure_path, showWarnings = FALSE, recursive = TRUE)
 
 # Plot saver
 
-```{r plot_saver_function}
+```{r}
 
 plot_saver <- function(filename,
                        plot,
@@ -63,7 +63,7 @@ plot_saver <- function(filename,
 
 # Loading the data
 
-```{r load the data}
+```{r}
 
 spleen_data <- read_excel(file.path(data_path, "SF Project Spleen Data (2025).xlsx"),
                           sheet = "spleen cell count data")
@@ -101,7 +101,7 @@ color_navy <- "#4477AA"
 
 # Cleaning the spleen data
 
-```{r spleen data cleaning}
+```{r}
 
 clean_spleen_data <- spleen_data %>% 
   filter(experiment == "NSF", 
@@ -114,8 +114,8 @@ clean_spleen_data <- spleen_data %>%
   clean_names() %>% 
   mutate(mouse_id = str_trim(as.character(mouse_id)),
          strain = as.character(strain),
-         t_muris_dose = recode(t_muris_dose, "0" = "Zero"),
-         t_muris_dose = factor(t_muris_dose, 
+         t_muris_dose = case_match(t_muris_dose, "0" ~ "Zero", .default = t_muris_dose),
+         t_muris_dose = factor(t_muris_dose,
                                   levels = c("Zero", "Low", "High")),
          lab_or_rw = factor(lab_or_rw),
          spleen_mass_g = as.numeric(spleen_mass_g))
@@ -128,7 +128,7 @@ str(clean_spleen_data)
 
 # Cleaning the mass data
 
-```{r body mass data cleaning}
+```{r}
 clean_body_mass_data <- body_mass_data %>% 
   filter(week == 3 | week == 4, 
          !is.na(mass)) %>% 
@@ -151,7 +151,7 @@ str(clean_body_mass_data)
 
 # Cleaning splenocyte data
 
-```{r splenocyte data cleaning}
+```{r}
 
 clean_spleen_lym_count <- spleen_lym_count %>%
   clean_names() %>%
@@ -168,7 +168,7 @@ clean_spleen_lym_count <- spleen_lym_count %>%
 
 # Cleaning meta data
 
-```{r meta data cleaning}
+```{r}
 
 clean_meta_data <- meta_data %>% 
   clean_names() %>%
@@ -183,10 +183,10 @@ clean_meta_data <- meta_data %>%
          source) %>%
    mutate(mouse_id = str_trim(as.character(mouse_id)),
          strain = as.character(strain),
-         t_muris_dose = recode(t_muris_dose, "0" = "Zero"),
-         t_muris_dose = factor(t_muris_dose, 
+         t_muris_dose = case_match(t_muris_dose, "0" ~ "Zero", .default = t_muris_dose),
+         t_muris_dose = factor(t_muris_dose,
                                levels = c("Zero", "Low", "High")),
-         lab_or_rw = factor(lab_or_rw), 
+         lab_or_rw = factor(lab_or_rw),
          experiment = as.character(experiment))
 
 str(clean_meta_data)
@@ -209,7 +209,7 @@ We want to include in a file called "compiled data." But, before that I want to 
 
 # Checking for mistakes
 
-```{r checking for mistakes}
+```{r}
 
 compiled_data_strain_check <- clean_meta_data %>% 
   full_join(clean_spleen_data, by = "mouse_id") %>%
@@ -238,7 +238,7 @@ compiled_data_t_muris_dose_check
 
 # Creating compiled data
 
-```{r create the compiled data set}
+```{r}
 
 spleen_mass_compiled_data <- clean_meta_data %>% 
   left_join(clean_spleen_data, by = "mouse_id") %>%
@@ -271,7 +271,7 @@ Still thinking whether this is the correct way to do this. See the last plot.
 
 # Calculating spleen-mass ratio (SMR) (Exploratory ONLY)
 
-```{r calculate the spleen-mass ratio (SMR)}
+```{r}
 spleen_mass_compiled_data <- spleen_mass_compiled_data %>% 
   mutate(spleen_mass_ratio = spleen_mass_g/mass, 
          log_smr = log(spleen_mass_ratio), 
@@ -298,7 +298,7 @@ compiled_data_b10 <- spleen_mass_compiled_data %>%
 
 # Plotting SMR data
 
-```{r plotting the data}
+```{r}
 
 
 spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data, 
@@ -347,8 +347,7 @@ spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data,
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
   xlab(expression(bolditalic("T. muris")~bold("Dosage"))) +
-  ylab("Spleen to Body Mass Ratio (SMR)") +
-  ggtitle("Estimated Marginal Means of SMR With 95% CI")
+  ggtitle("Spleen to Body Mass Ratio (SMR)")
 
 spleen_mass_ratio_plot
 
@@ -359,7 +358,7 @@ plot_saver("smr_general.png",
 
 # lmer modeling for SMR (Exploratory ONLY)
 
-```{r testing the significance for SMR}
+```{r}
 smr_lmer <- lmer(spleen_mass_ratio ~ 
                    strain * 
                    lab_or_rw * 
@@ -432,8 +431,6 @@ emm_smr_plot <- ggplot(emm_smr_df) +
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  xlab(expression(bolditalic("T. muris")~bold("Dosage"))) +
-  ylab("Spleen to Body Mass Ratio (SMR)") +
   ggtitle("Estimated Marginal Means of SMR with 95% CI")
 
 emm_smr_plot
@@ -462,7 +459,7 @@ Now let's do the lym and the spleen mass calculations
 # Modeling splenocyte count and spleen size
 
 
-```{r modeling the mass and lym relationship}
+```{r}
 
 lym_lmer <- lmer(log(spleen_mass_ratio) ~ 
                    log(total_lym_number) +
@@ -487,7 +484,7 @@ plot(lym_lmer)
 
 # Plotting the splenocyte count and spleen mass
 
-```{r spleen mass and lym relationship}
+```{r}
 
 spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data, 
                                      aes(x = spleen_mass_g,
