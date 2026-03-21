@@ -739,12 +739,12 @@ plot_saver("bas_number.png", plot = bas_plot)
 # Phase-split models and EMM plots for each CBC readout
 
 ## I'm thinking that since the pre-rw phase is where everyone is still just lab,
-## we can just use strain as the model.
-## Similarly, I think that since the during-rw phase we have lab_or_rw differences,
-## we can do lab_or_rw and strain interactions.
-## Next, since we infect on the during phase, and we don't see the effects of
-## infection until at the post-rw phase. We add the t_muris_dose only at the
-## post-rw phase model.
+## there is no environment effect yet — so lab_or_rw is excluded.
+## We still include t_muris_dose * strain so that the emmeans reflect the
+## baseline differences between groups that will later receive different doses.
+## Similarly, during-rw we add lab_or_rw since mice are now in different
+## environments, giving us the full lab_or_rw * t_muris_dose * strain.
+## Post-rw is the same full three-way interaction.
 
 ## We will also remove the mouse random effect since we're not sampling the same
 ## mouse over and over.
@@ -753,17 +753,18 @@ plot_saver("bas_number.png", plot = bas_plot)
 
 ```{r}
 
-# Pre-RW: strain only
-neu_pre <- lmer(log(neu_number) ~ strain +
+# Pre-RW: dose x strain (no environment — all mice are lab-housed)
+neu_pre <- lmer(log(neu_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
-                data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
+                data = filter(cleaned_combined_cbc_data,
+                              phase == "Pre-RW"))
 
 print(summary(neu_pre), correlation = FALSE)
 neu_pre_sim <- simulateResiduals(fittedModel = neu_pre, n = 1000)
 plot(neu_pre_sim)
 
-# During RW: environment x strain
-neu_during <- lmer(log(neu_number) ~ lab_or_rw * strain +
+# During RW: environment x dose x strain
+neu_during <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
@@ -784,19 +785,18 @@ plot(neu_post_sim)
 
 ```{r}
 
-# Pre-RW emmeans: extract ~ strain, duplicate across dose and environment
-emm_neu_pre <- as.data.frame(emmeans(neu_pre, ~ strain, type = "response")) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High")),
-           lab_or_rw    = factor(c("Lab", "RW"),
-                                 levels = c("Lab", "RW"))) %>%
-  mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+# Pre-RW emmeans: extract ~ t_muris_dose * strain, duplicate across environment
+emm_neu_pre <- as.data.frame(emmeans(neu_pre, ~ t_muris_dose * strain,
+                                     type = "response")) %>%
+  crossing(lab_or_rw = factor(c("Lab", "RW"),
+                              levels = c("Lab", "RW"))) %>%
+  mutate(phase = factor("Pre-RW",
+                        levels = c("Pre-RW", "During RW", "Post-RW")))
 
-# During RW emmeans: extract ~ lab_or_rw * strain, duplicate across dose
-emm_neu_during <- as.data.frame(emmeans(neu_during, ~ lab_or_rw * strain,
+# During RW emmeans: full extraction
+emm_neu_during <- as.data.frame(emmeans(neu_during,
+                                        ~ lab_or_rw * t_muris_dose * strain,
                                         type = "response")) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High"))) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 # Post-RW emmeans: full extraction
@@ -806,10 +806,10 @@ emm_neu_post <- as.data.frame(emmeans(neu_post, ~ lab_or_rw * t_muris_dose * str
 
 # Combine
 emm_neu_combined <- bind_rows(emm_neu_pre, emm_neu_during, emm_neu_post) %>%
-  mutate(phase        = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
+  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
          t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain       = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw    = factor(lab_or_rw, levels = c("Lab", "RW")))
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
+         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
 
 ```
 
@@ -833,8 +833,8 @@ plot_saver("emm_neu_number.png", emm_neu_plot)
 
 ```{r}
 
-# Pre-RW: strain only
-lym_pre <- lmer(log(lym_number) ~ strain +
+# Pre-RW: dose x strain (no environment — all mice are lab-housed)
+lym_pre <- lmer(log(lym_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
 
@@ -842,8 +842,8 @@ print(summary(lym_pre), correlation = FALSE)
 lym_pre_sim <- simulateResiduals(fittedModel = lym_pre, n = 1000)
 plot(lym_pre_sim)
 
-# During RW: environment x strain
-lym_during <- lmer(log(lym_number) ~ lab_or_rw * strain +
+# During RW: environment x dose x strain
+lym_during <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
@@ -864,17 +864,15 @@ plot(lym_post_sim)
 
 ```{r}
 
-emm_lym_pre <- as.data.frame(emmeans(lym_pre, ~ strain, type = "response")) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High")),
-           lab_or_rw    = factor(c("Lab", "RW"),
-                                 levels = c("Lab", "RW"))) %>%
+emm_lym_pre <- as.data.frame(emmeans(lym_pre, ~ t_muris_dose * strain,
+                                     type = "response")) %>%
+  crossing(lab_or_rw = factor(c("Lab", "RW"),
+                              levels = c("Lab", "RW"))) %>%
   mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
-emm_lym_during <- as.data.frame(emmeans(lym_during, ~ lab_or_rw * strain,
+emm_lym_during <- as.data.frame(emmeans(lym_during,
+                                        ~ lab_or_rw * t_muris_dose * strain,
                                         type = "response")) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High"))) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_lym_post <- as.data.frame(emmeans(lym_post, ~ lab_or_rw * t_muris_dose * strain,
@@ -882,10 +880,10 @@ emm_lym_post <- as.data.frame(emmeans(lym_post, ~ lab_or_rw * t_muris_dose * str
   mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_lym_combined <- bind_rows(emm_lym_pre, emm_lym_during, emm_lym_post) %>%
-  mutate(phase        = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
+  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
          t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain       = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw    = factor(lab_or_rw, levels = c("Lab", "RW")))
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
+         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
 
 ```
 
@@ -909,8 +907,8 @@ plot_saver("emm_lym_number.png", emm_lym_plot)
 
 ```{r}
 
-# Pre-RW: strain only
-mon_pre <- lmer(log(mon_number) ~ strain +
+# Pre-RW: dose x strain (no environment — all mice are lab-housed)
+mon_pre <- lmer(log(mon_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
 
@@ -918,8 +916,8 @@ print(summary(mon_pre), correlation = FALSE)
 mon_pre_sim <- simulateResiduals(fittedModel = mon_pre, n = 1000)
 plot(mon_pre_sim)
 
-# During RW: environment x strain
-mon_during <- lmer(log(mon_number) ~ lab_or_rw * strain +
+# During RW: environment x dose x strain
+mon_during <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
@@ -940,17 +938,15 @@ plot(mon_post_sim)
 
 ```{r}
 
-emm_mon_pre <- as.data.frame(emmeans(mon_pre, ~ strain, type = "response")) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High")),
-           lab_or_rw    = factor(c("Lab", "RW"),
-                                 levels = c("Lab", "RW"))) %>%
+emm_mon_pre <- as.data.frame(emmeans(mon_pre, ~ t_muris_dose * strain,
+                                     type = "response")) %>%
+  crossing(lab_or_rw = factor(c("Lab", "RW"),
+                              levels = c("Lab", "RW"))) %>%
   mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
-emm_mon_during <- as.data.frame(emmeans(mon_during, ~ lab_or_rw * strain,
+emm_mon_during <- as.data.frame(emmeans(mon_during,
+                                        ~ lab_or_rw * t_muris_dose * strain,
                                         type = "response")) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High"))) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_mon_post <- as.data.frame(emmeans(mon_post, ~ lab_or_rw * t_muris_dose * strain,
@@ -958,10 +954,10 @@ emm_mon_post <- as.data.frame(emmeans(mon_post, ~ lab_or_rw * t_muris_dose * str
   mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_mon_combined <- bind_rows(emm_mon_pre, emm_mon_during, emm_mon_post) %>%
-  mutate(phase        = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
+  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
          t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain       = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw    = factor(lab_or_rw, levels = c("Lab", "RW")))
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
+         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
 
 ```
 
@@ -985,8 +981,8 @@ plot_saver("emm_mon_number.png", emm_mon_plot)
 
 ```{r}
 
-# Pre-RW: strain only (log1p for zeros)
-eos_pre <- lmer(log1p(eos_number) ~ strain +
+# Pre-RW: dose x strain (log1p for zeros, no environment — all mice are lab-housed)
+eos_pre <- lmer(log1p(eos_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
 
@@ -994,8 +990,8 @@ print(summary(eos_pre), correlation = FALSE)
 eos_pre_sim <- simulateResiduals(fittedModel = eos_pre, n = 1000)
 plot(eos_pre_sim)
 
-# During RW: environment x strain
-eos_during <- lmer(log1p(eos_number) ~ lab_or_rw * strain +
+# During RW: environment x dose x strain
+eos_during <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
@@ -1017,35 +1013,33 @@ plot(eos_post_sim)
 ```{r}
 
 # log1p back-transform: expm1() reverses log1p()
-emm_eos_pre <- as.data.frame(emmeans(eos_pre, ~ strain)) %>%
+emm_eos_pre <- as.data.frame(emmeans(eos_pre, ~ t_muris_dose * strain)) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High")),
-           lab_or_rw    = factor(c("Lab", "RW"),
-                                 levels = c("Lab", "RW"))) %>%
+  crossing(lab_or_rw = factor(c("Lab", "RW"),
+                              levels = c("Lab", "RW"))) %>%
   mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
-emm_eos_during <- as.data.frame(emmeans(eos_during, ~ lab_or_rw * strain)) %>%
+emm_eos_during <- as.data.frame(emmeans(eos_during,
+                                        ~ lab_or_rw * t_muris_dose * strain)) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High"))) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
-emm_eos_post <- as.data.frame(emmeans(eos_post, ~ lab_or_rw * t_muris_dose * strain)) %>%
+emm_eos_post <- as.data.frame(emmeans(eos_post,
+                                      ~ lab_or_rw * t_muris_dose * strain)) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
   mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_eos_combined <- bind_rows(emm_eos_pre, emm_eos_during, emm_eos_post) %>%
-  mutate(phase        = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
+  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
          t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain       = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw    = factor(lab_or_rw, levels = c("Lab", "RW")))
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
+         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
 
 ```
 
@@ -1070,8 +1064,8 @@ plot_saver("emm_eos_number.png", emm_eos_plot)
 
 ```{r}
 
-# Pre-RW: strain only (log1p for zeros)
-bas_pre <- lmer(log1p(bas_number) ~ strain +
+# Pre-RW: dose x strain (log1p for zeros, no environment — all mice are lab-housed)
+bas_pre <- lmer(log1p(bas_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
 
@@ -1079,8 +1073,8 @@ print(summary(bas_pre), correlation = FALSE)
 bas_pre_sim <- simulateResiduals(fittedModel = bas_pre, n = 1000)
 plot(bas_pre_sim)
 
-# During RW: environment x strain
-bas_during <- lmer(log1p(bas_number) ~ lab_or_rw * strain +
+# During RW: environment x dose x strain
+bas_during <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
@@ -1102,35 +1096,33 @@ plot(bas_post_sim)
 ```{r}
 
 # log1p back-transform: expm1() reverses log1p()
-emm_bas_pre <- as.data.frame(emmeans(bas_pre, ~ strain)) %>%
+emm_bas_pre <- as.data.frame(emmeans(bas_pre, ~ t_muris_dose * strain)) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High")),
-           lab_or_rw    = factor(c("Lab", "RW"),
-                                 levels = c("Lab", "RW"))) %>%
+  crossing(lab_or_rw = factor(c("Lab", "RW"),
+                              levels = c("Lab", "RW"))) %>%
   mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
-emm_bas_during <- as.data.frame(emmeans(bas_during, ~ lab_or_rw * strain)) %>%
+emm_bas_during <- as.data.frame(emmeans(bas_during,
+                                        ~ lab_or_rw * t_muris_dose * strain)) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
-  crossing(t_muris_dose = factor(c("Zero", "Low", "High"),
-                                 levels = c("Zero", "Low", "High"))) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
-emm_bas_post <- as.data.frame(emmeans(bas_post, ~ lab_or_rw * t_muris_dose * strain)) %>%
+emm_bas_post <- as.data.frame(emmeans(bas_post,
+                                      ~ lab_or_rw * t_muris_dose * strain)) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
   mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_bas_combined <- bind_rows(emm_bas_pre, emm_bas_during, emm_bas_post) %>%
-  mutate(phase        = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
+  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
          t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain       = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw    = factor(lab_or_rw, levels = c("Lab", "RW")))
+         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
+         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
 
 ```
 
