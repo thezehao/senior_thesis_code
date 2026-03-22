@@ -247,12 +247,6 @@ plot_saver <- function(filename,
 
 ```
 
-# Diagnostics for data
-
-```{r}
-
-```
-
 ## Loading the data
 
 ```{r}
@@ -899,10 +893,97 @@ plot_saver("emm_tnf_plot.png",
            emm_tnf_plot)
 
 ```
+
 # Comparing IFN and TNF levels to see if there is a correlation
 
 ```{r}
 
+ifn_tnf_combined <- left_join(ifn_glmer_input, 
+                              tnf_glmer_input,
+                              by = c("mouse_id",
+                                     "treatment"),
+                              suffix = c("_ifn",
+                                         "_tnf")) %>%
+  select("mouse_id",
+         "plate_ifn",
+         "lab_or_rw_ifn",
+         "strain_ifn",
+         "t_muris_dose_ifn",
+         "cohort_ifn",
+         "experiment_ifn",
+         "source_ifn",
+         "experiment_day_ifn",
+         "treatment",
+         "mean_concentration_ifn",
+         "mean_concentration_tnf") %>%
+  rename("plate" = "plate_ifn",
+         "lab_or_rw" = "lab_or_rw_ifn",
+         "strain" = "strain_ifn",
+         "t_muris_dose" = "t_muris_dose_ifn",
+         "cohort" = "cohort_ifn",
+         "experiment" = "experiment_ifn",
+         "source" = "source_ifn",
+         "experiment_day" = "experiment_day_ifn") %>%
+  mutate(treatment = factor(treatment, 
+                            levels = c("CD28", "LPS", "IgG")))
+  
 
+```
+
+# We used log scale here to make sure that the whole graph fits.
+
+```{r}
+
+ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined,
+                                aes(x = mean_concentration_ifn,
+                                    y = mean_concentration_tnf,
+                                    fill = lab_or_rw,
+                                    color = lab_or_rw,
+                                    group = lab_or_rw)) +
+  geom_point(aes(shape = t_muris_dose),
+             size = 2,
+             alpha = 0.8) +
+  geom_smooth(method = "lm",
+              se = TRUE,
+              alpha = 0.1,
+              linewidth = 0.8) +
+  facet_grid(~treatment) +
+  scale_fill_manual(values = c("RW" = color_green,
+                               "Lab" = color_mustard),
+                   name = expression(bold("Environment")),
+                   labels = c("Lab" = "Laboratory",
+                              "RW" = "Rewilded")) +
+  scale_color_manual(values = c("RW" = color_green,
+                               "Lab" = color_mustard),
+                     name = expression(bold("Environment")),
+                     labels = c("Lab" = "Laboratory",
+                              "RW" = "Rewilded")) +
+  scale_shape_manual(values = c("Zero" = 1,
+                                "High" = 3),
+                     name = expression(bolditalic("T.muris") ~ bold("Dose"))) +
+  scale_x_continuous(name = expression(bold("IFN-"*gamma~"(pg mL"^"-1"*")")),
+                     trans = "log10") +
+  scale_y_continuous(name = expression(bold("TNF-"*alpha~"(pg mL"^"-1"*")")),
+                     trans = "log10") +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold")) +
+  ggtitle(expression(bold("IFN-"*gamma~"vs TNF-"*alpha~ "Mean Concentration")))
+
+ifn_tnf_combined_plot
+
+plot_saver("ifn_tnf_combined_plot.png",
+           ifn_tnf_combined_plot)
 
 ```
