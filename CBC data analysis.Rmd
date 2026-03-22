@@ -762,6 +762,11 @@ neu_pre <- lmer(log(neu_number) ~ t_muris_dose * strain +
 print(summary(neu_pre), correlation = FALSE)
 neu_pre_sim <- simulateResiduals(fittedModel = neu_pre, n = 1000)
 plot(neu_pre_sim)
+testUniformity(neu_pre_sim)
+testDispersion(neu_pre_sim)
+testOutliers(neu_pre_sim)
+plotResiduals(neu_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
+plotResiduals(neu_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
 # During RW: environment x dose x strain
 neu_during <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -771,6 +776,12 @@ neu_during <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(neu_during), correlation = FALSE)
 neu_during_sim <- simulateResiduals(fittedModel = neu_during, n = 1000)
 plot(neu_during_sim)
+testUniformity(neu_during_sim)
+testDispersion(neu_during_sim)
+testOutliers(neu_during_sim)
+plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$lab_or_rw)
+plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
+plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
 
 # Post-RW: environment x infection x strain
 neu_post <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -780,6 +791,12 @@ neu_post <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(neu_post), correlation = FALSE)
 neu_post_sim <- simulateResiduals(fittedModel = neu_post, n = 1000)
 plot(neu_post_sim)
+testUniformity(neu_post_sim)
+testDispersion(neu_post_sim)
+testOutliers(neu_post_sim)
+plotResiduals(neu_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$lab_or_rw)
+plotResiduals(neu_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$t_muris_dose)
+plotResiduals(neu_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$strain)
 
 ```
 
@@ -841,6 +858,11 @@ lym_pre <- lmer(log(lym_number) ~ t_muris_dose * strain +
 print(summary(lym_pre), correlation = FALSE)
 lym_pre_sim <- simulateResiduals(fittedModel = lym_pre, n = 1000)
 plot(lym_pre_sim)
+testUniformity(lym_pre_sim)
+testDispersion(lym_pre_sim)
+testOutliers(lym_pre_sim)
+plotResiduals(lym_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
+plotResiduals(lym_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
 # During RW: environment x dose x strain
 lym_during <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -850,6 +872,12 @@ lym_during <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(lym_during), correlation = FALSE)
 lym_during_sim <- simulateResiduals(fittedModel = lym_during, n = 1000)
 plot(lym_during_sim)
+testUniformity(lym_during_sim)
+testDispersion(lym_during_sim)
+testOutliers(lym_during_sim)
+plotResiduals(lym_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$lab_or_rw)
+plotResiduals(lym_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
+plotResiduals(lym_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
 
 # Post-RW: environment x infection x strain
 lym_post <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -859,6 +887,12 @@ lym_post <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(lym_post), correlation = FALSE)
 lym_post_sim <- simulateResiduals(fittedModel = lym_post, n = 1000)
 plot(lym_post_sim)
+testUniformity(lym_post_sim)
+testDispersion(lym_post_sim)
+testOutliers(lym_post_sim)
+plotResiduals(lym_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$lab_or_rw)
+plotResiduals(lym_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$t_muris_dose)
+plotResiduals(lym_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$strain)
 
 ```
 
@@ -915,6 +949,11 @@ mon_pre <- lmer(log(mon_number) ~ t_muris_dose * strain +
 print(summary(mon_pre), correlation = FALSE)
 mon_pre_sim <- simulateResiduals(fittedModel = mon_pre, n = 1000)
 plot(mon_pre_sim)
+testUniformity(mon_pre_sim)
+testDispersion(mon_pre_sim)
+testOutliers(mon_pre_sim)
+plotResiduals(mon_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
+plotResiduals(mon_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
 # During RW: environment x dose x strain
 mon_during <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -924,6 +963,12 @@ mon_during <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(mon_during), correlation = FALSE)
 mon_during_sim <- simulateResiduals(fittedModel = mon_during, n = 1000)
 plot(mon_during_sim)
+testUniformity(mon_during_sim)
+testDispersion(mon_during_sim)
+testOutliers(mon_during_sim)
+plotResiduals(mon_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$lab_or_rw)
+plotResiduals(mon_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
+plotResiduals(mon_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
 
 # Post-RW: environment x infection x strain
 mon_post <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -933,6 +978,12 @@ mon_post <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(mon_post), correlation = FALSE)
 mon_post_sim <- simulateResiduals(fittedModel = mon_post, n = 1000)
 plot(mon_post_sim)
+testUniformity(mon_post_sim)
+testDispersion(mon_post_sim)
+testOutliers(mon_post_sim)
+plotResiduals(mon_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$lab_or_rw)
+plotResiduals(mon_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$t_muris_dose)
+plotResiduals(mon_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$strain)
 
 ```
 
@@ -989,6 +1040,11 @@ eos_pre <- lmer(log1p(eos_number) ~ t_muris_dose * strain +
 print(summary(eos_pre), correlation = FALSE)
 eos_pre_sim <- simulateResiduals(fittedModel = eos_pre, n = 1000)
 plot(eos_pre_sim)
+testUniformity(eos_pre_sim)
+testDispersion(eos_pre_sim)
+testOutliers(eos_pre_sim)
+plotResiduals(eos_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
+plotResiduals(eos_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
 # During RW: environment x dose x strain
 eos_during <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -998,6 +1054,12 @@ eos_during <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(eos_during), correlation = FALSE)
 eos_during_sim <- simulateResiduals(fittedModel = eos_during, n = 1000)
 plot(eos_during_sim)
+testUniformity(eos_during_sim)
+testDispersion(eos_during_sim)
+testOutliers(eos_during_sim)
+plotResiduals(eos_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$lab_or_rw)
+plotResiduals(eos_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
+plotResiduals(eos_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
 
 # Post-RW: environment x infection x strain
 eos_post <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -1007,6 +1069,12 @@ eos_post <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(eos_post), correlation = FALSE)
 eos_post_sim <- simulateResiduals(fittedModel = eos_post, n = 1000)
 plot(eos_post_sim)
+testUniformity(eos_post_sim)
+testDispersion(eos_post_sim)
+testOutliers(eos_post_sim)
+plotResiduals(eos_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$lab_or_rw)
+plotResiduals(eos_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$t_muris_dose)
+plotResiduals(eos_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$strain)
 
 ```
 
@@ -1072,6 +1140,11 @@ bas_pre <- lmer(log1p(bas_number) ~ t_muris_dose * strain +
 print(summary(bas_pre), correlation = FALSE)
 bas_pre_sim <- simulateResiduals(fittedModel = bas_pre, n = 1000)
 plot(bas_pre_sim)
+testUniformity(bas_pre_sim)
+testDispersion(bas_pre_sim)
+testOutliers(bas_pre_sim)
+plotResiduals(bas_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
+plotResiduals(bas_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
 # During RW: environment x dose x strain
 bas_during <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -1081,6 +1154,12 @@ bas_during <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(bas_during), correlation = FALSE)
 bas_during_sim <- simulateResiduals(fittedModel = bas_during, n = 1000)
 plot(bas_during_sim)
+testUniformity(bas_during_sim)
+testDispersion(bas_during_sim)
+testOutliers(bas_during_sim)
+plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$lab_or_rw)
+plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
+plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
 
 # Post-RW: environment x infection x strain
 bas_post <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -1090,6 +1169,12 @@ bas_post <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
 print(summary(bas_post), correlation = FALSE)
 bas_post_sim <- simulateResiduals(fittedModel = bas_post, n = 1000)
 plot(bas_post_sim)
+testUniformity(bas_post_sim)
+testDispersion(bas_post_sim)
+testOutliers(bas_post_sim)
+plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$lab_or_rw)
+plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$t_muris_dose)
+plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$strain)
 
 ```
 

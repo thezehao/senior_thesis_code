@@ -251,17 +251,6 @@ plot_saver <- function(filename,
 
 ```{r}
 
-qq_plotter <- function(model,
-                       input,
-                       condition) {
-  qqnorm(resid(model))
-  qqline(resid(model))
-  plot(resid(model) ~ input[[condition]])
-}
-
-# NOTE: qq_plotter is no longer used for GLMER diagnostics.
-# DHARMa (simulateResiduals) is used instead in each diagnostics chunk.
-
 ```
 
 ## Loading the data
@@ -642,18 +631,14 @@ summary(ifn_glmer)
 
 ```{r}
 
-# DHARMa simulation-based diagnostics for Gamma GLMER
 ifn_sim_res <- simulateResiduals(fittedModel = ifn_glmer, n = 1000)
 
-# Standard DHARMa panel: uniform QQ plot + residuals vs. fitted
 plot(ifn_sim_res)
 
-# Formal tests
-testUniformity(ifn_sim_res)   # tests whether residuals are uniformly distributed
-testDispersion(ifn_sim_res)   # tests for over/under-dispersion
-testOutliers(ifn_sim_res)     # tests for outliers
+testUniformity(ifn_sim_res)
+testDispersion(ifn_sim_res)
+testOutliers(ifn_sim_res)
 
-# Residuals by each predictor to check group-level misfit
 plotResiduals(ifn_sim_res, form = ifn_glmer_input$lab_or_rw)
 plotResiduals(ifn_sim_res, form = ifn_glmer_input$t_muris_dose)
 plotResiduals(ifn_sim_res, form = ifn_glmer_input$treatment)
@@ -718,18 +703,14 @@ summary(tnf_glmer)
 
 ```{r}
 
-# DHARMa simulation-based diagnostics for Gamma GLMER
 tnf_sim_res <- simulateResiduals(fittedModel = tnf_glmer, n = 1000)
 
-# Standard DHARMa panel: uniform QQ plot + residuals vs. fitted
 plot(tnf_sim_res)
 
-# Formal tests
-testUniformity(tnf_sim_res)   # tests whether residuals are uniformly distributed
-testDispersion(tnf_sim_res)   # tests for over/under-dispersion
-testOutliers(tnf_sim_res)     # tests for outliers
+testUniformity(tnf_sim_res)
+testDispersion(tnf_sim_res)
+testOutliers(tnf_sim_res)
 
-# Residuals by each predictor to check group-level misfit
 plotResiduals(tnf_sim_res, form = tnf_glmer_input$lab_or_rw)
 plotResiduals(tnf_sim_res, form = tnf_glmer_input$t_muris_dose)
 plotResiduals(tnf_sim_res, form = tnf_glmer_input$treatment)
@@ -916,5 +897,12 @@ emm_tnf_plot
 
 plot_saver("emm_tnf_plot.png",
            emm_tnf_plot)
+
+```
+# Comparing IFN and TNF levels to see if there is a correlation
+
+```{r}
+
+
 
 ```

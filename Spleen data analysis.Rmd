@@ -23,6 +23,7 @@ library(emmeans)
 library(lme4)
 library(lmerTest)
 library(scales)
+library(DHARMa)
 
 ```
 
@@ -32,11 +33,17 @@ library(scales)
 
 base_path <- "/Users/zehao/Documents/Research Projects/Graham Group Thesis Research (Summer 2025)"
 
-data_path     <- file.path(base_path, "Metadata")
-clean_data_path <- file.path(base_path, "Cleaned data")
-figure_path        <- file.path(base_path, "Figures")
-spleen_figure_path <- file.path(figure_path, "Spleen Figures")
-dir.create(spleen_figure_path, showWarnings = FALSE, recursive = TRUE)
+data_path <- file.path(base_path, 
+                       "Metadata")
+clean_data_path <- file.path(base_path, 
+                             "Cleaned data")
+figure_path <- file.path(base_path, 
+                         "Figures")
+spleen_figure_path <- file.path(figure_path, 
+                                "Spleen Figures")
+dir.create(spleen_figure_path, 
+           showWarnings = FALSE, 
+           recursive = TRUE)
 
 ```
 
@@ -65,13 +72,17 @@ plot_saver <- function(filename,
 
 ```{r}
 
-spleen_data <- read_excel(file.path(data_path, "SF Project Spleen Data (2025).xlsx"),
+spleen_data <- read_excel(file.path(data_path,
+                                    "SF Project Spleen Data (2025).xlsx"),
                           sheet = "spleen cell count data")
-body_mass_data <- read_excel(file.path(data_path, "metamouse25_12_16_25_ver.xlsx"),
+body_mass_data <- read_excel(file.path(data_path, 
+                                       "metamouse25_12_16_25_ver.xlsx"),
                              sheet = "mass and fecal data")
-spleen_lym_count <- read_excel(file.path(data_path, "SF Project Spleen Data (2025).xlsx"),
+spleen_lym_count <- read_excel(file.path(data_path, 
+                                         "SF Project Spleen Data (2025).xlsx"),
                                sheet = "spleen cell concentration calcu")
-meta_data <- read_excel(file.path(data_path, "metamouse25_12_16_25_ver.xlsx"),
+meta_data <- read_excel(file.path(data_path, 
+                                  "metamouse25_12_16_25_ver.xlsx"),
                         sheet = "metadata")
 
 ```
@@ -183,20 +194,23 @@ clean_meta_data <- meta_data %>%
          source) %>%
    mutate(mouse_id = str_trim(as.character(mouse_id)),
          strain = as.character(strain),
-         t_muris_dose = case_match(t_muris_dose, "0" ~ "Zero", .default = t_muris_dose),
+         t_muris_dose = case_match(t_muris_dose, "0" ~ "Zero", 
+                                   .default = t_muris_dose),
          t_muris_dose = factor(t_muris_dose,
-                               levels = c("Zero", "Low", "High")),
+                               levels = c("Zero", 
+                                          "Low", 
+                                          "High")),
          lab_or_rw = factor(lab_or_rw),
          experiment = as.character(experiment))
 
 str(clean_meta_data)
 
 write_csv(clean_meta_data,
-          file.path(clean_data_path, "clean_meta_data.csv"))
+          file.path(clean_data_path, 
+                    "clean_meta_data.csv"))
 
-write_csv(clean_meta_data,
-          file.path(data_path, "clean_meta_data.csv"))
 ```
+
 We want to include in a file called "compiled data." But, before that I want to check to make sure the strains, ID, and the lab/rw conditions all match across the two data sets.
 
 1.  Mouse ID
@@ -212,21 +226,24 @@ We want to include in a file called "compiled data." But, before that I want to 
 ```{r}
 
 compiled_data_strain_check <- clean_meta_data %>% 
-  full_join(clean_spleen_data, by = "mouse_id") %>%
+  full_join(clean_spleen_data, 
+            by = "mouse_id") %>%
   mutate(match = strain.x == strain.y) %>%
   filter(!match)
 
 compiled_data_strain_check
 
 compiled_data_lab_rw_check <- clean_meta_data %>%
-  full_join(clean_spleen_data, by = "mouse_id") %>%
+  full_join(clean_spleen_data, 
+            by = "mouse_id") %>%
   mutate(match = lab_or_rw.x == lab_or_rw.y) %>%
   filter(!match)
 
 compiled_data_lab_rw_check
 
 compiled_data_t_muris_dose_check <- clean_meta_data %>%
-  full_join(clean_spleen_data, by = "mouse_id") %>%
+  full_join(clean_spleen_data, 
+            by = "mouse_id") %>%
   mutate(match = t_muris_dose.x == t_muris_dose.y) %>%
   filter(!match)
 
@@ -241,9 +258,12 @@ compiled_data_t_muris_dose_check
 ```{r}
 
 spleen_mass_compiled_data <- clean_meta_data %>% 
-  left_join(clean_spleen_data, by = "mouse_id") %>%
-  left_join(clean_body_mass_data, by = "mouse_id") %>%
-  filter(!is.na(spleen_mass_g), !is.na(mass)) %>%
+  left_join(clean_spleen_data, 
+            by = "mouse_id") %>%
+  left_join(clean_body_mass_data, 
+            by = "mouse_id") %>%
+  filter(!is.na(spleen_mass_g), 
+         !is.na(mass)) %>%
   select(mouse_id,
          strain = strain.x,
          lab_or_rw = lab_or_rw.x,
@@ -266,40 +286,32 @@ spleen_mass_compiled_data <- clean_meta_data %>%
 
 ```
 
-Now I will calculate the spleen-mass ratio (SMR) and make a plot. 
-Still thinking whether this is the correct way to do this. See the last plot.
+Now I will calculate the spleen-mass ratio (SMR) and make a plot. Still thinking whether this is the correct way to do this. See the last plot.
 
-# Calculating spleen-mass ratio (SMR) (Exploratory ONLY)
+# Calculating spleen-mass ratio (SMR)
 
 ```{r}
 spleen_mass_compiled_data <- spleen_mass_compiled_data %>% 
-  mutate(spleen_mass_ratio = spleen_mass_g/mass, 
-         log_smr = log(spleen_mass_ratio), 
-         log_spleen_mass = log(spleen_mass_g), 
-         log_mass = log(mass))
+  mutate(spleen_mass_ratio = spleen_mass_g/mass)
 
 lym_number_spleen_data <- spleen_mass_compiled_data %>% 
-  left_join(clean_spleen_lym_count, by = "mouse_id") %>%
+  left_join(clean_spleen_lym_count, 
+            by = "mouse_id") %>%
   filter(!is.na(total_lym_number))
 
 write_csv(lym_number_spleen_data,
-          file.path(clean_data_path, "lym_number_spleen_data.csv"))
+          file.path(clean_data_path, 
+                    "lym_number_spleen_data.csv"))
 
 write_csv(spleen_mass_compiled_data,
-          file.path(clean_data_path, "clean_compiled_spleen_data.csv"))
-
-compiled_data_b6 <- spleen_mass_compiled_data %>%
-  filter(strain == "C57BL/6J")
-
-compiled_data_b10 <- spleen_mass_compiled_data %>%
-  filter(strain == "B10.BR")
+          file.path(clean_data_path, 
+                    "clean_compiled_spleen_data.csv"))
 
 ```
 
 # Plotting SMR data
 
 ```{r}
-
 
 spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data, 
                                  aes(x = t_muris_dose, 
@@ -356,7 +368,7 @@ plot_saver("smr_general.png",
 
 ```
 
-# lmer modeling for SMR (Exploratory ONLY)
+# lmer modeling for SMR
 
 ```{r}
 smr_lmer <- lmer(spleen_mass_ratio ~ 
@@ -440,27 +452,271 @@ plot_saver("emm_smr_plot.png",
 
 ```
 
-# Plot the data straight up and running diagnostics
 ```{r}
-spleen_mass_lmer <- lmer(spleen_mass_g ~ mass + 
-                        strain * lab_or_rw * t_muris_dose + 
-                        (1 | cage_wedge), 
-                      data = spleen_mass_compiled_data)
 
-qqnorm(resid(spleen_mass_lmer))
-qqline(resid(spleen_mass_lmer))
+smr_sim_res <- simulateResiduals(fittedModel = smr_lmer, n = 1000)
 
-plot(spleen_mass_lmer)
+plot(smr_sim_res)
+
+testUniformity(smr_sim_res)
+testDispersion(smr_sim_res)
+testOutliers(smr_sim_res)
+
+plotResiduals(smr_sim_res, form = spleen_mass_compiled_data$lab_or_rw)
+plotResiduals(smr_sim_res, form = spleen_mass_compiled_data$t_muris_dose)
+plotResiduals(smr_sim_res, form = spleen_mass_compiled_data$strain)
+
+ranef(smr_lmer)
+
+VarCorr(smr_lmer)
 
 ```
 
-Now let's do the lym and the spleen mass calculations
 
-# Modeling splenocyte count and spleen size
-
+# lmer and emm of spleen mass only
 
 ```{r}
 
+spleen_lmer <- lmer(spleen_mass_g ~ 
+                   strain * 
+                   lab_or_rw * 
+                   t_muris_dose + 
+                   (1 | cage_wedge), 
+                 data = spleen_mass_compiled_data)
+
+summary(spleen_lmer)
+
+emm_spleen_mass <- emmeans(spleen_lmer, 
+                   specs = c("t_muris_dose", "lab_or_rw"), 
+                   by = c("strain"),
+                   type = "response")
+emm_spleen_mass
+
+pairs(emm_spleen_mass)
+
+emm_spleen_mass_df <- as.data.frame(emm_spleen_mass)
+
+emm_spleen_mass_plot <- ggplot(emm_spleen_mass_df) + 
+  geom_point(aes(x = t_muris_dose, 
+                 y = emmean, 
+                 fill = lab_or_rw,
+                 group = lab_or_rw),
+             position = position_dodge(width = 0.5),
+             alpha = 1,
+             size = 3,
+             shape = 21,
+             color = "black") +
+  geom_errorbar(aes(x = t_muris_dose, 
+                    ymin = lower.CL,
+                    ymax = upper.CL, 
+                    color = lab_or_rw,
+                    group = lab_or_rw), 
+                width = 0.3,
+                alpha = 0.8,
+             position = position_dodge(width = 0.5)) +
+  geom_point(data = spleen_mass_compiled_data,
+             aes(x = t_muris_dose,
+                 y = spleen_mass_g,
+                 color = lab_or_rw),
+             position = position_jitterdodge(jitter.width = 0.1,
+                                             dodge.width = 0.5),
+             alpha = 0.3,
+             size = 1.5) +
+  scale_y_continuous(name = "Spleen Mass (g)",
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dosage"))) +
+  scale_fill_manual(values = c("Lab" = color_mustard,
+                               "RW" = color_green),
+                    name = expression(bold("Environment")),
+                    labels = c("Lab" = "Laboratory",
+                              "RW" = "Rewilded")) +
+  scale_color_manual(values = c("Lab" = color_mustard,
+                                "RW" = color_green),
+                     name = expression(bold("Environment")),
+                     labels = c("Lab" = "Laboratory",
+                              "RW" = "Rewilded")) +
+  facet_wrap(~strain) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
+  ggtitle("Estimated Marginal Means of Spleen Mass with 95% CI")
+
+emm_spleen_mass_plot
+
+plot_saver("emm_spleen_mass_plot.png",
+           emm_spleen_mass_plot)
+
+```
+
+```{r}
+
+spleen_mass_reg <- ggplot(spleen_mass_compiled_data, 
+                                 aes(x = mass, 
+                          y = spleen_mass_g, 
+                          fill = t_muris_dose,
+                          color = t_muris_dose,
+                          group = t_muris_dose)) +
+  geom_abline(slope = 1,
+              intercept = 0,
+              linetype = "dashed",
+              color = "grey40",
+              alpha = 0.5) +
+  geom_point(alpha = 0.6,
+             size = 1.8) +
+  geom_smooth(method = "lm",
+              se = TRUE,
+              alpha = 0.15,
+              linewidth = 0.8) +
+  facet_grid(lab_or_rw ~ strain) + 
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "Low" = color_yellow,
+                               "High" = color_orange),
+                    name = expression(bold("Infection Dosage")),
+                    labels = c("Zero" = "Zero",
+                               "Low" = "Low",
+                               "High" = "High")) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                               "Low" = color_yellow,
+                               "High" = color_orange),
+                     name = expression(bold("Infection Dosage")),
+                     labels = c("Zero" = "Zero",
+                               "Low" = "Low",
+                               "High" = "High")) +
+  scale_x_continuous(trans = "log10",
+                     name = "Body Mass (g)") +
+  scale_y_continuous(trans = "log10",
+                     name = "Spleen Mass (g)") +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
+  ggtitle("Spleen vs Body Mass")
+
+spleen_mass_reg
+
+plot_saver("spleen_vs_body_mass_reg.png",
+           spleen_mass_reg)
+
+```
+
+# ANCOVA: Spleen mass adjusted for body mass
+
+```{r}
+
+spleen_adj_lmer <- lmer(spleen_mass_g ~
+                          strain *
+                          lab_or_rw *
+                          t_muris_dose +
+                          mass +
+                          (1 | cage_wedge),
+                        data = spleen_mass_compiled_data)
+
+summary(spleen_adj_lmer)
+
+qqnorm(resid(spleen_adj_lmer))
+qqline(resid(spleen_adj_lmer))
+
+plot(spleen_adj_lmer)
+
+```
+
+# Let's add the body mass as a co-variate to see if there is any change.
+
+```{r}
+
+emm_adj_spleen <- emmeans(spleen_adj_lmer,
+                      specs = c("t_muris_dose", "lab_or_rw"),
+                      by = c("strain"),
+                      type = "response")
+
+emm_adj_spleen
+
+pairs(emm_adj_spleen)
+
+emm_adj_spleen_df <- as.data.frame(emm_adj_spleen)
+
+emm_adj_spleen_plot <- ggplot(emm_adj_spleen_df) +
+  geom_point(aes(x = t_muris_dose,
+                 y = emmean,
+                 fill = lab_or_rw,
+                 group = lab_or_rw),
+             position = position_dodge(width = 0.5),
+             alpha = 1,
+             size = 3,
+             shape = 21,
+             color = "black") +
+  geom_errorbar(aes(x = t_muris_dose,
+                    ymin = lower.CL,
+                    ymax = upper.CL,
+                    color = lab_or_rw,
+                    group = lab_or_rw),
+                width = 0.3,
+                alpha = 0.8,
+             position = position_dodge(width = 0.5)) +
+  geom_point(data = spleen_mass_compiled_data,
+             aes(x = t_muris_dose,
+                 y = spleen_mass_g,
+                 color = lab_or_rw),
+             position = position_jitterdodge(jitter.width = 0.1,
+                                             dodge.width = 0.5),
+             alpha = 0.3,
+             size = 1.5) +
+  scale_y_continuous(name = "Spleen Mass Adjusted for Body Mass (g)",
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dosage"))) +
+  scale_fill_manual(values = c("Lab" = color_mustard,
+                               "RW" = color_green),
+                    name = expression(bold("Environment")),
+                    labels = c("Lab" = "Laboratory",
+                              "RW" = "Rewilded")) +
+  scale_color_manual(values = c("Lab" = color_mustard,
+                                "RW" = color_green),
+                     name = expression(bold("Environment")),
+                     labels = c("Lab" = "Laboratory",
+                              "RW" = "Rewilded")) +
+  facet_wrap(~strain) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold")) +
+  ggtitle("Estimated Marginal Means of Adjusted Spleen Mass with 95% CI")
+
+emm_adj_spleen_plot
+
+plot_saver("emm_adj_spleen_plot.png",
+           emm_adj_spleen_plot)
+
+```
+
+```{r}
 lym_lmer <- lmer(log(spleen_mass_ratio) ~ 
                    log(total_lym_number) +
                    lab_or_rw * 
@@ -469,6 +725,7 @@ lym_lmer <- lmer(log(spleen_mass_ratio) ~
              data = lym_number_spleen_data)
 
 summary(lym_lmer)
+
 ```
 
 # Diagnostic for the lym-mass relationship
