@@ -557,6 +557,7 @@ plot_saver("emm_spleen_mass_plot.png",
            emm_spleen_mass_plot)
 
 ```
+# We use log scale here to make sure that the whole thing fits.
 
 ```{r}
 
@@ -618,7 +619,7 @@ plot_saver("spleen_vs_body_mass_reg.png",
 
 ```
 
-# ANCOVA: Spleen mass adjusted for body mass
+# Spleen mass adjusted for body mass
 
 ```{r}
 
