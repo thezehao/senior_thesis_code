@@ -7,7 +7,14 @@ output:
   html_document: default
 ---
 
-load the needed library first
+# First time run order: Spleen → CBC → Spleen
+# This markdown produces clean_meta_data.csv used by CBC and ELISA analysis.
+# The section looking at the correlation between spleen size and lymphocyte counts
+at the bottom requires cleaned_combined_cbc_data.csv from CBC. That's why CBC
+needs to be ran on the second try. But, this is only applicable if this is the
+first time this code is ran. 
+
+# Load the needed library first
 
 ```{r}
 library(tidyverse)
@@ -84,6 +91,9 @@ spleen_lym_count <- read_excel(file.path(data_path,
 meta_data <- read_excel(file.path(data_path, 
                                   "metamouse25_12_16_25_ver.xlsx"),
                         sheet = "metadata")
+
+cbc_data <- read_csv(file.path(clean_data_path,
+                               "cleaned_combined_cbc_data.csv"))
 
 ```
 
@@ -309,6 +319,24 @@ write_csv(spleen_mass_compiled_data,
 
 ```
 
+# Filte the cbc data to join with spleen data
+
+```{r}
+
+cbc_lym <- cbc_data %>%
+  filter(phase == "Post-RW") %>%
+  select(mouse_id, 
+         lym_number) %>%
+  mutate(mouse_id = str_trim(as.character(mouse_id)))
+
+spleen_cbc <- spleen_mass_compiled_data %>% 
+  left_join(cbc_lym,
+            by = "mouse_id") %>%
+  filter(!is.na(lym_number),
+         !is.na(spleen_mass_g))
+
+```
+
 # Plotting SMR data
 
 ```{r}
@@ -358,7 +386,7 @@ spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data,
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  xlab(expression(bolditalic("T. muris")~bold("Dosage"))) +
+  xlab(expression(bolditalic("T. muris")~bold("Dose"))) +
   ggtitle("Spleen to Body Mass Ratio (SMR)")
 
 spleen_mass_ratio_plot
@@ -418,7 +446,7 @@ emm_smr_plot <- ggplot(emm_smr_df) +
              size = 1.5) +
   scale_y_continuous(name = "Spleen to Body Mass Ratio (SMR)",
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dosage"))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
@@ -443,7 +471,7 @@ emm_smr_plot <- ggplot(emm_smr_df) +
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  ggtitle("Estimated Marginal Means of SMR with 95% CI")
+  ggtitle("EMM of SMR with 95% CI")
 
 emm_smr_plot
 
@@ -524,7 +552,7 @@ emm_spleen_mass_plot <- ggplot(emm_spleen_mass_df) +
              size = 1.5) +
   scale_y_continuous(name = "Spleen Mass (g)",
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dosage"))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
@@ -549,7 +577,7 @@ emm_spleen_mass_plot <- ggplot(emm_spleen_mass_df) +
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  ggtitle("Estimated Marginal Means of Spleen Mass with 95% CI")
+  ggtitle("EMM of Spleen Mass with 95% CI")
 
 emm_spleen_mass_plot
 
@@ -557,6 +585,7 @@ plot_saver("emm_spleen_mass_plot.png",
            emm_spleen_mass_plot)
 
 ```
+
 # We use log scale here to make sure that the whole thing fits.
 
 ```{r}
@@ -564,35 +593,32 @@ plot_saver("emm_spleen_mass_plot.png",
 spleen_mass_reg <- ggplot(spleen_mass_compiled_data, 
                                  aes(x = mass, 
                           y = spleen_mass_g, 
-                          fill = t_muris_dose,
-                          color = t_muris_dose,
-                          group = t_muris_dose)) +
-  geom_abline(slope = 1,
-              intercept = 0,
-              linetype = "dashed",
-              color = "grey40",
-              alpha = 0.5) +
-  geom_point(alpha = 0.6,
+                          fill = lab_or_rw,
+                          color = lab_or_rw,
+                          group = lab_or_rw)) +
+  geom_point(aes(shape = t_muris_dose),
+             alpha = 0.6,
              size = 1.8) +
   geom_smooth(method = "lm",
               se = TRUE,
               alpha = 0.15,
               linewidth = 0.8) +
-  facet_grid(lab_or_rw ~ strain) + 
-  scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "Low" = color_yellow,
-                               "High" = color_orange),
-                    name = expression(bold("Infection Dosage")),
-                    labels = c("Zero" = "Zero",
-                               "Low" = "Low",
-                               "High" = "High")) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                               "Low" = color_yellow,
-                               "High" = color_orange),
-                     name = expression(bold("Infection Dosage")),
-                     labels = c("Zero" = "Zero",
-                               "Low" = "Low",
-                               "High" = "High")) +
+  facet_wrap( ~ strain) + 
+  scale_fill_manual(values = c("Lab" = color_mustard,
+                               "RW" = color_green),
+                    name = expression(bold("Environment")),
+                    labels = c("Lab" = "Laboratory",
+                               "RW" = "Rewilded")) +
+  scale_color_manual(values = c("Lab" = color_mustard,
+                               "RW" = color_green),
+                    name = expression(bold("Environment")),
+                    labels = c("Lab" = "Laboratory",
+                               "RW" = "Rewilded")) +
+  scale_shape_manual(values = c("Zero" = 1,
+                                "Low" = 13,
+                                "High" = 3),
+                     name = expression(bolditalic("T. muris") ~
+                                         bold("Dose"))) +
   scale_x_continuous(trans = "log10",
                      name = "Body Mass (g)") +
   scale_y_continuous(trans = "log10",
@@ -683,7 +709,7 @@ emm_adj_spleen_plot <- ggplot(emm_adj_spleen_df) +
              size = 1.5) +
   scale_y_continuous(name = "Spleen Mass Adjusted for Body Mass (g)",
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dosage"))) +
+  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
@@ -708,7 +734,7 @@ emm_adj_spleen_plot <- ggplot(emm_adj_spleen_df) +
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  ggtitle("Estimated Marginal Means of Adjusted Spleen Mass with 95% CI")
+  ggtitle("EMM of Adjusted Spleen Mass with 95% CI")
 
 emm_adj_spleen_plot
 
@@ -763,12 +789,12 @@ spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data,
                                       "High" = "High"))) +
   scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW" = color_green),
-                     name = "Environment",
+                     name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                                 "RW" = "Rewilded")) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
-                    name = "Environment",
+                    name = expression(bold("Environment")),
                     labels = c("Lab" = "Laboratory",
                                "RW" = "Rewilded")) +
   scale_x_continuous(trans = scales::log_trans(),
@@ -789,9 +815,67 @@ spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data,
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  labs(title = "Spleen Mass and Lymphocyte Count")
+  labs(title = "Spleen Mass vs. Lymphocyte Count")
 
 spleen_mass_lym_count_plot
 plot_saver("spleen_mass_lymphocyte.png",
            spleen_mass_lym_count_plot)
+```
+
+# CBC lym count and spleen mass at final time point regression
+
+```{r}
+
+spleen_cbc_reg <- ggplot(spleen_cbc,
+                         aes(x = lym_number,
+                             y = spleen_mass_g,
+                             color = lab_or_rw)) +
+  geom_point(aes(shape = t_muris_dose),
+             size = 2.5,
+             alpha = 0.8) +
+  geom_smooth(method = "lm",
+              se = TRUE,
+              aes(group = lab_or_rw,
+                  fill = lab_or_rw),
+              alpha = 0.05,
+              linewidth = 0.8,
+              show.legend = FALSE) +
+  facet_wrap(~ strain) +
+  scale_color_manual(values = c("Lab" = color_mustard,
+                                "RW" = color_green),
+                     name = expression(bold("Environment")),
+                     labels = c("Lab" = "Laboratory",
+                                "RW" = "Rewilded")) +
+  scale_fill_manual(values = c("Lab" = color_mustard,
+                                "RW" = color_green)) +
+  scale_shape_manual(values = c("Zero" = 1,
+                                "Low" = 13,
+                                "High" = 3),
+                     name = expression(bolditalic("T. muris") ~
+                                         bold("Dose"))) +
+  scale_x_continuous(name = expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
+                     trans = "log10") +
+  scale_y_continuous(name = expression(bold("Spleen Mass (g)")),
+                     trans = "log10") +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold")) +
+  ggtitle("Spleen Mass vs. CBC Lymphocyte Count")
+
+spleen_cbc_reg
+
+plot_saver("spleen_cbc_reg.png",
+           spleen_cbc_reg)
+
 ```

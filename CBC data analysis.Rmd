@@ -7,6 +7,9 @@ output:
   html_document: default
 ---
 
+# First time run order: Spleen → CBC → Spleen
+# Requires clean_meta_data.csv from the spleen analysis markdown
+
 # Libraries
 
 ```{r}
@@ -186,11 +189,11 @@ emm_plotter <- function(emm_df,
     scale_fill_manual(values = c("Zero" = color_dark_blue,
                                  "Low"  = color_yellow,
                                  "High" = color_orange),
-                      name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+                      name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
     scale_color_manual(values = c("Zero" = color_dark_blue,
                                   "Low"  = color_yellow,
                                   "High" = color_orange),
-                       name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+                       name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
     scale_y_continuous(name = y_label) + 
     # add expand = expansion(mult = c(0.05, 0.3)) if adding sig astrix.
     theme_minimal() +
@@ -259,11 +262,11 @@ cbc_plotter <- function(cbc_data,
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "Low"  = color_yellow,
                                "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+                    name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   scale_color_manual(values = c("Zero" = color_dark_blue,
                                 "Low"  = color_yellow,
                                 "High" = color_orange),
-                     name = expression(bolditalic("T. muris") ~ bold("Dosage"))) +
+                     name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white",
                                         color = "black",
@@ -294,7 +297,7 @@ cbc_data_1 <- read_excel(file.path(data_path,
                                    "DCV_25SF.W-3thruNSF1trapout.XLSX"))
 cbc_data_2 <- read_excel(file.path(data_path,
                                    "DCV_25SF.W3_NSF2.XLSX"))
-meta_data   <- read_csv(file.path(data_path, 
+meta_data   <- read_csv(file.path(clean_data_path,
                                   "clean_meta_data.csv"))
 
 # CDC NHANES human data
@@ -605,7 +608,7 @@ comp_plot <- ggplot(bar_plot_input,
                                    size = 8)) +
   xlab("Population") +
   ylab("CBC Composition") +
-  ggtitle("CBC Composition Between Mice and Humans")
+  ggtitle("CBC Composition: Mice vs. Humans")
 
 comp_plot
 
@@ -837,7 +840,7 @@ emm_neu_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "neu_number",
   y_label = expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
-  title = "Estimated Marginal Means of Neutrophil Count with 95% CI"
+  title = "EMM of Neutrophil Count with 95% CI"
 )
 
 emm_neu_plot
@@ -928,7 +931,7 @@ emm_lym_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "lym_number",
   y_label = expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
-  title = "Estimated Marginal Means of Lymphocyte Count with 95% CI"
+  title = "EMM of Lymphocyte Count with 95% CI"
 )
 
 emm_lym_plot
@@ -1019,7 +1022,7 @@ emm_mon_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "mon_number",
   y_label = expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
-  title = "Estimated Marginal Means of Monocyte Count with 95% CI"
+  title = "EMM of Monocyte Count with 95% CI"
 )
 
 emm_mon_plot
@@ -1118,7 +1121,7 @@ emm_eos_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "eos_number",
   y_label = expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
-  title = "Estimated Marginal Means of Eosinophil Count with 95% CI",
+  title = "EMM of Eosinophil Count with 95% CI",
   floor_zero = TRUE
 )
 
@@ -1218,7 +1221,7 @@ emm_bas_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "bas_number",
   y_label = expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
-  title = "Estimated Marginal Means of Basophil Count with 95% CI",
+  title = "EMM of Basophil Count with 95% CI",
   floor_zero = TRUE
 )
 

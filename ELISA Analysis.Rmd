@@ -7,7 +7,10 @@ output:
   html_document: default
 ---
 
-# Loading the Libraries
+# First time run order: Spleen → CBC → ELISA
+# Requires clean_meta_data.csv from the spleen analysis file.
+
+# Loading the libraries
 
 ```{r}
 library(tidyverse)
@@ -141,7 +144,7 @@ elisa_summary_plotter <- function(input_data,
                      labels = c("Zero" = "Zero",
                                 "High" = "High"),
                      name = expression(bolditalic("T. muris") ~
-                                         bold("Infection Dosage"))) +
+                                         bold("Dose"))) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
     theme_minimal() +
     theme(strip.background = element_rect(fill = "white",
@@ -199,7 +202,7 @@ elisa_treatment_plotter <- function(input_data,
                      labels = c("Zero" = "Zero",
                                 "High" = "High"),
                      name = expression(bolditalic("T. muris") ~ 
-                                         bold("Infection Dosage"))) +
+                                         bold("Dose"))) +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.3))) +
     theme_minimal() +
     theme(strip.background = element_rect(fill = "white",
@@ -788,7 +791,7 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
                                                  0.3)),
                      trans = "log10") +
   scale_x_discrete(name = expression(bolditalic("T. muris") ~ 
-                                              bold("Infection Dosage")),
+                                              bold("Dose")),
                    limits = c("Zero", "High"),
                    labels = c("Zero" = "Zero",
                               "High" = "High")) +
@@ -809,7 +812,7 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
         plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold")) +
-  ggtitle(expression(bold("Estimated Marginal Means of IFN-" * gamma ~ "with 95% CI")))
+  ggtitle(expression(bold("EMM of IFN-" * gamma ~ "with 95% CI")))
 
 emm_ifn_plot
 
@@ -854,7 +857,7 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
                      expand = expansion(mult = c(0.05, 0.3)),
                      trans = "log10") +
   scale_x_discrete(name = expression(bolditalic("T. muris") ~
-                                       bold("Infection Dosage")),
+                                       bold("Dose")),
                    limits = c("Zero", "High"),
                    labels = c("Zero" = "Zero",
                               "High" = "High")) +
@@ -885,7 +888,7 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
         plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold")) +
-  ggtitle(expression(bold("Estimated Marginal Means of TNF-" * alpha ~ "with 95% CI")))
+  ggtitle(expression(bold("EMM of TNF-" * alpha ~ "with 95% CI")))
 
 emm_tnf_plot
 
@@ -960,7 +963,7 @@ ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined,
                               "RW" = "Rewilded")) +
   scale_shape_manual(values = c("Zero" = 1,
                                 "High" = 3),
-                     name = expression(bolditalic("T.muris") ~ bold("Dose"))) +
+                     name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   scale_x_continuous(name = expression(bold("IFN-"*gamma~"(pg mL"^"-1"*")")),
                      trans = "log10") +
   scale_y_continuous(name = expression(bold("TNF-"*alpha~"(pg mL"^"-1"*")")),
@@ -979,11 +982,22 @@ ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined,
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold")) +
-  ggtitle(expression(bold("IFN-"*gamma~"vs TNF-"*alpha~ "Mean Concentration")))
+  ggtitle(expression(bold("IFN-"*gamma~"vs. TNF-"*alpha~"Concentration")))
 
 ifn_tnf_combined_plot
 
 plot_saver("ifn_tnf_combined_plot.png",
            ifn_tnf_combined_plot)
+
+
+# Highest IFN
+ifn_tnf_combined %>% 
+  slice_max(mean_concentration_ifn, n = 1) %>% 
+  select(mouse_id, mean_concentration_ifn)
+
+# Highest TNF
+ifn_tnf_combined %>% 
+  slice_max(mean_concentration_tnf, n = 1) %>% 
+  select(mouse_id, mean_concentration_tnf)
 
 ```
