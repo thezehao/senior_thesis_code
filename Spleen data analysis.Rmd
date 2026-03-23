@@ -675,7 +675,7 @@ emm_adj_spleen <- emmeans(spleen_adj_lmer,
                       by = c("strain"),
                       type = "response")
 
-emm_adj_spleen
+summary(emm_adj_spleen)
 
 pairs(emm_adj_spleen)
 
