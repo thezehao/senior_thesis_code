@@ -38,14 +38,14 @@ library(readr)
 
 ```{r}
 
-color_black      <- "#000000"
-color_mustard    <- "#E69F00"
+color_black <- "#000000"
+color_mustard <- "#E69F00"
 color_light_blue <- "#56B4E9"
-color_green      <- "#009E73"
-color_yellow     <- "#F0E442"
-color_dark_blue  <- "#0072B2"
-color_orange     <- "#D55E00"
-color_purple     <- "#CC79A7"
+color_green <- "#009E73"
+color_yellow <- "#F0E442"
+color_dark_blue <- "#0072B2"
+color_orange <- "#D55E00"
+color_purple <- "#CC79A7"
 
 color_grey <- "#BBBBBB"
 color_dark_purple <- "#AA3377"
@@ -768,8 +768,10 @@ plot(neu_pre_sim)
 testUniformity(neu_pre_sim)
 testDispersion(neu_pre_sim)
 testOutliers(neu_pre_sim)
-plotResiduals(neu_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
-plotResiduals(neu_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
+plotResiduals(neu_pre_sim, form = filter(cleaned_combined_cbc_data, 
+                                         phase == "Pre-RW")$t_muris_dose)
+plotResiduals(neu_pre_sim, form = filter(cleaned_combined_cbc_data, 
+                                         phase == "Pre-RW")$strain)
 
 # During RW: environment x dose x strain
 neu_during <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -782,9 +784,12 @@ plot(neu_during_sim)
 testUniformity(neu_during_sim)
 testDispersion(neu_during_sim)
 testOutliers(neu_during_sim)
-plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$lab_or_rw)
-plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
-plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
+plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, 
+                                            phase == "During RW")$lab_or_rw)
+plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, 
+                                            phase == "During RW")$t_muris_dose)
+plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, 
+                                            phase == "During RW")$strain)
 
 # Post-RW: environment x infection x strain
 neu_post <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -806,7 +811,9 @@ plotResiduals(neu_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 ```{r}
 
 # Pre-RW emmeans: extract ~ t_muris_dose * strain, duplicate across environment
-emm_neu_pre <- as.data.frame(emmeans(neu_pre, ~ t_muris_dose * strain,
+emm_neu_pre <- as.data.frame(emmeans(neu_pre,
+                                     specs = "t_muris_dose",
+                                     by = "strain",
                                      type = "response")) %>%
   crossing(lab_or_rw = factor(c("Lab", "RW"),
                               levels = c("Lab", "RW"))) %>%
@@ -815,12 +822,15 @@ emm_neu_pre <- as.data.frame(emmeans(neu_pre, ~ t_muris_dose * strain,
 
 # During RW emmeans: full extraction
 emm_neu_during <- as.data.frame(emmeans(neu_during,
-                                        ~ lab_or_rw * t_muris_dose * strain,
+                                        specs = c("t_muris_dose", "lab_or_rw"),
+                                        by = "strain",
                                         type = "response")) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 # Post-RW emmeans: full extraction
-emm_neu_post <- as.data.frame(emmeans(neu_post, ~ lab_or_rw * t_muris_dose * strain,
+emm_neu_post <- as.data.frame(emmeans(neu_post,
+                                      specs = c("t_muris_dose", "lab_or_rw"),
+                                      by = "strain",
                                       type = "response")) %>%
   mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
@@ -901,18 +911,23 @@ plotResiduals(lym_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 
 ```{r}
 
-emm_lym_pre <- as.data.frame(emmeans(lym_pre, ~ t_muris_dose * strain,
+emm_lym_pre <- as.data.frame(emmeans(lym_pre,
+                                     specs = "t_muris_dose",
+                                     by = "strain",
                                      type = "response")) %>%
   crossing(lab_or_rw = factor(c("Lab", "RW"),
                               levels = c("Lab", "RW"))) %>%
   mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_lym_during <- as.data.frame(emmeans(lym_during,
-                                        ~ lab_or_rw * t_muris_dose * strain,
+                                        specs = c("t_muris_dose", "lab_or_rw"),
+                                        by = "strain",
                                         type = "response")) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
-emm_lym_post <- as.data.frame(emmeans(lym_post, ~ lab_or_rw * t_muris_dose * strain,
+emm_lym_post <- as.data.frame(emmeans(lym_post,
+                                      specs = c("t_muris_dose", "lab_or_rw"),
+                                      by = "strain",
                                       type = "response")) %>%
   mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
@@ -992,18 +1007,23 @@ plotResiduals(mon_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 
 ```{r}
 
-emm_mon_pre <- as.data.frame(emmeans(mon_pre, ~ t_muris_dose * strain,
+emm_mon_pre <- as.data.frame(emmeans(mon_pre,
+                                     specs = "t_muris_dose",
+                                     by = "strain",
                                      type = "response")) %>%
   crossing(lab_or_rw = factor(c("Lab", "RW"),
                               levels = c("Lab", "RW"))) %>%
   mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_mon_during <- as.data.frame(emmeans(mon_during,
-                                        ~ lab_or_rw * t_muris_dose * strain,
+                                        specs = c("t_muris_dose", "lab_or_rw"),
+                                        by = "strain",
                                         type = "response")) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
-emm_mon_post <- as.data.frame(emmeans(mon_post, ~ lab_or_rw * t_muris_dose * strain,
+emm_mon_post <- as.data.frame(emmeans(mon_post,
+                                      specs = c("t_muris_dose", "lab_or_rw"),
+                                      by = "strain",
                                       type = "response")) %>%
   mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
@@ -1084,7 +1104,9 @@ plotResiduals(eos_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 ```{r}
 
 # log1p back-transform: expm1() reverses log1p()
-emm_eos_pre <- as.data.frame(emmeans(eos_pre, ~ t_muris_dose * strain)) %>%
+emm_eos_pre <- as.data.frame(emmeans(eos_pre,
+                                     specs = "t_muris_dose",
+                                     by = "strain")) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
@@ -1093,14 +1115,16 @@ emm_eos_pre <- as.data.frame(emmeans(eos_pre, ~ t_muris_dose * strain)) %>%
   mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_eos_during <- as.data.frame(emmeans(eos_during,
-                                        ~ lab_or_rw * t_muris_dose * strain)) %>%
+                                        specs = c("t_muris_dose", "lab_or_rw"),
+                                        by = "strain")) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_eos_post <- as.data.frame(emmeans(eos_post,
-                                      ~ lab_or_rw * t_muris_dose * strain)) %>%
+                                      specs = c("t_muris_dose", "lab_or_rw"),
+                                      by = "strain")) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
@@ -1160,9 +1184,12 @@ plot(bas_during_sim)
 testUniformity(bas_during_sim)
 testDispersion(bas_during_sim)
 testOutliers(bas_during_sim)
-plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$lab_or_rw)
-plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
-plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
+plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, 
+                                            phase == "During RW")$lab_or_rw)
+plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, 
+                                            phase == "During RW")$t_muris_dose)
+plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, 
+                                            phase == "During RW")$strain)
 
 # Post-RW: environment x infection x strain
 bas_post <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
@@ -1175,16 +1202,21 @@ plot(bas_post_sim)
 testUniformity(bas_post_sim)
 testDispersion(bas_post_sim)
 testOutliers(bas_post_sim)
-plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$lab_or_rw)
-plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$t_muris_dose)
-plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, phase == "Post-RW")$strain)
+plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, 
+                                          phase == "Post-RW")$lab_or_rw)
+plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, 
+                                          phase == "Post-RW")$t_muris_dose)
+plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data, 
+                                          phase == "Post-RW")$strain)
 
 ```
 
 ```{r}
 
 # log1p back-transform: expm1() reverses log1p()
-emm_bas_pre <- as.data.frame(emmeans(bas_pre, ~ t_muris_dose * strain)) %>%
+emm_bas_pre <- as.data.frame(emmeans(bas_pre,
+                                     specs = "t_muris_dose",
+                                     by = "strain")) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
@@ -1193,14 +1225,16 @@ emm_bas_pre <- as.data.frame(emmeans(bas_pre, ~ t_muris_dose * strain)) %>%
   mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_bas_during <- as.data.frame(emmeans(bas_during,
-                                        ~ lab_or_rw * t_muris_dose * strain)) %>%
+                                        specs = c("t_muris_dose", "lab_or_rw"),
+                                        by = "strain")) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%
   mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
 
 emm_bas_post <- as.data.frame(emmeans(bas_post,
-                                      ~ lab_or_rw * t_muris_dose * strain)) %>%
+                                      specs = c("t_muris_dose", "lab_or_rw"),
+                                      by = "strain")) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
          upper.CL = expm1(upper.CL)) %>%

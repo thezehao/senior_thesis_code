@@ -97,18 +97,18 @@ cbc_data <- read_csv(file.path(clean_data_path,
 
 ```
 
-# Setting the colors (Okabe-Ito palette and IBM palette)
+# Setting the colors (Okabe-Ito palette and Paul Tol's Bright)
 
 ```{r}
 
-color_black      <- "#000000"
-color_mustard    <- "#E69F00"
+color_black <- "#000000"
+color_mustard <- "#E69F00"
 color_light_blue <- "#56B4E9"
-color_green      <- "#009E73"
-color_yellow     <- "#F0E442"
-color_dark_blue  <- "#0072B2"
-color_orange     <- "#D55E00"
-color_purple     <- "#CC79A7"
+color_green <- "#009E73"
+color_yellow <- "#F0E442"
+color_dark_blue <- "#0072B2"
+color_orange <- "#D55E00"
+color_purple <- "#CC79A7"
 
 color_grey <- "#BBBBBB"
 color_dark_purple <- "#AA3377"
@@ -179,7 +179,7 @@ clean_spleen_lym_count <- spleen_lym_count %>%
   select(avg_total_cell_concentration_cell_m_l, 
          solution_volume_m_l, 
          mouse_id) %>%
-  mutate(mouse_id = as.character(mouse_id) |> str_trim(), 
+  mutate(mouse_id = as.character(mouse_id) %>% str_trim(), 
          total_lym_number = avg_total_cell_concentration_cell_m_l * solution_volume_m_l,
          total_lym_number = as.numeric(total_lym_number)) %>%
   select(mouse_id,
@@ -371,7 +371,7 @@ spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data,
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                                 "RW" = "Rewilded")) +
-  scale_y_continuous(name = "Spleen to Body Mass Ratio (SMR)",
+  scale_y_continuous(name = expression(bold("Spleen to Body Mass Ratio (SMR)")),
                      expand = expansion(mult = c(0.05, 0.3))) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white",
@@ -444,7 +444,7 @@ emm_smr_plot <- ggplot(emm_smr_df) +
                                              dodge.width = 0.5),
              alpha = 0.3,
              size = 1.5) +
-  scale_y_continuous(name = "Spleen to Body Mass Ratio (SMR)",
+  scale_y_continuous(name = expression(bold("Spleen to Body Mass Ratio (SMR)")),
                      expand = expansion(mult = c(0.05, 0.3))) +
   scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
   scale_fill_manual(values = c("Lab" = color_mustard,
@@ -457,15 +457,15 @@ emm_smr_plot <- ggplot(emm_smr_df) +
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
-  facet_wrap(~strain) +
+  facet_wrap(~ strain) +
   theme_minimal() +
-  theme(strip.background = element_rect(fill = "white", 
-                                        color = "black", 
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
                                         linewidth = 0.8),
-        strip.text = element_text(size = 10, 
+        strip.text = element_text(size = 10,
                                   face = "bold"),
-        panel.border = element_rect(color = "black", 
-                                    fill = NA, 
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
@@ -550,7 +550,7 @@ emm_spleen_mass_plot <- ggplot(emm_spleen_mass_df) +
                                              dodge.width = 0.5),
              alpha = 0.3,
              size = 1.5) +
-  scale_y_continuous(name = "Spleen Mass (g)",
+  scale_y_continuous(name = expression(bold("Spleen Mass (g)")),
                      expand = expansion(mult = c(0.05, 0.3))) +
   scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
   scale_fill_manual(values = c("Lab" = color_mustard,
@@ -563,7 +563,7 @@ emm_spleen_mass_plot <- ggplot(emm_spleen_mass_df) +
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
-  facet_wrap(~strain) +
+  facet_wrap(~ strain) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white",
                                         color = "black",
@@ -603,7 +603,7 @@ spleen_mass_reg <- ggplot(spleen_mass_compiled_data,
               se = TRUE,
               alpha = 0.15,
               linewidth = 0.8) +
-  facet_wrap( ~ strain) + 
+  facet_wrap(~ strain) + 
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
@@ -620,9 +620,9 @@ spleen_mass_reg <- ggplot(spleen_mass_compiled_data,
                      name = expression(bolditalic("T. muris") ~
                                          bold("Dose"))) +
   scale_x_continuous(trans = "log10",
-                     name = "Body Mass (g)") +
+                     name = expression(bold("Body Mass (g)"))) +
   scale_y_continuous(trans = "log10",
-                     name = "Spleen Mass (g)") +
+                     name = expression(bold("Spleen Mass (g)"))) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white",
                                         color = "black",
@@ -645,14 +645,15 @@ plot_saver("spleen_vs_body_mass_reg.png",
 
 ```
 
-# Spleen mass adjusted for body mass
+# Spleen mass adjusted for body mass for B6 and B10. I'm splitting the strains 
+to not overfit the model.
 
 ```{r}
 
 spleen_adj_lmer <- lmer(spleen_mass_g ~
-                          strain *
                           lab_or_rw *
-                          t_muris_dose +
+                          t_muris_dose * 
+                          strain +
                           mass +
                           (1 | cage_wedge),
                         data = spleen_mass_compiled_data)
@@ -707,7 +708,7 @@ emm_adj_spleen_plot <- ggplot(emm_adj_spleen_df) +
                                              dodge.width = 0.5),
              alpha = 0.3,
              size = 1.5) +
-  scale_y_continuous(name = "Spleen Mass Adjusted for Body Mass (g)",
+  scale_y_continuous(name = expression(bold("Spleen Mass Adjusted for Body Mass (g)")),
                      expand = expansion(mult = c(0.05, 0.3))) +
   scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
   scale_fill_manual(values = c("Lab" = color_mustard,
@@ -720,7 +721,7 @@ emm_adj_spleen_plot <- ggplot(emm_adj_spleen_df) +
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                               "RW" = "Rewilded")) +
-  facet_wrap(~strain) +
+  facet_wrap(~ strain) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white",
                                         color = "black",
@@ -797,10 +798,10 @@ spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data,
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Laboratory",
                                "RW" = "Rewilded")) +
-  scale_x_continuous(trans = scales::log_trans(),
-                     name = "Spleen Mass (g)") +
-  scale_y_continuous(trans = scales::log_trans(),
-                     name = "Extracted Lymphocyte Count") +
+  scale_x_continuous(trans = "log10",
+                     name = expression(bold("Spleen Mass (g)"))) +
+  scale_y_continuous(trans = "log10",
+                     name = expression(bold("Extracted Lymphocyte Count"))) +
   guides(fill = guide_legend(override.aes = list(shape = 21, color = "black")),
          color = "none") +
   theme_minimal() +
@@ -847,7 +848,10 @@ spleen_cbc_reg <- ggplot(spleen_cbc,
                      labels = c("Lab" = "Laboratory",
                                 "RW" = "Rewilded")) +
   scale_fill_manual(values = c("Lab" = color_mustard,
-                                "RW" = color_green)) +
+                                "RW" = color_green),
+                     name = expression(bold("Environment")),
+                     labels = c("Lab" = "Laboratory",
+                                "RW" = "Rewilded")) +
   scale_shape_manual(values = c("Zero" = 1,
                                 "Low" = 13,
                                 "High" = 3),

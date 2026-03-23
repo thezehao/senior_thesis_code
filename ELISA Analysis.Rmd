@@ -127,7 +127,7 @@ elisa_summary_plotter <- function(input_data,
               shape = 21,
               color = "black") +
     facet_wrap(~ treatment,
-               labeller = as_labeller(c("CD28" = "CD28",
+               labeller = as_labeller(c("CD28" = "CD28SA",
                                         "LPS" = "LPS",
                                         "IgG" = "IgG1"))) +
     scale_fill_manual(values = c("Lab" = color_mustard,
@@ -486,7 +486,7 @@ ifn_input_cd28 <- ifn_input_cd28 %>%
 
 ifn_cd28_plot <- elisa_treatment_plotter(ifn_input_cd28,
                                        expression(bold("IFN-" * gamma ~ "(pg mL"^"-1"*")")),
-                                       title = expression(bold("CD28 Stimulation")))
+                                       title = expression(bold("CD28SA Stimulation")))
 
 ifn_cd28_plot
 
@@ -504,11 +504,11 @@ tnf_input_cd28 <- tnf_input_cd28 %>%
 
 tnf_cd28_plot <- elisa_treatment_plotter(tnf_input_cd28,
                                        expression(bold("TNF-"*alpha ~ "(pg mL"^"-1"*")")),
-                                       title = expression(bold("CD28 Stimulation")))
+                                       title = expression(bold("CD28SA Stimulation")))
 
 tnf_cd28_plot
 
-plot_saver("tnf_cd28_plot.png",
+plot_saver("tnf_cd28_treatment_plot.png",
            tnf_cd28_plot)
 
 ```
@@ -545,7 +545,7 @@ tnf_lps_plot <- elisa_treatment_plotter(tnf_input_lps,
 
 tnf_lps_plot
 
-plot_saver("tnf_lps_plot.png",
+plot_saver("tnf_lps_treatment_plot.png",
            tnf_lps_plot)
 
 ```
@@ -582,7 +582,7 @@ tnf_igg_plot <- elisa_treatment_plotter(tnf_input_igg,
 
 tnf_igg_plot
 
-plot_saver("tnf_igg_plot.png",
+plot_saver("tnf_igg_treatment_plot.png",
            tnf_igg_plot)
 
 ```
@@ -796,7 +796,7 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
                    labels = c("Zero" = "Zero",
                               "High" = "High")) +
   facet_wrap(~ treatment,
-             labeller = as_labeller(c("CD28" = "CD28",
+             labeller = as_labeller(c("CD28" = "CD28SA",
                                       "LPS" = "LPS",
                                       "IgG" = "IgG1"))) +
   theme_minimal() +
@@ -872,7 +872,7 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
                      labels = c("Lab" = "Laboratory",
                               "RW"  = "Rewilded")) +
   facet_wrap(~ treatment,
-             labeller = as_labeller(c("CD28" = "CD28",
+             labeller = as_labeller(c("CD28" = "CD28SA",
                                       "LPS" = "LPS",
                                       "IgG" = "IgG1"))) +
   theme_minimal() +
@@ -950,7 +950,10 @@ ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined,
               se = TRUE,
               alpha = 0.1,
               linewidth = 0.8) +
-  facet_grid(~treatment) +
+  facet_grid(~ treatment,
+             labeller = as_labeller(c("CD28" = "CD28SA",
+                                      "LPS" = "LPS",
+                                      "IgG" = "IgG1"))) +
   scale_fill_manual(values = c("RW" = color_green,
                                "Lab" = color_mustard),
                    name = expression(bold("Environment")),
@@ -992,12 +995,12 @@ plot_saver("ifn_tnf_combined_plot.png",
 
 # Highest IFN
 ifn_tnf_combined %>% 
-  slice_max(mean_concentration_ifn, n = 1) %>% 
+  slice_max(mean_concentration_ifn, n = 10) %>% 
   select(mouse_id, mean_concentration_ifn)
 
 # Highest TNF
 ifn_tnf_combined %>% 
-  slice_max(mean_concentration_tnf, n = 1) %>% 
+  slice_max(mean_concentration_tnf, n = 10) %>% 
   select(mouse_id, mean_concentration_tnf)
 
 ```
