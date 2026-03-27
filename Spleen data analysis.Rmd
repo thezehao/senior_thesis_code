@@ -3,8 +3,8 @@ title: "Spleen_mass_analysis"
 author: "Zehao Wu"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 # First time run order: Spleen → CBC → Spleen
@@ -31,6 +31,8 @@ library(lme4)
 library(lmerTest)
 library(scales)
 library(DHARMa)
+library(kableExtra)
+library(sjPlot) # does not work when knitting to PDF
 
 ```
 
@@ -364,12 +366,12 @@ spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data,
   scale_fill_manual(values = c("RW" = color_green,
                                "Lab" = color_mustard),
                     name = expression(bold("Environment")),
-                    labels = c("Lab" = "Laboratory",
+                    labels = c("Lab" = "Lab",
                                "RW" = "Rewilded")) +
   scale_color_manual(values = c("RW" = color_green,
                                 "Lab" = color_mustard),
                      name = expression(bold("Environment")),
-                     labels = c("Lab" = "Laboratory",
+                     labels = c("Lab" = "Lab",
                                 "RW" = "Rewilded")) +
   scale_y_continuous(name = expression(bold("Spleen to Body Mass Ratio (SMR)")),
                      expand = expansion(mult = c(0.05, 0.3))) +
@@ -406,15 +408,16 @@ smr_lmer <- lmer(spleen_mass_ratio ~
                    (1 | cage_wedge), 
                  data = spleen_mass_compiled_data)
 
-summary(smr_lmer)
+tab_model(smr_lmer, show.stat = TRUE)
+# statistic is t-value btw
 
-emm_smr <- emmeans(smr_lmer, 
-                   specs = c("t_muris_dose", "lab_or_rw"), 
+emm_smr <- emmeans(smr_lmer,
+                   specs = c("t_muris_dose", "lab_or_rw"),
                    by = c("strain"),
                    type = "response")
 emm_smr
 
-pairs(emm_smr)
+kable(pairs(emm_smr))
 
 emm_smr_df <- as.data.frame(emm_smr)
 
@@ -450,12 +453,12 @@ emm_smr_plot <- ggplot(emm_smr_df) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
-                    labels = c("Lab" = "Laboratory",
+                    labels = c("Lab" = "Lab",
                               "RW" = "Rewilded")) +
   scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW" = color_green),
                      name = expression(bold("Environment")),
-                     labels = c("Lab" = "Laboratory",
+                     labels = c("Lab" = "Lab",
                               "RW" = "Rewilded")) +
   facet_wrap(~ strain) +
   theme_minimal() +
@@ -471,7 +474,7 @@ emm_smr_plot <- ggplot(emm_smr_df) +
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  ggtitle("EMM of SMR with 95% CI")
+  ggtitle("Marginal Means of SMR (95% CI)")
 
 emm_smr_plot
 
@@ -512,15 +515,16 @@ spleen_lmer <- lmer(spleen_mass_g ~
                    (1 | cage_wedge), 
                  data = spleen_mass_compiled_data)
 
-summary(spleen_lmer)
+tab_model(spleen_lmer, show.stat = TRUE)
+# statistic is t-value btw
 
-emm_spleen_mass <- emmeans(spleen_lmer, 
-                   specs = c("t_muris_dose", "lab_or_rw"), 
+emm_spleen_mass <- emmeans(spleen_lmer,
+                   specs = c("t_muris_dose", "lab_or_rw"),
                    by = c("strain"),
                    type = "response")
 emm_spleen_mass
 
-pairs(emm_spleen_mass)
+kable(pairs(emm_spleen_mass))
 
 emm_spleen_mass_df <- as.data.frame(emm_spleen_mass)
 
@@ -556,12 +560,12 @@ emm_spleen_mass_plot <- ggplot(emm_spleen_mass_df) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
-                    labels = c("Lab" = "Laboratory",
+                    labels = c("Lab" = "Lab",
                               "RW" = "Rewilded")) +
   scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW" = color_green),
                      name = expression(bold("Environment")),
-                     labels = c("Lab" = "Laboratory",
+                     labels = c("Lab" = "Lab",
                               "RW" = "Rewilded")) +
   facet_wrap(~ strain) +
   theme_minimal() +
@@ -577,7 +581,7 @@ emm_spleen_mass_plot <- ggplot(emm_spleen_mass_df) +
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  ggtitle("EMM of Spleen Mass with 95% CI")
+  ggtitle("Marginal Means of Spleen Mass (95% CI)")
 
 emm_spleen_mass_plot
 
@@ -607,12 +611,12 @@ spleen_mass_reg <- ggplot(spleen_mass_compiled_data,
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
-                    labels = c("Lab" = "Laboratory",
+                    labels = c("Lab" = "Lab",
                                "RW" = "Rewilded")) +
   scale_color_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
-                    labels = c("Lab" = "Laboratory",
+                    labels = c("Lab" = "Lab",
                                "RW" = "Rewilded")) +
   scale_shape_manual(values = c("Zero" = 1,
                                 "Low" = 13,
@@ -658,7 +662,8 @@ spleen_adj_lmer <- lmer(spleen_mass_g ~
                           (1 | cage_wedge),
                         data = spleen_mass_compiled_data)
 
-summary(spleen_adj_lmer)
+tab_model(spleen_adj_lmer, show.stat = TRUE)
+# statistic is t-value btw
 
 qqnorm(resid(spleen_adj_lmer))
 qqline(resid(spleen_adj_lmer))
@@ -678,49 +683,49 @@ emm_adj_spleen <- emmeans(spleen_adj_lmer,
 
 summary(emm_adj_spleen)
 
-pairs(emm_adj_spleen)
+kable(pairs(emm_adj_spleen))
 
 emm_adj_spleen_df <- as.data.frame(emm_adj_spleen)
 
 emm_adj_spleen_plot <- ggplot(emm_adj_spleen_df) +
-  geom_point(aes(x = t_muris_dose,
+  geom_point(aes(x = lab_or_rw,
                  y = emmean,
-                 fill = lab_or_rw,
-                 group = lab_or_rw),
+                 fill = t_muris_dose,
+                 group = t_muris_dose),
              position = position_dodge(width = 0.5),
              alpha = 1,
              size = 3,
              shape = 21,
              color = "black") +
-  geom_errorbar(aes(x = t_muris_dose,
+  geom_errorbar(aes(x = lab_or_rw,
                     ymin = lower.CL,
                     ymax = upper.CL,
-                    color = lab_or_rw,
-                    group = lab_or_rw),
+                    color = t_muris_dose,
+                    group = t_muris_dose),
                 width = 0.3,
                 alpha = 0.8,
              position = position_dodge(width = 0.5)) +
   geom_point(data = spleen_mass_compiled_data,
-             aes(x = t_muris_dose,
+             aes(x = lab_or_rw,
                  y = spleen_mass_g,
-                 color = lab_or_rw),
+                 color = t_muris_dose),
              position = position_jitterdodge(jitter.width = 0.1,
                                              dodge.width = 0.5),
              alpha = 0.3,
              size = 1.5) +
   scale_y_continuous(name = expression(bold("Spleen Mass Adjusted for Body Mass (g)")),
                      expand = expansion(mult = c(0.05, 0.3))) +
-  scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
-  scale_fill_manual(values = c("Lab" = color_mustard,
-                               "RW" = color_green),
-                    name = expression(bold("Environment")),
-                    labels = c("Lab" = "Laboratory",
+  scale_x_discrete(name = expression(bold("Environment")),
+                   labels = c("Lab" = "Lab",
                               "RW" = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_mustard,
-                                "RW" = color_green),
-                     name = expression(bold("Environment")),
-                     labels = c("Lab" = "Laboratory",
-                              "RW" = "Rewilded")) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "Low" = color_mustard,
+                               "High" = color_orange),
+                    name = expression(bolditalic("T. muris")~bold("Dose"))) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "Low" = color_mustard,
+                                "High" = color_orange),
+                     name = expression(bolditalic("T. muris")~bold("Dose"))) +
   facet_wrap(~ strain) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white",
@@ -735,7 +740,7 @@ emm_adj_spleen_plot <- ggplot(emm_adj_spleen_df) +
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5, face = "bold")) +
-  ggtitle("EMM of Adjusted Spleen Mass with 95% CI")
+  ggtitle("Marginal Means of Adjusted Spleen Mass (95% CI)")
 
 emm_adj_spleen_plot
 
@@ -752,7 +757,8 @@ lym_lmer <- lmer(log(spleen_mass_ratio) ~
                    (1 | cage_wedge), 
              data = lym_number_spleen_data)
 
-summary(lym_lmer)
+tab_model(lym_lmer, show.stat = TRUE)
+# statistic is t-value btw
 
 ```
 
@@ -791,12 +797,12 @@ spleen_mass_lym_count_plot <- ggplot(lym_number_spleen_data,
   scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW" = color_green),
                      name = expression(bold("Environment")),
-                     labels = c("Lab" = "Laboratory",
+                     labels = c("Lab" = "Lab",
                                 "RW" = "Rewilded")) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
-                    labels = c("Lab" = "Laboratory",
+                    labels = c("Lab" = "Lab",
                                "RW" = "Rewilded")) +
   scale_x_continuous(trans = "log10",
                      name = expression(bold("Spleen Mass (g)"))) +
@@ -845,12 +851,12 @@ spleen_cbc_reg <- ggplot(spleen_cbc,
   scale_color_manual(values = c("Lab" = color_mustard,
                                 "RW" = color_green),
                      name = expression(bold("Environment")),
-                     labels = c("Lab" = "Laboratory",
+                     labels = c("Lab" = "Lab",
                                 "RW" = "Rewilded")) +
   scale_fill_manual(values = c("Lab" = color_mustard,
                                 "RW" = color_green),
                      name = expression(bold("Environment")),
-                     labels = c("Lab" = "Laboratory",
+                     labels = c("Lab" = "Lab",
                                 "RW" = "Rewilded")) +
   scale_shape_manual(values = c("Zero" = 1,
                                 "Low" = 13,

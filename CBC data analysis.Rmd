@@ -3,8 +3,8 @@ title: "CBC data analysis"
 author: "Zehao Wu"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 # First time run order: Spleen → CBC → Spleen
@@ -31,6 +31,8 @@ library(scales)
 library(haven)
 library(broom.mixed)
 library(readr)
+library(kableExtra)
+library(sjPlot) # does not work when knitting to PDF
 
 ```
 
@@ -186,17 +188,17 @@ emm_plotter <- function(emm_df,
              fontface = "italic",
              alpha = 0.6) +
     facet_grid(lab_or_rw ~ strain,
-               labeller = labeller(lab_or_rw = c("Lab" = "Laboratory",
+               labeller = labeller(lab_or_rw = c("Lab" = "Lab",
                                                   "RW" = "Rewilded"))) +
     scale_fill_manual(values = c("Zero" = color_dark_blue,
-                                 "Low"  = color_yellow,
+                                 "Low"  = color_mustard,
                                  "High" = color_orange),
                       name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
     scale_color_manual(values = c("Zero" = color_dark_blue,
-                                  "Low"  = color_yellow,
+                                  "Low"  = color_mustard,
                                   "High" = color_orange),
                        name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
-    scale_y_continuous(name = y_label) + 
+    scale_y_continuous(name = y_label) +
     # add expand = expansion(mult = c(0.05, 0.3)) if adding sig astrix.
     theme_minimal() +
     theme(strip.background = element_rect(fill = "white",
@@ -211,7 +213,11 @@ emm_plotter <- function(emm_df,
           plot.title = element_text(hjust = 0.5,
                                     face = "bold"),
           axis.title.x = element_text(face = "bold"),
-          axis.title.y = element_text(face = "bold")) +
+          axis.title.y = element_text(face = "bold"),
+          axis.text = element_text(color = "black"),
+          axis.ticks = element_line(color = "black",
+                                    linewidth = 0.3),
+          axis.ticks.length = unit(0.15, "cm")) +
     xlab("Phase") +
     ggtitle(title)
 }
@@ -261,14 +267,14 @@ cbc_plotter <- function(cbc_data,
            fontface = "italic",
            alpha = 0.6) +
   facet_grid(lab_or_rw ~ strain,
-             labeller = labeller(lab_or_rw = c("Lab" = "Laboratory",
+             labeller = labeller(lab_or_rw = c("Lab" = "Lab",
                                                 "RW" = "Rewilded"))) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
-                               "Low"  = color_yellow,
+                               "Low"  = color_mustard,
                                "High" = color_orange),
                     name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "Low"  = color_yellow,
+                                "Low"  = color_mustard,
                                 "High" = color_orange),
                      name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   theme_minimal() +
@@ -284,7 +290,11 @@ cbc_plotter <- function(cbc_data,
         plot.title = element_text(hjust = 0.5,
                                   face = "bold"),
         axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
+        axis.title.y = element_text(face = "bold"),
+        axis.text = element_text(color = "black"),
+        axis.ticks = element_line(color = "black",
+                                  linewidth = 0.3),
+        axis.ticks.length = unit(0.15, "cm")) +
   xlab("Phase") +
   ylab(y_label) +
   ggtitle(title)
@@ -562,15 +572,7 @@ bar_plot_input <- bind_rows(human_17_18,
                                        "mon_percent",
                                        "eos_percent",
                                        "bas_percent")),
-         strain = factor(strain, levels = c("Human", "C57BL/6J", "B10.BR")),
-         facet_label = case_when(
-           strain == "Human" ~ gsub("Human_", "", group),
-           TRUE ~ gsub("C57BL/6J |B10.BR ", "", group)
-         ),
-         facet_label = factor(facet_label,
-                              levels = c("2017_18", "2021_23",
-                                         "Zero Lab", "Low Lab", "High Lab",
-                                         "Zero RW", "Low RW", "High RW")))
+         strain = factor(strain, levels = c("Human", "C57BL/6J", "B10.BR")))
 
 data_saver(data_name = bar_plot_input,
            path = file.path(clean_data_path, 
@@ -580,8 +582,8 @@ data_saver(data_name = bar_plot_input,
 
 ```{r}
 
-comp_plot <- ggplot(bar_plot_input,
-                    aes(x = facet_label,
+comparative_cbc <- ggplot(bar_plot_input,
+                    aes(x = group,
                         y = cbc_percent,
                         fill = cell_type)) +
   geom_col(position = "stack",
@@ -599,23 +601,24 @@ comp_plot <- ggplot(bar_plot_input,
                                "eos_percent" = "Eosinophils",
                                "bas_percent" = "Basophils"),
                     name = expression(bold("Immune Cell Type"))) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
-  scale_x_discrete(labels = c("2017_18" = "2017-18 NHANES",
-                               "2021_23" = "2021-23 NHANES",
-                               "Zero Lab" = "Zero Dose Laboratory",
-                               "Low Lab" = "Low Dose Laboratory",
-                               "High Lab" = "High Dose Laboratory",
-                               "Zero RW" = "Zero Dose Rewilded",
-                               "Low RW" = "Low Dose Rewilded",
-                               "High RW" = "High Dose Rewilded")) +
-  facet_wrap(~ strain, scales = "free_x") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)),
+                     name = "CBC Composition") +
+  scale_x_discrete(labels = c("Human_2017_18"     = "2017-18",
+                               "Human_2021_23"     = "2021-23",
+                               "C57BL/6J Zero Lab" = "B6 Zero",
+                               "B10.BR Zero Lab"   = "B10 Zero",
+                               "C57BL/6J Low Lab"  = "B6 Low",
+                               "B10.BR Low Lab"    = "B10 Low",
+                               "C57BL/6J High Lab" = "B6 High",
+                               "B10.BR High Lab"   = "B10 High",
+                               "C57BL/6J Zero RW"  = "B6 Zero",
+                               "B10.BR Zero RW"    = "B10 Zero",
+                               "C57BL/6J Low RW"   = "B6 Low",
+                               "B10.BR Low RW"     = "B10 Low",
+                               "C57BL/6J High RW"  = "B6 High",
+                               "B10.BR High RW"    = "B10 High")) +
   theme_minimal() +
-  theme(strip.background = element_rect(fill = "white",
-                                        color = "black",
-                                        linewidth = 0.8),
-        strip.text = element_text(size = 10,
-                                  face = "bold"),
-        panel.border = element_rect(color = "black",
+  theme(panel.border = element_rect(color = "black",
                                     fill = NA,
                                     linewidth = 0.8),
         panel.grid = element_blank(),
@@ -623,17 +626,20 @@ comp_plot <- ggplot(bar_plot_input,
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5,
                                   face = "bold"),
+        axis.text = element_text(color = "black"),
         axis.text.x = element_text(angle = 45,
                                    hjust = 1,
-                                   size = 8)) +
-  xlab("Population") +
-  ylab("CBC Composition") +
+                                   size = 8),
+        axis.ticks = element_line(color = "black",
+                                  linewidth = 0.3),
+        axis.ticks.length = unit(0.15, "cm")) +
+  xlab("") +
   ggtitle("CBC Composition: Mice vs. Humans")
 
-comp_plot
+comparative_cbc
 
 plot_saver("cbc_composition_plot.png",
-           plot = comp_plot)
+           plot = comparative_cbc)
 
 ```
 
@@ -782,7 +788,8 @@ neu_pre <- lmer(log(neu_number) ~ t_muris_dose * strain +
                 data = filter(cleaned_combined_cbc_data,
                               phase == "Pre-RW"))
 
-print(summary(neu_pre), correlation = FALSE)
+tab_model(neu_pre, show.stat = TRUE)
+# statistic is t-value btw
 neu_pre_sim <- simulateResiduals(fittedModel = neu_pre, n = 1000)
 plot(neu_pre_sim)
 testUniformity(neu_pre_sim)
@@ -798,7 +805,8 @@ neu_during <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
-print(summary(neu_during), correlation = FALSE)
+tab_model(neu_during, show.stat = TRUE)
+# statistic is t-value btw
 neu_during_sim <- simulateResiduals(fittedModel = neu_during, n = 1000)
 plot(neu_during_sim)
 testUniformity(neu_during_sim)
@@ -816,7 +824,8 @@ neu_post <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
 
-print(summary(neu_post), correlation = FALSE)
+tab_model(neu_post, show.stat = TRUE)
+# statistic is t-value btw
 neu_post_sim <- simulateResiduals(fittedModel = neu_post, n = 1000)
 plot(neu_post_sim)
 testUniformity(neu_post_sim)
@@ -870,7 +879,7 @@ emm_neu_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "neu_number",
   y_label = expression(bold("Neutrophil Count (10"^3~"cells/"*mu*"L)")),
-  title = "EMM of Neutrophil Count with 95% CI"
+  title = "Marginal Means of Neutrophil Count (95% CI)"
 )
 
 emm_neu_plot
@@ -888,7 +897,8 @@ lym_pre <- lmer(log(lym_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
 
-print(summary(lym_pre), correlation = FALSE)
+tab_model(lym_pre, show.stat = TRUE)
+# statistic is t-value btw
 lym_pre_sim <- simulateResiduals(fittedModel = lym_pre, n = 1000)
 plot(lym_pre_sim)
 testUniformity(lym_pre_sim)
@@ -902,7 +912,8 @@ lym_during <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
-print(summary(lym_during), correlation = FALSE)
+tab_model(lym_during, show.stat = TRUE)
+# statistic is t-value btw
 lym_during_sim <- simulateResiduals(fittedModel = lym_during, n = 1000)
 plot(lym_during_sim)
 testUniformity(lym_during_sim)
@@ -917,7 +928,8 @@ lym_post <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
 
-print(summary(lym_post), correlation = FALSE)
+tab_model(lym_post, show.stat = TRUE)
+# statistic is t-value btw
 lym_post_sim <- simulateResiduals(fittedModel = lym_post, n = 1000)
 plot(lym_post_sim)
 testUniformity(lym_post_sim)
@@ -966,7 +978,7 @@ emm_lym_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "lym_number",
   y_label = expression(bold("Lymphocyte Count (10"^3~"cells/"*mu*"L)")),
-  title = "EMM of Lymphocyte Count with 95% CI"
+  title = "Marginal Means of Lymphocyte Count (95% CI)"
 )
 
 emm_lym_plot
@@ -984,7 +996,8 @@ mon_pre <- lmer(log(mon_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
 
-print(summary(mon_pre), correlation = FALSE)
+tab_model(mon_pre, show.stat = TRUE)
+# statistic is t-value btw
 mon_pre_sim <- simulateResiduals(fittedModel = mon_pre, n = 1000)
 plot(mon_pre_sim)
 testUniformity(mon_pre_sim)
@@ -998,7 +1011,8 @@ mon_during <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
-print(summary(mon_during), correlation = FALSE)
+tab_model(mon_during, show.stat = TRUE)
+# statistic is t-value btw
 mon_during_sim <- simulateResiduals(fittedModel = mon_during, n = 1000)
 plot(mon_during_sim)
 testUniformity(mon_during_sim)
@@ -1013,7 +1027,8 @@ mon_post <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
 
-print(summary(mon_post), correlation = FALSE)
+tab_model(mon_post, show.stat = TRUE)
+# statistic is t-value btw
 mon_post_sim <- simulateResiduals(fittedModel = mon_post, n = 1000)
 plot(mon_post_sim)
 testUniformity(mon_post_sim)
@@ -1062,7 +1077,7 @@ emm_mon_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "mon_number",
   y_label = expression(bold("Monocyte Count (10"^3~"cells/"*mu*"L)")),
-  title = "EMM of Monocyte Count with 95% CI"
+  title = "Marginal Means of Monocyte Count (95% CI)"
 )
 
 emm_mon_plot
@@ -1080,7 +1095,8 @@ eos_pre <- lmer(log1p(eos_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
 
-print(summary(eos_pre), correlation = FALSE)
+tab_model(eos_pre, show.stat = TRUE)
+# statistic is t-value btw
 eos_pre_sim <- simulateResiduals(fittedModel = eos_pre, n = 1000)
 plot(eos_pre_sim)
 testUniformity(eos_pre_sim)
@@ -1094,7 +1110,8 @@ eos_during <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
-print(summary(eos_during), correlation = FALSE)
+tab_model(eos_during, show.stat = TRUE)
+# statistic is t-value btw
 eos_during_sim <- simulateResiduals(fittedModel = eos_during, n = 1000)
 plot(eos_during_sim)
 testUniformity(eos_during_sim)
@@ -1109,7 +1126,8 @@ eos_post <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
 
-print(summary(eos_post), correlation = FALSE)
+tab_model(eos_post, show.stat = TRUE)
+# statistic is t-value btw
 eos_post_sim <- simulateResiduals(fittedModel = eos_post, n = 1000)
 plot(eos_post_sim)
 testUniformity(eos_post_sim)
@@ -1165,7 +1183,7 @@ emm_eos_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "eos_number",
   y_label = expression(bold("Eosinophil Count (10"^3~"cells/"*mu*"L)")),
-  title = "EMM of Eosinophil Count with 95% CI",
+  title = "Marginal Means of Eosinophil Count (95% CI)",
   floor_zero = TRUE
 )
 
@@ -1184,7 +1202,8 @@ bas_pre <- lmer(log1p(bas_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
 
-print(summary(bas_pre), correlation = FALSE)
+tab_model(bas_pre, show.stat = TRUE)
+# statistic is t-value btw
 bas_pre_sim <- simulateResiduals(fittedModel = bas_pre, n = 1000)
 plot(bas_pre_sim)
 testUniformity(bas_pre_sim)
@@ -1198,7 +1217,8 @@ bas_during <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
 
-print(summary(bas_during), correlation = FALSE)
+tab_model(bas_during, show.stat = TRUE)
+# statistic is t-value btw
 bas_during_sim <- simulateResiduals(fittedModel = bas_during, n = 1000)
 plot(bas_during_sim)
 testUniformity(bas_during_sim)
@@ -1216,7 +1236,8 @@ bas_post <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
 
-print(summary(bas_post), correlation = FALSE)
+tab_model(bas_post, show.stat = TRUE)
+# statistic is t-value btw
 bas_post_sim <- simulateResiduals(fittedModel = bas_post, n = 1000)
 plot(bas_post_sim)
 testUniformity(bas_post_sim)
@@ -1275,7 +1296,7 @@ emm_bas_plot <- emm_plotter(
   cbc_input = cleaned_combined_cbc_data,
   y_col = "bas_number",
   y_label = expression(bold("Basophil Count (10"^3~"cells/"*mu*"L)")),
-  title = "EMM of Basophil Count with 95% CI",
+  title = "Marginal Means of Basophil Count (95% CI)",
   floor_zero = TRUE
 )
 
