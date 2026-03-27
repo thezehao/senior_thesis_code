@@ -111,9 +111,10 @@ color_navy <- "#4477AA"
 elisa_summary_plotter <- function(input_data,
                                   y_label,
                                   title = NULL) {
-  ggplot(input_data, aes(x = t_muris_dose,
-                        y = mean_concentration,
-                        fill = lab_or_rw)) +
+  ggplot(input_data %>% mutate(treatment = factor(treatment, levels = c("IgG", "LPS", "CD28"))),
+         aes(x = t_muris_dose,
+             y = mean_concentration,
+             fill = lab_or_rw)) +
     geom_boxplot(position = position_dodge(width = 0.75),
                alpha = 0.8,
                outlier.shape = NA,
@@ -172,7 +173,7 @@ elisa_summary_plotter <- function(input_data,
 elisa_treatment_plotter <- function(input_data,
                                    y_label,
                                    title = NULL) {
-  ggplot(input_data,
+  ggplot(input_data %>% mutate(treatment = factor(treatment, levels = c("IgG", "LPS", "CD28"))),
          aes(x = t_muris_dose,
              y = mean_concentration,
              fill = lab_or_rw)) +
@@ -751,8 +752,16 @@ emm_tnf_df <- as.data.frame(emm_tnf) %>%
 # We're plotting the LOD/2 values as the data points as well. 
 # That is what those clustered points are. Those were zeros.
 
-emm_ifn_plot <- ggplot(emm_ifn_df) +
-  geom_point(data = ifn_glmer_input,
+emm_ifn_plot <- ggplot(emm_ifn_df %>% 
+                         mutate(treatment = factor(treatment, 
+                                                   levels = c("IgG", 
+                                                              "LPS", 
+                                                              "CD28")))) +
+  geom_point(data = ifn_glmer_input %>% 
+               mutate(treatment = factor(treatment, 
+                                         levels = c("IgG", 
+                                                    "LPS", 
+                                                    "CD28"))),
              aes(x = t_muris_dose,
                  y = mean_concentration,
                  color = lab_or_rw),
@@ -785,12 +794,18 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Laboratory",
                               "RW"  = "Rewilded")) +
-  scale_y_continuous(name = expression(bold("IFN-" * gamma ~ 
+  scale_y_continuous(name = expression(bold("IFN-" * gamma ~
                                               "(pg mL"^"-1" * ")")),
-                     expand = expansion(mult = c(0.05, 
-                                                 0.3)),
-                     trans = "log10") +
-  scale_x_discrete(name = expression(bolditalic("T. muris") ~ 
+                     expand = expansion(mult = 0),
+                     trans = "log10",
+                     breaks = 10^seq(-1, 4),
+                     labels = c("0.1", "1", "10", "100", "1000", "10000"),
+                     limits = c(0.1, 10000),
+                     guide = guide_axis_logticks(long = 1.5,
+                                                mid = 1,
+                                                short = 0.5,
+                                                expanded = FALSE)) +
+  scale_x_discrete(name = expression(bolditalic("T. muris") ~
                                               bold("Dose")),
                    limits = c("Zero", "High"),
                    labels = c("Zero" = "Zero",
@@ -811,8 +826,10 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
         panel.grid = element_blank(),
         plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
-  ggtitle(expression(bold("EMM of IFN-" * gamma ~ "with 95% CI")))
+        axis.title.y = element_text(face = "bold"),
+        axis.ticks.y = element_line(color = "black", linewidth = 0.5),
+        axis.ticks.length = unit(0.1, "cm")) +
+  ggtitle(expression(bold("Estimated Marginal Means of IFN-" * gamma ~ "with 95% CI")))
 
 emm_ifn_plot
 
@@ -829,8 +846,16 @@ plot_saver("emm_ifn_plot.png",
 # We're plotting the LOD/2 values as the data points as well. 
 # That is what those clustered points are. Those were zeros.
 
-emm_tnf_plot <- ggplot(emm_tnf_df) +
-  geom_point(data = tnf_glmer_input,
+emm_tnf_plot <- ggplot(emm_tnf_df %>% 
+                         mutate(treatment = factor(treatment, 
+                                                   levels = c("IgG", 
+                                                              "LPS", 
+                                                              "CD28")))) +
+  geom_point(data = tnf_glmer_input %>% 
+               mutate(treatment = factor(treatment, 
+                                         levels = c("IgG", 
+                                                    "LPS", 
+                                                    "CD28"))),
              aes(x = t_muris_dose,
                  y = mean_concentration,
                  color = lab_or_rw),
@@ -854,8 +879,15 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
              size = 3,
              color = "black") +
   scale_y_continuous(name = expression(bold("TNF-"*alpha~"(pg mL"^"-1"*")")),
-                     expand = expansion(mult = c(0.05, 0.3)),
-                     trans = "log10") +
+                     expand = expansion(mult = 0),
+                     trans = "log10",
+                     breaks = 10^seq(-1, 4),
+                     labels = c("0.1", "1", "10", "100", "1000", "10000"),
+                     limits = c(0.1, 10000),
+                     guide = guide_axis_logticks(long = 1.5,
+                                                mid = 1,
+                                                short = 0.5,
+                                                expanded = FALSE)) +
   scale_x_discrete(name = expression(bolditalic("T. muris") ~
                                        bold("Dose")),
                    limits = c("Zero", "High"),
@@ -887,8 +919,11 @@ emm_tnf_plot <- ggplot(emm_tnf_df) +
         panel.grid = element_blank(),
         plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold")) +
-  ggtitle(expression(bold("EMM of TNF-" * alpha ~ "with 95% CI")))
+        axis.title.y = element_text(face = "bold"),
+        axis.ticks.y = element_line(color = "black", linewidth = 0.5),
+        axis.ticks.length = unit(0.1, "cm")) +
+  ggtitle(expression(bold("Estimated Marginal Means of TNF-" * 
+                            alpha ~ "with 95% CI")))
 
 emm_tnf_plot
 
@@ -937,7 +972,11 @@ ifn_tnf_combined <- left_join(ifn_glmer_input,
 
 ```{r}
 
-ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined,
+ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined %>% 
+                                  mutate(treatment = factor(treatment, 
+                                                            levels = c("IgG", 
+                                                                       "LPS", 
+                                                                       "CD28"))),
                                 aes(x = mean_concentration_ifn,
                                     y = mean_concentration_tnf,
                                     fill = lab_or_rw,
@@ -968,9 +1007,25 @@ ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined,
                                 "High" = 3),
                      name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   scale_x_continuous(name = expression(bold("IFN-"*gamma~"(pg mL"^"-1"*")")),
-                     trans = "log10") +
+                     trans = "log10",
+                     breaks = 10^seq(-1, 3),
+                     labels = c("0.1", "1", "10", "100", "1000"),
+                     limits = c(0.1, 1000),
+                     expand = expansion(mult = 0),
+                     guide = guide_axis_logticks(long = 1.5,
+                                                mid = 1,
+                                                short = 0.5,
+                                                expanded = FALSE)) +
   scale_y_continuous(name = expression(bold("TNF-"*alpha~"(pg mL"^"-1"*")")),
-                     trans = "log10") +
+                     trans = "log10",
+                     breaks = 10^seq(-1, 3),
+                     labels = c("0.1", "1", "10", "100", "1000"),
+                     limits = c(0.1, 1000),
+                     expand = expansion(mult = 0),
+                     guide = guide_axis_logticks(long = 1.5,
+                                                mid = 1,
+                                                short = 0.5,
+                                                expanded = FALSE)) +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white",
                                         color = "black",
@@ -983,15 +1038,18 @@ ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined,
         panel.grid = element_blank(),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
+        axis.ticks = element_line(color = "black", linewidth = 0.5),
+        axis.ticks.length = unit(0.1, "cm"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
         plot.title = element_text(hjust = 0.5,
-                                  face = "bold")) +
+                                  face = "bold"),
+        panel.spacing = unit(0.6, "cm")) +
   ggtitle(expression(bold("IFN-"*gamma~"vs. TNF-"*alpha~"Concentration")))
 
 ifn_tnf_combined_plot
 
 plot_saver("ifn_tnf_combined_plot.png",
            ifn_tnf_combined_plot)
-
 
 # Highest IFN
 ifn_tnf_combined %>% 
@@ -1002,5 +1060,4 @@ ifn_tnf_combined %>%
 ifn_tnf_combined %>% 
   slice_max(mean_concentration_tnf, n = 10) %>% 
   select(mouse_id, mean_concentration_tnf)
-
 ```

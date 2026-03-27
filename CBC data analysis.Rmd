@@ -185,7 +185,9 @@ emm_plotter <- function(emm_df,
              size = 3,
              fontface = "italic",
              alpha = 0.6) +
-    facet_grid(lab_or_rw ~ strain) +
+    facet_grid(lab_or_rw ~ strain,
+               labeller = labeller(lab_or_rw = c("Lab" = "Laboratory",
+                                                  "RW" = "Rewilded"))) +
     scale_fill_manual(values = c("Zero" = color_dark_blue,
                                  "Low"  = color_yellow,
                                  "High" = color_orange),
@@ -258,7 +260,9 @@ cbc_plotter <- function(cbc_data,
            size = 3,
            fontface = "italic",
            alpha = 0.6) +
-  facet_grid(lab_or_rw ~ strain) +
+  facet_grid(lab_or_rw ~ strain,
+             labeller = labeller(lab_or_rw = c("Lab" = "Laboratory",
+                                                "RW" = "Rewilded"))) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "Low"  = color_yellow,
                                "High" = color_orange),
@@ -557,7 +561,16 @@ bar_plot_input <- bind_rows(human_17_18,
                                        "lym_percent",
                                        "mon_percent",
                                        "eos_percent",
-                                       "bas_percent")))
+                                       "bas_percent")),
+         strain = factor(strain, levels = c("Human", "C57BL/6J", "B10.BR")),
+         facet_label = case_when(
+           strain == "Human" ~ gsub("Human_", "", group),
+           TRUE ~ gsub("C57BL/6J |B10.BR ", "", group)
+         ),
+         facet_label = factor(facet_label,
+                              levels = c("2017_18", "2021_23",
+                                         "Zero Lab", "Low Lab", "High Lab",
+                                         "Zero RW", "Low RW", "High RW")))
 
 data_saver(data_name = bar_plot_input,
            path = file.path(clean_data_path, 
@@ -568,7 +581,7 @@ data_saver(data_name = bar_plot_input,
 ```{r}
 
 comp_plot <- ggplot(bar_plot_input,
-                    aes(x = group,
+                    aes(x = facet_label,
                         y = cbc_percent,
                         fill = cell_type)) +
   geom_col(position = "stack",
@@ -587,8 +600,15 @@ comp_plot <- ggplot(bar_plot_input,
                                "bas_percent" = "Basophils"),
                     name = expression(bold("Immune Cell Type"))) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
-  scale_x_discrete(labels = c("Human_2017_18" = "Human 2017-18",
-                               "Human_2021_23" = "Human 2021-23")) +
+  scale_x_discrete(labels = c("2017_18" = "2017-18 NHANES",
+                               "2021_23" = "2021-23 NHANES",
+                               "Zero Lab" = "Zero Dose Laboratory",
+                               "Low Lab" = "Low Dose Laboratory",
+                               "High Lab" = "High Dose Laboratory",
+                               "Zero RW" = "Zero Dose Rewilded",
+                               "Low RW" = "Low Dose Rewilded",
+                               "High RW" = "High Dose Rewilded")) +
+  facet_wrap(~ strain, scales = "free_x") +
   theme_minimal() +
   theme(strip.background = element_rect(fill = "white",
                                         color = "black",
