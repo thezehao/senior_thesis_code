@@ -944,6 +944,14 @@ emm_ifn_env <- emmeans(ifn_glmer,
 
 kable(pairs(emm_ifn_env))
 
+# Pairwise contrast: treatments within each dose x environment combo
+emm_ifn_trt <- emmeans(ifn_glmer,
+                       specs = "treatment",
+                       by = c("t_muris_dose", "lab_or_rw"),
+                       type = "response")
+
+kable(pairs(emm_ifn_trt))
+
 ```
 
 # Doing the same thing here
@@ -1024,6 +1032,14 @@ emm_tnf_env <- emmeans(tnf_glmer,
                        type = "response")
 
 kable(pairs(emm_tnf_env))
+
+# Pairwise contrast: treatments within each dose x environment combo
+emm_tnf_trt <- emmeans(tnf_glmer,
+                       specs = "treatment",
+                       by = c("t_muris_dose", "lab_or_rw"),
+                       type = "response")
+
+kable(pairs(emm_tnf_trt))
 
 ```
 
@@ -1121,7 +1137,7 @@ emm_ifn_plot <- ggplot(emm_ifn_df) +
         axis.ticks = element_line(color = "black",
                                   linewidth = 0.3),
         axis.ticks.length = unit(0.1, "cm")) +
-  ggtitle(expression(bold("Marginal Means IFN-" * gamma ~ "(95% C.I.)")))
+  ggtitle(expression(bold("Marginal Means of IFN-" * gamma ~ "(95% CI)")))
 
 emm_ifn_plot
 
