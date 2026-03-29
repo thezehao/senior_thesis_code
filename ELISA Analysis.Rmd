@@ -138,9 +138,6 @@ elisa_summary_plotter <- function(input_data,
     scale_fill_manual(values = c("Zero" = color_dark_blue,
                                  "High" = color_orange),
                     name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
-    scale_color_manual(values = c("Zero" = color_dark_blue,
-                                  "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
     scale_x_discrete(labels = c("Lab" = "Lab",
                                 "RW"  = "Rewilded"),
                      name = expression(bold("Environment"))) +
@@ -194,9 +191,6 @@ elisa_treatment_plotter <- function(input_data,
                                                 dodge.width = 0.6)) +
     scale_fill_manual(values = c("Zero" = color_dark_blue,
                                  "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
-    scale_color_manual(values = c("Zero" = color_dark_blue,
-                                  "High" = color_orange),
                     name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
     scale_x_discrete(labels = c("Lab" = "Lab",
                                 "RW"  = "Rewilded"),
@@ -501,16 +495,11 @@ ifn_dose_facet_plot <- ggplot(ifn_input %>%
   facet_wrap(~ t_muris_dose,
              labeller = as_labeller(c("Zero" = "Zero Dose",
                                       "High" = "High Dose"))) +
-  scale_fill_manual(values = c("Lab" = color_mustard,
+  scale_fill_manual(values = c("Lab" = color_purple,
                                "RW"  = color_green),
                     labels = c("Lab" = "Lab",
                                "RW"  = "Rewilded"),
                     name = expression(bold("Environment"))) +
-  scale_color_manual(values = c("Lab" = color_mustard,
-                                "RW"  = color_green),
-                     labels = c("Lab" = "Lab",
-                                "RW"  = "Rewilded"),
-                     name = expression(bold("Environment"))) +
   scale_x_discrete(name = expression(bold("Treatment")),
                    labels = c("CD28" = "CD28SA",
                               "LPS" = "LPS",
@@ -571,16 +560,11 @@ tnf_dose_facet_plot <- ggplot(tnf_input %>%
   facet_wrap(~ t_muris_dose,
              labeller = as_labeller(c("Zero" = "Zero Dose",
                                       "High" = "High Dose"))) +
-  scale_fill_manual(values = c("Lab" = color_mustard,
+  scale_fill_manual(values = c("Lab" = color_purple,
                                "RW"  = color_green),
                     labels = c("Lab" = "Lab",
                                "RW"  = "Rewilded"),
                     name = expression(bold("Environment"))) +
-  scale_color_manual(values = c("Lab" = color_mustard,
-                                "RW"  = color_green),
-                     labels = c("Lab" = "Lab",
-                                "RW"  = "Rewilded"),
-                     name = expression(bold("Environment"))) +
   scale_x_discrete(name = expression(bold("Treatment")),
                    labels = c("CD28" = "CD28SA",
                               "LPS" = "LPS",
@@ -648,9 +632,6 @@ ifn_env_facet_plot <- ggplot(ifn_input %>%
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "High" = color_orange),
                     name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   scale_x_discrete(name = expression(bold("Treatment")),
                    labels = c("CD28" = "CD28SA",
                               "LPS" = "LPS",
@@ -717,9 +698,6 @@ tnf_env_facet_plot <- ggplot(tnf_input %>%
                                       "RW"  = "Rewilded"))) +
   scale_fill_manual(values = c("Zero" = color_dark_blue,
                                "High" = color_orange),
-                    name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
-  scale_color_manual(values = c("Zero" = color_dark_blue,
-                                "High" = color_orange),
                     name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   scale_x_discrete(name = expression(bold("Treatment")),
                    labels = c("CD28" = "CD28SA",
@@ -1179,12 +1157,12 @@ emm_ifn_dose_plot <- ggplot(emm_ifn_df) +
              size = 3,
              shape = 21,
              color = "black") +
-  scale_fill_manual(values = c("Lab" = color_mustard,
+  scale_fill_manual(values = c("Lab" = color_purple,
                                "RW"  = color_green),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",
                                "RW"  = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_mustard,
+  scale_color_manual(values = c("Lab" = color_purple,
                                 "RW"  = color_green),
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Lab",
@@ -1433,12 +1411,12 @@ emm_tnf_dose_plot <- ggplot(emm_tnf_df) +
              size = 3,
              shape = 21,
              color = "black") +
-  scale_fill_manual(values = c("Lab" = color_mustard,
+  scale_fill_manual(values = c("Lab" = color_purple,
                                "RW"  = color_green),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",
                                "RW"  = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_mustard,
+  scale_color_manual(values = c("Lab" = color_purple,
                                 "RW"  = color_green),
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Lab",
@@ -1613,39 +1591,38 @@ ifn_tnf_combined <- left_join(ifn_glmer_input,
 
 #TODO need to find out what hte line is telling me.
 
-ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined %>% 
-                                  mutate(treatment = factor(treatment, 
-                                                            levels = c("IgG", 
-                                                                       "LPS", 
-                                                                       "CD28"))),
+ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined %>%
+                                  mutate(treatment = factor(treatment,
+                                                            levels = c("IgG",
+                                                                       "LPS",
+                                                                       "CD28")),
+                                         lab_or_rw = factor(lab_or_rw,
+                                                            levels = c("Lab", 
+                                                                       "RW")),
+                                         t_muris_dose = factor(t_muris_dose,
+                                                               levels = c("Zero", "High"))),
                                 aes(x = mean_concentration_ifn,
                                     y = mean_concentration_tnf,
-                                    fill = lab_or_rw,
-                                    color = lab_or_rw,
-                                    group = lab_or_rw)) +
-  geom_point(aes(shape = t_muris_dose),
-             size = 2,
-             alpha = 0.8) +
+                                    fill = t_muris_dose,
+                                    color = t_muris_dose,
+                                    group = t_muris_dose)) +
+  geom_point(size = 2,
+             alpha = 0.6) +
   geom_smooth(method = "lm",
               se = TRUE,
-              alpha = 0.1,
+              alpha = 0.2,
               linewidth = 0.8) +
-  facet_grid(~ treatment,
-             labeller = as_labeller(c("CD28" = "CD28SA",
-                                      "LPS" = "LPS",
-                                      "IgG" = "IgG1"))) +
-  scale_fill_manual(values = c("RW" = color_green,
-                               "Lab" = color_mustard),
-                   name = expression(bold("Environment")),
-                   labels = c("Lab" = "Lab",
-                              "RW" = "Rewilded")) +
-  scale_color_manual(values = c("RW" = color_green,
-                               "Lab" = color_mustard),
-                     name = expression(bold("Environment")),
-                     labels = c("Lab" = "Lab",
-                              "RW" = "Rewilded")) +
-  scale_shape_manual(values = c("Zero" = 1,
-                                "High" = 3),
+  facet_grid(lab_or_rw ~ treatment,
+             labeller = labeller(lab_or_rw = c("Lab" = "Lab",
+                                                "RW" = "Rewilded"),
+                                 treatment = c("CD28" = "CD28SA",
+                                               "LPS" = "LPS",
+                                               "IgG" = "IgG1"))) +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "High" = color_orange),
+                    name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "High" = color_orange),
                      name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
   scale_x_continuous(name = expression(bold("IFN-"*gamma~"(pg mL"^"-1"*")")),
                      trans = "log10",
@@ -1699,7 +1676,9 @@ ifn_tnf_combined_plot <- ggplot(ifn_tnf_combined %>%
 ifn_tnf_combined_plot
 
 plot_saver("ifn_tnf_combined_plot.png",
-           ifn_tnf_combined_plot)
+           ifn_tnf_combined_plot,
+           width = 10,
+           height = 6)
 
 # Highest IFN
 ifn_tnf_combined %>% 

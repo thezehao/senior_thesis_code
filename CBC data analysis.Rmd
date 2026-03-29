@@ -605,23 +605,23 @@ comparative_cbc <- ggplot(bar_plot_input,
                      name = "CBC Composition") +
   scale_x_discrete(labels = c("Human_2017_18"     = "2017-18",
                                "Human_2021_23"     = "2021-23",
-                               "C57BL/6J Zero Lab" = "B6 Zero",
-                               "B10.BR Zero Lab"   = "B10 Zero",
-                               "C57BL/6J Low Lab"  = "B6 Low",
-                               "B10.BR Low Lab"    = "B10 Low",
-                               "C57BL/6J High Lab" = "B6 High",
-                               "B10.BR High Lab"   = "B10 High",
-                               "C57BL/6J Zero RW"  = "B6 Zero",
-                               "B10.BR Zero RW"    = "B10 Zero",
-                               "C57BL/6J Low RW"   = "B6 Low",
-                               "B10.BR Low RW"     = "B10 Low",
-                               "C57BL/6J High RW"  = "B6 High",
-                               "B10.BR High RW"    = "B10 High")) +
+                               "C57BL/6J Zero Lab" = "Zero",
+                               "B10.BR Zero Lab"   = "Zero",
+                               "C57BL/6J Low Lab"  = "Low",
+                               "B10.BR Low Lab"    = "Low",
+                               "C57BL/6J High Lab" = "High",
+                               "B10.BR High Lab"   = "High",
+                               "C57BL/6J Zero RW"  = "Zero",
+                               "B10.BR Zero RW"    = "Zero",
+                               "C57BL/6J Low RW"   = "Low",
+                               "B10.BR Low RW"     = "Low",
+                               "C57BL/6J High RW"  = "High",
+                               "B10.BR High RW"    = "High")) +
   theme_minimal() +
-  theme(panel.border = element_rect(color = "black",
-                                    fill = NA,
-                                    linewidth = 0.8),
+  theme(panel.border = element_blank(),
         panel.grid = element_blank(),
+        axis.line = element_line(color = "black",
+                                 linewidth = 0.8),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5,
@@ -874,6 +874,44 @@ emm_neu_combined <- bind_rows(emm_neu_pre, emm_neu_during, emm_neu_post) %>%
 
 ```{r}
 
+# Pairwise: infection status within each environment and strain
+# Pre-RW (no environment effect yet)
+emm_neu_pre_pairs <- emmeans(neu_pre,
+                             specs = "t_muris_dose",
+                             by = "strain",
+                             type = "response")
+
+kable(pairs(emm_neu_pre_pairs),
+      caption = "Neutrophil Pre-RW: Pairwise Comparisons of Infection Status by Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+# During RW: infection within each environment x strain
+emm_neu_during_pairs <- emmeans(neu_during,
+                                specs = "t_muris_dose",
+                                by = c("lab_or_rw", "strain"),
+                                type = "response")
+
+kable(pairs(emm_neu_during_pairs),
+      caption = "Neutrophil During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+# Post-RW: infection within each environment x strain
+emm_neu_post_pairs <- emmeans(neu_post,
+                              specs = "t_muris_dose",
+                              by = c("lab_or_rw", "strain"),
+                              type = "response")
+
+kable(pairs(emm_neu_post_pairs),
+      caption = "Neutrophil Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
+```{r}
+
 emm_neu_plot <- emm_plotter(
   emm_df = emm_neu_combined,
   cbc_input = cleaned_combined_cbc_data,
@@ -973,6 +1011,40 @@ emm_lym_combined <- bind_rows(emm_lym_pre, emm_lym_during, emm_lym_post) %>%
 
 ```{r}
 
+emm_lym_pre_pairs <- emmeans(lym_pre,
+                             specs = "t_muris_dose",
+                             by = "strain",
+                             type = "response")
+
+kable(pairs(emm_lym_pre_pairs),
+      caption = "Lymphocyte Pre-RW: Pairwise Comparisons of Infection Status by Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_lym_during_pairs <- emmeans(lym_during,
+                                specs = "t_muris_dose",
+                                by = c("lab_or_rw", "strain"),
+                                type = "response")
+
+kable(pairs(emm_lym_during_pairs),
+      caption = "Lymphocyte During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_lym_post_pairs <- emmeans(lym_post,
+                              specs = "t_muris_dose",
+                              by = c("lab_or_rw", "strain"),
+                              type = "response")
+
+kable(pairs(emm_lym_post_pairs),
+      caption = "Lymphocyte Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
+```{r}
+
 emm_lym_plot <- emm_plotter(
   emm_df = emm_lym_combined,
   cbc_input = cleaned_combined_cbc_data,
@@ -1067,6 +1139,40 @@ emm_mon_combined <- bind_rows(emm_mon_pre, emm_mon_during, emm_mon_post) %>%
          t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
          strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
          lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+
+```
+
+```{r}
+
+emm_mon_pre_pairs <- emmeans(mon_pre,
+                             specs = "t_muris_dose",
+                             by = "strain",
+                             type = "response")
+
+kable(pairs(emm_mon_pre_pairs),
+      caption = "Monocyte Pre-RW: Pairwise Comparisons of Infection Status by Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_mon_during_pairs <- emmeans(mon_during,
+                                specs = "t_muris_dose",
+                                by = c("lab_or_rw", "strain"),
+                                type = "response")
+
+kable(pairs(emm_mon_during_pairs),
+      caption = "Monocyte During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_mon_post_pairs <- emmeans(mon_post,
+                              specs = "t_muris_dose",
+                              by = c("lab_or_rw", "strain"),
+                              type = "response")
+
+kable(pairs(emm_mon_post_pairs),
+      caption = "Monocyte Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
@@ -1173,6 +1279,37 @@ emm_eos_combined <- bind_rows(emm_eos_pre, emm_eos_during, emm_eos_post) %>%
          t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
          strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
          lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+
+```
+
+```{r}
+
+emm_eos_pre_pairs <- emmeans(eos_pre,
+                             specs = "t_muris_dose",
+                             by = "strain")
+
+kable(pairs(emm_eos_pre_pairs),
+      caption = "Eosinophil Pre-RW: Pairwise Comparisons of Infection Status by Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_eos_during_pairs <- emmeans(eos_during,
+                                specs = "t_muris_dose",
+                                by = c("lab_or_rw", "strain"))
+
+kable(pairs(emm_eos_during_pairs),
+      caption = "Eosinophil During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_eos_post_pairs <- emmeans(eos_post,
+                              specs = "t_muris_dose",
+                              by = c("lab_or_rw", "strain"))
+
+kable(pairs(emm_eos_post_pairs),
+      caption = "Eosinophil Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
@@ -1286,6 +1423,37 @@ emm_bas_combined <- bind_rows(emm_bas_pre, emm_bas_during, emm_bas_post) %>%
          t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
          strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
          lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+
+```
+
+```{r}
+
+emm_bas_pre_pairs <- emmeans(bas_pre,
+                             specs = "t_muris_dose",
+                             by = "strain")
+
+kable(pairs(emm_bas_pre_pairs),
+      caption = "Basophil Pre-RW: Pairwise Comparisons of Infection Status by Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_bas_during_pairs <- emmeans(bas_during,
+                                specs = "t_muris_dose",
+                                by = c("lab_or_rw", "strain"))
+
+kable(pairs(emm_bas_during_pairs),
+      caption = "Basophil During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_bas_post_pairs <- emmeans(bas_post,
+                              specs = "t_muris_dose",
+                              by = c("lab_or_rw", "strain"))
+
+kable(pairs(emm_bas_post_pairs),
+      caption = "Basophil Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
