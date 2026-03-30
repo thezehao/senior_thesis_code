@@ -421,7 +421,9 @@ emm_smr <- emmeans(smr_lmer,
                    type = "response")
 emm_smr
 
-kable(pairs(emm_smr))
+kable(pairs(emm_smr),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 emm_smr_df <- as.data.frame(emm_smr)
 
@@ -532,7 +534,9 @@ emm_spleen_mass <- emmeans(spleen_lmer,
                    type = "response")
 emm_spleen_mass
 
-kable(pairs(emm_spleen_mass))
+kable(pairs(emm_spleen_mass),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 emm_spleen_mass_df <- as.data.frame(emm_spleen_mass)
 
@@ -678,7 +682,8 @@ spleen_adj_lmer <- lmer(spleen_mass_g ~
                           (1 | cage_wedge),
                         data = spleen_mass_compiled_data)
 
-tab_model(spleen_adj_lmer, show.stat = TRUE)
+tab_model(spleen_adj_lmer, 
+          show.stat = TRUE)
 # statistic is t-value btw
 
 qqnorm(resid(spleen_adj_lmer))
@@ -699,7 +704,9 @@ emm_adj_spleen <- emmeans(spleen_adj_lmer,
 
 summary(emm_adj_spleen)
 
-kable(pairs(emm_adj_spleen))
+kable(pairs(emm_adj_spleen),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 emm_adj_spleen_df <- as.data.frame(emm_adj_spleen)
 

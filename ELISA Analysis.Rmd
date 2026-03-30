@@ -912,23 +912,18 @@ emm_ifn <- emmeans(ifn_glmer,
                    type = "response")
 emm_ifn
 
-kable(pairs(emm_ifn))
+kable(pairs(emm_ifn),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
-# Pairwise contrast: Lab vs Rewilded within each treatment
-emm_ifn_env <- emmeans(ifn_glmer,
-                       specs = "t_muris_dose",
-                       by = c("treatment", "lab_or_rw"),
-                       type = "response")
-
-kable(pairs(emm_ifn_env))
-
-# Pairwise contrast: treatments within each dose x environment combo
 emm_ifn_trt <- emmeans(ifn_glmer,
                        specs = "treatment",
                        by = c("t_muris_dose", "lab_or_rw"),
                        type = "response")
 
-kable(pairs(emm_ifn_trt))
+kable(pairs(emm_ifn_trt),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
@@ -1001,23 +996,18 @@ emm_tnf <- emmeans(tnf_glmer,
 
 emm_tnf
 
-kable(pairs(emm_tnf))
+kable(pairs(emm_tnf),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
-# Pairwise contrast: Lab vs Rewilded within each treatment
-emm_tnf_env <- emmeans(tnf_glmer,
-                       specs = "t_muris_dose",
-                       by = c("treatment", "lab_or_rw"),
-                       type = "response")
-
-kable(pairs(emm_tnf_env))
-
-# Pairwise contrast: treatments within each dose x environment combo
 emm_tnf_trt <- emmeans(tnf_glmer,
                        specs = "treatment",
                        by = c("t_muris_dose", "lab_or_rw"),
                        type = "response")
 
-kable(pairs(emm_tnf_trt))
+kable(pairs(emm_tnf_trt),
+      digit = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
@@ -1026,14 +1016,28 @@ kable(pairs(emm_tnf_trt))
 ```{r}
 
 emm_ifn_df <- as.data.frame(emm_ifn) %>%
-  mutate(treatment = factor(treatment, levels = c("IgG", "LPS", "CD28")),
-         t_muris_dose = factor(t_muris_dose, levels = c("Zero", "High")),
-         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+  mutate(treatment = factor(treatment, 
+                            levels = c("IgG", 
+                                       "LPS", 
+                                       "CD28")),
+         t_muris_dose = factor(t_muris_dose, 
+                               levels = c("Zero", 
+                                          "High")),
+         lab_or_rw = factor(lab_or_rw, 
+                            levels = c("Lab", 
+                                       "RW")))
 
 emm_tnf_df <- as.data.frame(emm_tnf) %>%
-  mutate(treatment = factor(treatment, levels = c("IgG", "LPS", "CD28")),
-         t_muris_dose = factor(t_muris_dose, levels = c("Zero", "High")),
-         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+  mutate(treatment = factor(treatment, 
+                            levels = c("IgG", 
+                                       "LPS", 
+                                       "CD28")),
+         t_muris_dose = factor(t_muris_dose, 
+                               levels = c("Zero", 
+                                          "High")),
+         lab_or_rw = factor(lab_or_rw, 
+                            levels = c("Lab", 
+                                       "RW")))
 
 ```
 
@@ -1048,9 +1052,15 @@ emm_tnf_df <- as.data.frame(emm_tnf) %>%
 emm_ifn_plot <- ggplot(emm_ifn_df) +
   geom_point(data = ifn_glmer_input %>%
                mutate(treatment = factor(treatment,
-                                         levels = c("IgG", "LPS", "CD28")),
-                      lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")),
-                      t_muris_dose = factor(t_muris_dose, levels = c("Zero", "High"))),
+                                         levels = c("IgG", 
+                                                    "LPS", 
+                                                    "CD28")),
+                      lab_or_rw = factor(lab_or_rw, 
+                                         levels = c("Lab", 
+                                                    "RW")),
+                      t_muris_dose = factor(t_muris_dose, 
+                                            levels = c("Zero", 
+                                                       "High"))),
              aes(x = lab_or_rw,
                  y = mean_concentration,
                  color = t_muris_dose),
