@@ -589,7 +589,7 @@ comparative_cbc <- ggplot(bar_plot_input,
   geom_col(position = "stack",
            color = "black",
            linewidth = 0.5,
-           alpha = 0.85) +
+           alpha = 0.8) +
   scale_fill_manual(values = c("neu_percent" = color_light_purple,
                                "lym_percent" = color_dark_purple,
                                "mon_percent" = color_sand,
@@ -603,25 +603,40 @@ comparative_cbc <- ggplot(bar_plot_input,
                     name = expression(bold("Immune Cell Type"))) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05)),
                      name = "CBC Composition") +
-  scale_x_discrete(labels = c("Human_2017_18"     = "2017-18",
-                               "Human_2021_23"     = "2021-23",
-                               "C57BL/6J Zero Lab" = "Zero",
-                               "B10.BR Zero Lab"   = "Zero",
-                               "C57BL/6J Low Lab"  = "Low",
-                               "B10.BR Low Lab"    = "Low",
-                               "C57BL/6J High Lab" = "High",
-                               "B10.BR High Lab"   = "High",
-                               "C57BL/6J Zero RW"  = "Zero",
-                               "B10.BR Zero RW"    = "Zero",
-                               "C57BL/6J Low RW"   = "Low",
-                               "B10.BR Low RW"     = "Low",
-                               "C57BL/6J High RW"  = "High",
-                               "B10.BR High RW"    = "High")) +
+  scale_x_discrete(limits = c("Human_2017_18",
+                              "Human_2021_23",
+                              "C57BL/6J Zero Lab",
+                              "C57BL/6J Low Lab",
+                              "C57BL/6J High Lab",
+                              "C57BL/6J Zero RW",
+                              "C57BL/6J Low RW",
+                              "C57BL/6J High RW",
+                              "B10.BR Zero Lab",
+                              "B10.BR Low Lab",
+                              "B10.BR High Lab",
+                              "B10.BR Zero RW",
+                              "B10.BR Low RW",
+                              "B10.BR High RW"),
+                   labels = c("Human_2017_18" = "Human 2017-18",
+                              "Human_2021_23" = "Human 2021-23",
+                              "C57BL/6J Zero Lab" = "C57BL/6J Zero Lab",
+                              "C57BL/6J Low Lab" = "C57BL/6J Low Lab",
+                              "C57BL/6J High Lab" = "C57BL/6J High Lab",
+                              "C57BL/6J Zero RW" = "C57BL/6J Zero RW",
+                              "C57BL/6J Low RW" = "C57BL/6J Low RW",
+                              "C57BL/6J High RW" = "C57BL/6J High RW",
+                              "B10.BR Zero Lab" = "B10.BR Zero Lab",
+                              "B10.BR Low Lab" = "B10.BR Low Lab",
+                              "B10.BR High Lab" = "B10.BR High Lab",
+                              "B10.BR Zero RW" = "B10.BR Zero RW",
+                              "B10.BR Low RW" = "B10.BR Low RW",
+                              "B10.BR High RW" = "B10.BR High RW")) +
+  coord_flip() +
   theme_minimal() +
   theme(panel.border = element_blank(),
         panel.grid = element_blank(),
         axis.line = element_line(color = "black",
-                                 linewidth = 0.8),
+                                 linewidth = 0.5),
         axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         plot.title = element_text(hjust = 0.5,
@@ -1017,7 +1032,6 @@ emm_lym_pre_pairs <- emmeans(lym_pre,
                              type = "response")
 
 kable(pairs(emm_lym_pre_pairs),
-      caption = "Lymphocyte Pre-RW: Pairwise Comparisons of Infection Status by Strain",
       digits = 3) %>%
   kable_styling(full_width = FALSE)
 
@@ -1027,7 +1041,6 @@ emm_lym_during_pairs <- emmeans(lym_during,
                                 type = "response")
 
 kable(pairs(emm_lym_during_pairs),
-      caption = "Lymphocyte During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
       digits = 3) %>%
   kable_styling(full_width = FALSE)
 
@@ -1037,7 +1050,6 @@ emm_lym_post_pairs <- emmeans(lym_post,
                               type = "response")
 
 kable(pairs(emm_lym_post_pairs),
-      caption = "Lymphocyte Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
       digits = 3) %>%
   kable_styling(full_width = FALSE)
 
