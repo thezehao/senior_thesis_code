@@ -199,7 +199,6 @@ emm_plotter <- function(emm_df,
                                   "High" = color_orange),
                        name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
     scale_y_continuous(name = y_label) +
-    # add expand = expansion(mult = c(0.05, 0.3)) if adding sig astrix.
     theme_minimal() +
     theme(strip.background = element_rect(fill = "white",
                                           color = "black",
@@ -428,14 +427,15 @@ cleaned_combined_cbc_data <- bind_rows(clean_cbc_data_1,
   filter(!is.na(lab_or_rw)) %>%
   mutate(phase = case_when(
     week %in% c(-4, -3) ~ "Pre-RW",
-    week == 0           ~ "During RW",
-    week %in% c(3, 4)   ~ "Post-RW"
+    week == 0 ~ "During RW",
+    week %in% c(3, 4) ~ "Post-RW"
   ) %>% factor(levels = c("Pre-RW", "During RW", "Post-RW")))
 
 cbc_endpoint <- cleaned_combined_cbc_data %>%
   filter(phase == "Post-RW")
 
-# [132, 193] was removed because it has different naming. Check how to fix this issue soon.
+# [132, 193] was removed because it has different naming. 
+# Check how to fix this issue soon.
 
 ```
 
@@ -459,11 +459,11 @@ cleaned_nhanes_data_2017_18 <- nhanes_data_2017_18 %>%
          neu_percent = lbxnepct,
          bas_percent = lbxbapct,
          eos_percent = lbxeopct,
-         lym_number  = lbdlymno,
-         neu_number  = lbdneno,
-         mon_number  = lbdmono,
-         bas_number  = lbdbano,
-         eos_number  = lbdeono) %>%
+         lym_number = lbdlymno,
+         neu_number = lbdneno,
+         mon_number = lbdmono,
+         bas_number = lbdbano,
+         eos_number = lbdeono) %>%
   select(respondent_id,
          all_of(cbc_number),
          all_of(cbc_percent)) %>%
@@ -479,23 +479,26 @@ cleaned_nhanes_data_2021_23 <- nhanes_data_2021_23 %>%
          neu_percent = lbxnepct,
          bas_percent = lbxbapct,
          eos_percent = lbxeopct,
-         lym_number  = lbdlymno,
-         neu_number  = lbdneno,
-         mon_number  = lbdmono,
-         bas_number  = lbdbano,
-         eos_number  = lbdeono) %>%
+         lym_number = lbdlymno,
+         neu_number = lbdneno,
+         mon_number = lbdmono,
+         bas_number = lbdbano,
+         eos_number = lbdeono) %>%
   select(respondent_id,
          all_of(cbc_number),
          all_of(cbc_percent)) %>%
   drop_na() %>%
   mutate(respondent_id = as.character(respondent_id),
-         across(all_of(c(cbc_number, cbc_percent)), ~ as.numeric(.)))
+         across(all_of(c(cbc_number, 
+                         cbc_percent)), ~ as.numeric(.)))
 
 data_saver(data_name = cleaned_nhanes_data_2017_18,
-           path = file.path(clean_data_path, "cleaned_nhanes_data_2017_18.csv"))
+           path = file.path(clean_data_path, 
+                            "cleaned_nhanes_data_2017_18.csv"))
 
 data_saver(data_name = cleaned_nhanes_data_2021_23,
-           path = file.path(clean_data_path, "cleaned_nhanes_data_2021_23.csv"))
+           path = file.path(clean_data_path, 
+                            "cleaned_nhanes_data_2021_23.csv"))
 
 ```
 
@@ -530,7 +533,9 @@ human_21_23 <- cbc_summarizer(cleaned_nhanes_data_2021_23,
   mutate(strain = "Human")
 
 mean_mouse <- cbc_endpoint %>%
-  group_by(strain, t_muris_dose, lab_or_rw) %>%
+  group_by(strain, 
+           t_muris_dose, 
+           lab_or_rw) %>%
   summarise(neu_percent = mean(neu_percent, 
                                na.rm = TRUE) / 100,
             lym_percent = mean(lym_percent, 
@@ -542,7 +547,9 @@ mean_mouse <- cbc_endpoint %>%
             bas_percent = mean(bas_percent, 
                                na.rm = TRUE) / 100,
             .groups = "drop") %>%
-  mutate(group = paste(strain, t_muris_dose, lab_or_rw)) %>%
+  mutate(group = paste(strain, 
+                       t_muris_dose, 
+                       lab_or_rw)) %>%
   pivot_longer(cols = neu_percent:bas_percent,
                names_to = "cell_type",
                values_to = "cbc_percent")
@@ -567,12 +574,14 @@ bar_plot_input <- bind_rows(human_17_18,
                           "C57BL/6J High RW",
                           "B10.BR High RW")),
          cell_type = factor(cell_type,
-                            levels = c("neu_percent",
-                                       "lym_percent",
+                            levels = c("lym_percent",
+                                       "neu_percent",
                                        "mon_percent",
                                        "eos_percent",
                                        "bas_percent")),
-         strain = factor(strain, levels = c("Human", "C57BL/6J", "B10.BR")))
+         strain = factor(strain, levels = c("Human", 
+                                            "C57BL/6J", 
+                                            "B10.BR")))
 
 data_saver(data_name = bar_plot_input,
            path = file.path(clean_data_path, 
@@ -590,8 +599,8 @@ comparative_cbc <- ggplot(bar_plot_input,
            color = "black",
            linewidth = 0.5,
            alpha = 0.8) +
-  scale_fill_manual(values = c("neu_percent" = color_light_purple,
-                               "lym_percent" = color_dark_purple,
+  scale_fill_manual(values = c("neu_percent" = color_dark_purple,
+                               "lym_percent" = color_light_purple,
                                "mon_percent" = color_sand,
                                "eos_percent" = color_cyan,
                                "bas_percent" = color_black),
@@ -601,7 +610,8 @@ comparative_cbc <- ggplot(bar_plot_input,
                                "eos_percent" = "Eosinophils",
                                "bas_percent" = "Basophils"),
                     name = expression(bold("Immune Cell Type"))) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05)),
+  scale_y_continuous(expand = expansion(mult = c(0, 
+                                                 0.05)),
                      name = "CBC Composition") +
   scale_x_discrete(limits = c("Human_2017_18",
                               "Human_2021_23",
@@ -803,7 +813,8 @@ neu_pre <- lmer(log(neu_number) ~ t_muris_dose * strain +
                 data = filter(cleaned_combined_cbc_data,
                               phase == "Pre-RW"))
 
-tab_model(neu_pre, show.stat = TRUE)
+tab_model(neu_pre, 
+          show.stat = TRUE)
 # statistic is t-value btw
 neu_pre_sim <- simulateResiduals(fittedModel = neu_pre, n = 1000)
 plot(neu_pre_sim)
@@ -853,77 +864,81 @@ plotResiduals(neu_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 ```
 
 ```{r}
+# Pre-RW (no environment effect yet)
+emm_neu_pre <- emmeans(neu_pre,
+                       specs = "t_muris_dose",
+                       by = "strain",
+                       type = "response")
 
-# Pre-RW emmeans: extract ~ t_muris_dose * strain, duplicate across environment
-emm_neu_pre <- as.data.frame(emmeans(neu_pre,
-                                     specs = "t_muris_dose",
-                                     by = "strain",
-                                     type = "response")) %>%
-  crossing(lab_or_rw = factor(c("Lab", "RW"),
-                              levels = c("Lab", "RW"))) %>%
-  mutate(phase = factor("Pre-RW",
-                        levels = c("Pre-RW", "During RW", "Post-RW")))
+kable(pairs(emm_neu_pre),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
-# During RW emmeans: full extraction
-emm_neu_during <- as.data.frame(emmeans(neu_during,
-                                        specs = c("t_muris_dose", "lab_or_rw"),
-                                        by = "strain",
-                                        type = "response")) %>%
-  mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+emm_neu_during <- emmeans(neu_during,
+                          specs = c("t_muris_dose", "lab_or_rw"),
+                          by = "strain",
+                          type = "response")
 
-# Post-RW emmeans: full extraction
-emm_neu_post <- as.data.frame(emmeans(neu_post,
-                                      specs = c("t_muris_dose", "lab_or_rw"),
-                                      by = "strain",
-                                      type = "response")) %>%
-  mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+kable(pairs(emm_neu_during),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
-# Combine
-emm_neu_combined <- bind_rows(emm_neu_pre, emm_neu_during, emm_neu_post) %>%
-  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
-         t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+emm_neu_post <- emmeans(neu_post,
+                        specs = c("t_muris_dose", "lab_or_rw"),
+                        by = "strain",
+                        type = "response")
+
+kable(pairs(emm_neu_post),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
 ```{r}
 
-# Pairwise: infection status within each environment and strain
-# Pre-RW (no environment effect yet)
-emm_neu_pre_pairs <- emmeans(neu_pre,
-                             specs = "t_muris_dose",
-                             by = "strain",
-                             type = "response")
+emm_neu_pre_df <- as.data.frame(emm_neu_pre) %>%
+  crossing(lab_or_rw = factor(c("Lab", 
+                                "RW"),
+                              levels = c("Lab", 
+                                         "RW"))) %>%
+  mutate(phase = factor("Pre-RW",
+                        levels = c("Pre-RW", 
+                                   "During RW", 
+                                   "Post-RW")))
 
-kable(pairs(emm_neu_pre_pairs),
-      caption = "Neutrophil Pre-RW: Pairwise Comparisons of Infection Status by Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+emm_neu_during_df <- as.data.frame(emm_neu_during) %>%
+  mutate(phase = factor("During RW", 
+                        levels = c("Pre-RW", 
+                                   "During RW", 
+                                   "Post-RW")))
 
-# During RW: infection within each environment x strain
-emm_neu_during_pairs <- emmeans(neu_during,
-                                specs = "t_muris_dose",
-                                by = c("lab_or_rw", "strain"),
-                                type = "response")
+emm_neu_post_df <- as.data.frame(emm_neu_post) %>%
+  mutate(phase = factor("Post-RW", 
+                        levels = c("Pre-RW", 
+                                   "During RW", 
+                                   "Post-RW")))
 
-kable(pairs(emm_neu_during_pairs),
-      caption = "Neutrophil During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
-
-# Post-RW: infection within each environment x strain
-emm_neu_post_pairs <- emmeans(neu_post,
-                              specs = "t_muris_dose",
-                              by = c("lab_or_rw", "strain"),
-                              type = "response")
-
-kable(pairs(emm_neu_post_pairs),
-      caption = "Neutrophil Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+# Combine
+emm_neu_combined <- bind_rows(emm_neu_pre_df, 
+                              emm_neu_during_df, 
+                              emm_neu_post_df) %>%
+  mutate(phase = factor(phase, 
+                        levels = c("Pre-RW", 
+                                   "During RW", 
+                                   "Post-RW")),
+         t_muris_dose = factor(t_muris_dose, 
+                               levels = c("Zero",
+                                          "Low", 
+                                          "High")),
+         strain = factor(strain, 
+                         levels = c("C57BL/6J",
+                                    "B10.BR")),
+         lab_or_rw = factor(lab_or_rw, 
+                            levels = c("Lab", 
+                                       "RW")))
 
 ```
+
 
 ```{r}
 
@@ -996,62 +1011,78 @@ plotResiduals(lym_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 
 ```{r}
 
-emm_lym_pre <- as.data.frame(emmeans(lym_pre,
-                                     specs = "t_muris_dose",
-                                     by = "strain",
-                                     type = "response")) %>%
-  crossing(lab_or_rw = factor(c("Lab", "RW"),
-                              levels = c("Lab", "RW"))) %>%
-  mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+# Pre-RW (no environment effect yet)
+emm_lym_pre <- emmeans(lym_pre,
+                       specs = "t_muris_dose",
+                       by = "strain",
+                       type = "response")
 
-emm_lym_during <- as.data.frame(emmeans(lym_during,
-                                        specs = c("t_muris_dose", "lab_or_rw"),
-                                        by = "strain",
-                                        type = "response")) %>%
-  mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+kable(pairs(emm_lym_pre),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
-emm_lym_post <- as.data.frame(emmeans(lym_post,
-                                      specs = c("t_muris_dose", "lab_or_rw"),
-                                      by = "strain",
-                                      type = "response")) %>%
-  mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+emm_lym_during <- emmeans(lym_during,
+                          specs = c("t_muris_dose", "lab_or_rw"),
+                          by = "strain",
+                          type = "response")
 
-emm_lym_combined <- bind_rows(emm_lym_pre, emm_lym_during, emm_lym_post) %>%
-  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
-         t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+kable(pairs(emm_lym_during),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_lym_post <- emmeans(lym_post,
+                        specs = c("t_muris_dose", "lab_or_rw"),
+                        by = "strain",
+                        type = "response")
+
+kable(pairs(emm_lym_post),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
 ```{r}
 
-emm_lym_pre_pairs <- emmeans(lym_pre,
-                             specs = "t_muris_dose",
-                             by = "strain",
-                             type = "response")
+emm_lym_pre_df <- as.data.frame(emm_lym_pre) %>%
+  crossing(lab_or_rw = factor(c("Lab",
+                                "RW"),
+                              levels = c("Lab",
+                                         "RW"))) %>%
+  mutate(phase = factor("Pre-RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-kable(pairs(emm_lym_pre_pairs),
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+emm_lym_during_df <- as.data.frame(emm_lym_during) %>%
+  mutate(phase = factor("During RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-emm_lym_during_pairs <- emmeans(lym_during,
-                                specs = "t_muris_dose",
-                                by = c("lab_or_rw", "strain"),
-                                type = "response")
+emm_lym_post_df <- as.data.frame(emm_lym_post) %>%
+  mutate(phase = factor("Post-RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-kable(pairs(emm_lym_during_pairs),
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
-
-emm_lym_post_pairs <- emmeans(lym_post,
-                              specs = "t_muris_dose",
-                              by = c("lab_or_rw", "strain"),
-                              type = "response")
-
-kable(pairs(emm_lym_post_pairs),
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+# Combine
+emm_lym_combined <- bind_rows(emm_lym_pre_df,
+                              emm_lym_during_df,
+                              emm_lym_post_df) %>%
+  mutate(phase = factor(phase,
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")),
+         t_muris_dose = factor(t_muris_dose,
+                               levels = c("Zero",
+                                          "Low",
+                                          "High")),
+         strain = factor(strain,
+                         levels = c("C57BL/6J",
+                                    "B10.BR")),
+         lab_or_rw = factor(lab_or_rw,
+                            levels = c("Lab",
+                                       "RW")))
 
 ```
 
@@ -1126,65 +1157,78 @@ plotResiduals(mon_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 
 ```{r}
 
-emm_mon_pre <- as.data.frame(emmeans(mon_pre,
-                                     specs = "t_muris_dose",
-                                     by = "strain",
-                                     type = "response")) %>%
-  crossing(lab_or_rw = factor(c("Lab", "RW"),
-                              levels = c("Lab", "RW"))) %>%
-  mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+# Pre-RW (no environment effect yet)
+emm_mon_pre <- emmeans(mon_pre,
+                       specs = "t_muris_dose",
+                       by = "strain",
+                       type = "response")
 
-emm_mon_during <- as.data.frame(emmeans(mon_during,
-                                        specs = c("t_muris_dose", "lab_or_rw"),
-                                        by = "strain",
-                                        type = "response")) %>%
-  mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+kable(pairs(emm_mon_pre),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
-emm_mon_post <- as.data.frame(emmeans(mon_post,
-                                      specs = c("t_muris_dose", "lab_or_rw"),
-                                      by = "strain",
-                                      type = "response")) %>%
-  mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+emm_mon_during <- emmeans(mon_during,
+                          specs = c("t_muris_dose", "lab_or_rw"),
+                          by = "strain",
+                          type = "response")
 
-emm_mon_combined <- bind_rows(emm_mon_pre, emm_mon_during, emm_mon_post) %>%
-  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
-         t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+kable(pairs(emm_mon_during),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_mon_post <- emmeans(mon_post,
+                        specs = c("t_muris_dose", "lab_or_rw"),
+                        by = "strain",
+                        type = "response")
+
+kable(pairs(emm_mon_post),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
 ```{r}
 
-emm_mon_pre_pairs <- emmeans(mon_pre,
-                             specs = "t_muris_dose",
-                             by = "strain",
-                             type = "response")
+emm_mon_pre_df <- as.data.frame(emm_mon_pre) %>%
+  crossing(lab_or_rw = factor(c("Lab",
+                                "RW"),
+                              levels = c("Lab",
+                                         "RW"))) %>%
+  mutate(phase = factor("Pre-RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-kable(pairs(emm_mon_pre_pairs),
-      caption = "Monocyte Pre-RW: Pairwise Comparisons of Infection Status by Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+emm_mon_during_df <- as.data.frame(emm_mon_during) %>%
+  mutate(phase = factor("During RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-emm_mon_during_pairs <- emmeans(mon_during,
-                                specs = "t_muris_dose",
-                                by = c("lab_or_rw", "strain"),
-                                type = "response")
+emm_mon_post_df <- as.data.frame(emm_mon_post) %>%
+  mutate(phase = factor("Post-RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-kable(pairs(emm_mon_during_pairs),
-      caption = "Monocyte During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
-
-emm_mon_post_pairs <- emmeans(mon_post,
-                              specs = "t_muris_dose",
-                              by = c("lab_or_rw", "strain"),
-                              type = "response")
-
-kable(pairs(emm_mon_post_pairs),
-      caption = "Monocyte Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+# Combine
+emm_mon_combined <- bind_rows(emm_mon_pre_df,
+                              emm_mon_during_df,
+                              emm_mon_post_df) %>%
+  mutate(phase = factor(phase,
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")),
+         t_muris_dose = factor(t_muris_dose,
+                               levels = c("Zero",
+                                          "Low",
+                                          "High")),
+         strain = factor(strain,
+                         levels = c("C57BL/6J",
+                                    "B10.BR")),
+         lab_or_rw = factor(lab_or_rw,
+                            levels = c("Lab",
+                                       "RW")))
 
 ```
 
@@ -1259,69 +1303,85 @@ plotResiduals(eos_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 
 ```{r}
 
-# log1p back-transform: expm1() reverses log1p()
-emm_eos_pre <- as.data.frame(emmeans(eos_pre,
-                                     specs = "t_muris_dose",
-                                     by = "strain")) %>%
-  mutate(response = expm1(emmean),
-         lower.CL = expm1(lower.CL),
-         upper.CL = expm1(upper.CL)) %>%
-  crossing(lab_or_rw = factor(c("Lab", "RW"),
-                              levels = c("Lab", "RW"))) %>%
-  mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+# Pre-RW (no environment effect yet)
+emm_eos_pre <- emmeans(eos_pre,
+                       specs = "t_muris_dose",
+                       by = "strain")
 
-emm_eos_during <- as.data.frame(emmeans(eos_during,
-                                        specs = c("t_muris_dose", "lab_or_rw"),
-                                        by = "strain")) %>%
-  mutate(response = expm1(emmean),
-         lower.CL = expm1(lower.CL),
-         upper.CL = expm1(upper.CL)) %>%
-  mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+kable(pairs(emm_eos_pre),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
-emm_eos_post <- as.data.frame(emmeans(eos_post,
-                                      specs = c("t_muris_dose", "lab_or_rw"),
-                                      by = "strain")) %>%
-  mutate(response = expm1(emmean),
-         lower.CL = expm1(lower.CL),
-         upper.CL = expm1(upper.CL)) %>%
-  mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+emm_eos_during <- emmeans(eos_during,
+                          specs = c("t_muris_dose", "lab_or_rw"),
+                          by = "strain")
 
-emm_eos_combined <- bind_rows(emm_eos_pre, emm_eos_during, emm_eos_post) %>%
-  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
-         t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+kable(pairs(emm_eos_during),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_eos_post <- emmeans(eos_post,
+                        specs = c("t_muris_dose", "lab_or_rw"),
+                        by = "strain")
+
+kable(pairs(emm_eos_post),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
 ```{r}
 
-emm_eos_pre_pairs <- emmeans(eos_pre,
-                             specs = "t_muris_dose",
-                             by = "strain")
+# log1p back-transform: expm1() reverses log1p()
+emm_eos_pre_df <- as.data.frame(emm_eos_pre) %>%
+  mutate(response = expm1(emmean),
+         lower.CL = expm1(lower.CL),
+         upper.CL = expm1(upper.CL)) %>%
+  crossing(lab_or_rw = factor(c("Lab",
+                                "RW"),
+                              levels = c("Lab",
+                                         "RW"))) %>%
+  mutate(phase = factor("Pre-RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-kable(pairs(emm_eos_pre_pairs),
-      caption = "Eosinophil Pre-RW: Pairwise Comparisons of Infection Status by Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+emm_eos_during_df <- as.data.frame(emm_eos_during) %>%
+  mutate(response = expm1(emmean),
+         lower.CL = expm1(lower.CL),
+         upper.CL = expm1(upper.CL)) %>%
+  mutate(phase = factor("During RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-emm_eos_during_pairs <- emmeans(eos_during,
-                                specs = "t_muris_dose",
-                                by = c("lab_or_rw", "strain"))
+emm_eos_post_df <- as.data.frame(emm_eos_post) %>%
+  mutate(response = expm1(emmean),
+         lower.CL = expm1(lower.CL),
+         upper.CL = expm1(upper.CL)) %>%
+  mutate(phase = factor("Post-RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-kable(pairs(emm_eos_during_pairs),
-      caption = "Eosinophil During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
-
-emm_eos_post_pairs <- emmeans(eos_post,
-                              specs = "t_muris_dose",
-                              by = c("lab_or_rw", "strain"))
-
-kable(pairs(emm_eos_post_pairs),
-      caption = "Eosinophil Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+# Combine
+emm_eos_combined <- bind_rows(emm_eos_pre_df,
+                              emm_eos_during_df,
+                              emm_eos_post_df) %>%
+  mutate(phase = factor(phase,
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")),
+         t_muris_dose = factor(t_muris_dose,
+                               levels = c("Zero",
+                                          "Low",
+                                          "High")),
+         strain = factor(strain,
+                         levels = c("C57BL/6J",
+                                    "B10.BR")),
+         lab_or_rw = factor(lab_or_rw,
+                            levels = c("Lab",
+                                       "RW")))
 
 ```
 
@@ -1403,69 +1463,85 @@ plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data,
 
 ```{r}
 
-# log1p back-transform: expm1() reverses log1p()
-emm_bas_pre <- as.data.frame(emmeans(bas_pre,
-                                     specs = "t_muris_dose",
-                                     by = "strain")) %>%
-  mutate(response = expm1(emmean),
-         lower.CL = expm1(lower.CL),
-         upper.CL = expm1(upper.CL)) %>%
-  crossing(lab_or_rw = factor(c("Lab", "RW"),
-                              levels = c("Lab", "RW"))) %>%
-  mutate(phase = factor("Pre-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+# Pre-RW (no environment effect yet)
+emm_bas_pre <- emmeans(bas_pre,
+                       specs = "t_muris_dose",
+                       by = "strain")
 
-emm_bas_during <- as.data.frame(emmeans(bas_during,
-                                        specs = c("t_muris_dose", "lab_or_rw"),
-                                        by = "strain")) %>%
-  mutate(response = expm1(emmean),
-         lower.CL = expm1(lower.CL),
-         upper.CL = expm1(upper.CL)) %>%
-  mutate(phase = factor("During RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+kable(pairs(emm_bas_pre),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
-emm_bas_post <- as.data.frame(emmeans(bas_post,
-                                      specs = c("t_muris_dose", "lab_or_rw"),
-                                      by = "strain")) %>%
-  mutate(response = expm1(emmean),
-         lower.CL = expm1(lower.CL),
-         upper.CL = expm1(upper.CL)) %>%
-  mutate(phase = factor("Post-RW", levels = c("Pre-RW", "During RW", "Post-RW")))
+emm_bas_during <- emmeans(bas_during,
+                          specs = c("t_muris_dose", "lab_or_rw"),
+                          by = "strain")
 
-emm_bas_combined <- bind_rows(emm_bas_pre, emm_bas_during, emm_bas_post) %>%
-  mutate(phase = factor(phase, levels = c("Pre-RW", "During RW", "Post-RW")),
-         t_muris_dose = factor(t_muris_dose, levels = c("Zero", "Low", "High")),
-         strain = factor(strain, levels = c("C57BL/6J", "B10.BR")),
-         lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")))
+kable(pairs(emm_bas_during),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+emm_bas_post <- emmeans(bas_post,
+                        specs = c("t_muris_dose", "lab_or_rw"),
+                        by = "strain")
+
+kable(pairs(emm_bas_post),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
 ```{r}
 
-emm_bas_pre_pairs <- emmeans(bas_pre,
-                             specs = "t_muris_dose",
-                             by = "strain")
+# log1p back-transform: expm1() reverses log1p()
+emm_bas_pre_df <- as.data.frame(emm_bas_pre) %>%
+  mutate(response = expm1(emmean),
+         lower.CL = expm1(lower.CL),
+         upper.CL = expm1(upper.CL)) %>%
+  crossing(lab_or_rw = factor(c("Lab",
+                                "RW"),
+                              levels = c("Lab",
+                                         "RW"))) %>%
+  mutate(phase = factor("Pre-RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-kable(pairs(emm_bas_pre_pairs),
-      caption = "Basophil Pre-RW: Pairwise Comparisons of Infection Status by Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+emm_bas_during_df <- as.data.frame(emm_bas_during) %>%
+  mutate(response = expm1(emmean),
+         lower.CL = expm1(lower.CL),
+         upper.CL = expm1(upper.CL)) %>%
+  mutate(phase = factor("During RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-emm_bas_during_pairs <- emmeans(bas_during,
-                                specs = "t_muris_dose",
-                                by = c("lab_or_rw", "strain"))
+emm_bas_post_df <- as.data.frame(emm_bas_post) %>%
+  mutate(response = expm1(emmean),
+         lower.CL = expm1(lower.CL),
+         upper.CL = expm1(upper.CL)) %>%
+  mutate(phase = factor("Post-RW",
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")))
 
-kable(pairs(emm_bas_during_pairs),
-      caption = "Basophil During-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
-
-emm_bas_post_pairs <- emmeans(bas_post,
-                              specs = "t_muris_dose",
-                              by = c("lab_or_rw", "strain"))
-
-kable(pairs(emm_bas_post_pairs),
-      caption = "Basophil Post-RW: Pairwise Comparisons of Infection Status by Environment and Strain",
-      digits = 3) %>%
-  kable_styling(full_width = FALSE)
+# Combine
+emm_bas_combined <- bind_rows(emm_bas_pre_df,
+                              emm_bas_during_df,
+                              emm_bas_post_df) %>%
+  mutate(phase = factor(phase,
+                        levels = c("Pre-RW",
+                                   "During RW",
+                                   "Post-RW")),
+         t_muris_dose = factor(t_muris_dose,
+                               levels = c("Zero",
+                                          "Low",
+                                          "High")),
+         strain = factor(strain,
+                         levels = c("C57BL/6J",
+                                    "B10.BR")),
+         lab_or_rw = factor(lab_or_rw,
+                            levels = c("Lab",
+                                       "RW")))
 
 ```
 
