@@ -8,11 +8,13 @@ output:
 ---
 
 # First time run order: Spleen → CBC → Spleen
-# This markdown produces clean_meta_data.csv used by CBC and ELISA analysis.
-# The section looking at the correlation between spleen size and lymphocyte counts
+This markdown produces clean_meta_data.csv used by CBC and ELISA analysis.
+The section looking at the correlation between spleen size and lymphocyte counts
 at the bottom requires cleaned_combined_cbc_data.csv from CBC. That's why CBC
 needs to be ran on the second try. But, this is only applicable if this is the
-first time this code is ran. 
+first time this code is ran.
+
+The analysis done in the ELISA code relies on the worm burden data cleaned here.
 
 # Load the needed library first
 
@@ -96,6 +98,10 @@ meta_data <- read_excel(file.path(data_path,
 
 cbc_data <- read_csv(file.path(clean_data_path,
                                "cleaned_combined_cbc_data.csv"))
+
+worm_burden <- read_excel(file.path(data_path,
+                                    "Worm_burden.xlsx"),
+                          sheet = "Worm burden")
 
 ```
 
@@ -222,6 +228,21 @@ write_csv(clean_meta_data,
                     "clean_meta_data.csv"))
 
 ```
+Cleaning worm burden data
+
+```{r}
+
+clean_worm_burden <- worm_burden %>%
+  clean_names() %>%
+  select(mouse_id,
+         total_worms)
+
+write_csv(clean_worm_burden,
+          file.path(clean_data_path,
+                    "clean_worm_burden.csv"))
+
+```
+
 
 We want to include in a file called "compiled data." But, before that I want to check to make sure the strains, ID, and the lab/rw conditions all match across the two data sets.
 
@@ -414,12 +435,15 @@ smr_lmer <- lmer(spleen_mass_ratio ~
 
 tab_model(smr_lmer, show.stat = TRUE)
 # statistic is t-value btw
+summary(smr_lmer)
 
 emm_smr <- emmeans(smr_lmer,
                    specs = c("t_muris_dose", "lab_or_rw"),
                    by = c("strain"),
                    type = "response")
 emm_smr
+
+pairs(emm_smr)
 
 kable(pairs(emm_smr),
       digits = 3) %>%
@@ -527,12 +551,15 @@ spleen_lmer <- lmer(spleen_mass_g ~
 
 tab_model(spleen_lmer, show.stat = TRUE)
 # statistic is t-value btw
+summary(spleen_lmer)
 
 emm_spleen_mass <- emmeans(spleen_lmer,
                    specs = c("t_muris_dose", "lab_or_rw"),
                    by = c("strain"),
                    type = "response")
 emm_spleen_mass
+
+pairs(emm_spleen_mass)
 
 kable(pairs(emm_spleen_mass),
       digits = 3) %>%
@@ -682,9 +709,10 @@ spleen_adj_lmer <- lmer(spleen_mass_g ~
                           (1 | cage_wedge),
                         data = spleen_mass_compiled_data)
 
-tab_model(spleen_adj_lmer, 
+tab_model(spleen_adj_lmer,
           show.stat = TRUE)
 # statistic is t-value btw
+summary(spleen_adj_lmer)
 
 qqnorm(resid(spleen_adj_lmer))
 qqline(resid(spleen_adj_lmer))
@@ -703,6 +731,8 @@ emm_adj_spleen <- emmeans(spleen_adj_lmer,
                       type = "response")
 
 summary(emm_adj_spleen)
+
+pairs(emm_adj_spleen)
 
 kable(pairs(emm_adj_spleen),
       digits = 3) %>%
@@ -786,6 +816,7 @@ lym_lmer <- lmer(log(spleen_mass_ratio) ~
 
 tab_model(lym_lmer, show.stat = TRUE)
 # statistic is t-value btw
+summary(lym_lmer)
 
 ```
 
@@ -873,8 +904,8 @@ spleen_cbc_reg <- ggplot(spleen_cbc,
                          aes(x = lym_number,
                              y = spleen_mass_g,
                              color = t_muris_dose)) +
-  geom_point(size = 2.5,
-             alpha = 0.8) +
+  geom_point(size = 1.5,
+             alpha = 0.6) +
   geom_smooth(method = "lm",
               se = TRUE,
               aes(group = t_muris_dose,
@@ -923,5 +954,24 @@ spleen_cbc_reg
 
 plot_saver("spleen_cbc_reg.png",
            spleen_cbc_reg)
+
+
+spleen_cbc <- spleen_cbc %>%
+  mutate(lab_or_rw = relevel(factor(lab_or_rw), 
+                             ref = "Lab"),
+         strain = relevel(factor(strain), 
+                          ref = "C57BL/6J"),
+         t_muris_dose = relevel(factor(t_muris_dose),
+                                ref = "Zero"))
+
+spleen_cbc_lm <- lm(spleen_mass_g ~ lym_number + 
+                      lab_or_rw + 
+                      strain + 
+                      t_muris_dose,
+                    data = spleen_cbc)
+
+summary(spleen_cbc_lm)
+
+tab_model(spleen_cbc_lm)
 
 ```

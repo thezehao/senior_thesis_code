@@ -579,9 +579,10 @@ bar_plot_input <- bind_rows(human_17_18,
                                        "mon_percent",
                                        "eos_percent",
                                        "bas_percent")),
-         strain = factor(strain, levels = c("Human", 
-                                            "C57BL/6J", 
-                                            "B10.BR")))
+         strain = factor(strain, levels = c("Human",
+                                            "C57BL/6J",
+                                            "B10.BR")),
+)
 
 data_saver(data_name = bar_plot_input,
            path = file.path(clean_data_path, 
@@ -627,24 +628,25 @@ comparative_cbc <- ggplot(bar_plot_input,
                               "B10.BR Zero RW",
                               "B10.BR Low RW",
                               "B10.BR High RW"),
-                   labels = c("Human_2017_18" = "Human 2017-18",
-                              "Human_2021_23" = "Human 2021-23",
-                              "C57BL/6J Zero Lab" = "C57BL/6J Zero Lab",
-                              "C57BL/6J Low Lab" = "C57BL/6J Low Lab",
-                              "C57BL/6J High Lab" = "C57BL/6J High Lab",
-                              "C57BL/6J Zero RW" = "C57BL/6J Zero RW",
-                              "C57BL/6J Low RW" = "C57BL/6J Low RW",
-                              "C57BL/6J High RW" = "C57BL/6J High RW",
-                              "B10.BR Zero Lab" = "B10.BR Zero Lab",
-                              "B10.BR Low Lab" = "B10.BR Low Lab",
-                              "B10.BR High Lab" = "B10.BR High Lab",
-                              "B10.BR Zero RW" = "B10.BR Zero RW",
-                              "B10.BR Low RW" = "B10.BR Low RW",
-                              "B10.BR High RW" = "B10.BR High RW")) +
+                   labels = c("Human_2017_18" = "2017-18",
+                              "Human_2021_23" = "2021-23",
+                              "C57BL/6J Zero Lab" = "Zero",
+                              "C57BL/6J Low Lab" = "Low",
+                              "C57BL/6J High Lab" = "High",
+                              "C57BL/6J Zero RW" = "Zero",
+                              "C57BL/6J Low RW" = "Low",
+                              "C57BL/6J High RW" = "High",
+                              "B10.BR Zero Lab" = "Zero",
+                              "B10.BR Low Lab" = "Low",
+                              "B10.BR High Lab" = "High",
+                              "B10.BR Zero RW" = "Zero",
+                              "B10.BR Low RW" = "Low",
+                              "B10.BR High RW" = "High")) +
   coord_flip() +
   theme_minimal() +
   theme(panel.border = element_blank(),
         panel.grid = element_blank(),
+        panel.spacing = unit(0.8, "cm"),
         axis.line = element_line(color = "black",
                                  linewidth = 0.5),
         axis.title.x = element_text(face = "bold"),
@@ -813,9 +815,10 @@ neu_pre <- lmer(log(neu_number) ~ t_muris_dose * strain +
                 data = filter(cleaned_combined_cbc_data,
                               phase == "Pre-RW"))
 
-tab_model(neu_pre, 
+tab_model(neu_pre,
           show.stat = TRUE)
 # statistic is t-value btw
+summary(neu_pre)
 neu_pre_sim <- simulateResiduals(fittedModel = neu_pre, n = 1000)
 plot(neu_pre_sim)
 testUniformity(neu_pre_sim)
@@ -833,6 +836,7 @@ neu_during <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(neu_during, show.stat = TRUE)
 # statistic is t-value btw
+summary(neu_during)
 neu_during_sim <- simulateResiduals(fittedModel = neu_during, n = 1000)
 plot(neu_during_sim)
 testUniformity(neu_during_sim)
@@ -852,6 +856,7 @@ neu_post <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(neu_post, show.stat = TRUE)
 # statistic is t-value btw
+summary(neu_post)
 neu_post_sim <- simulateResiduals(fittedModel = neu_post, n = 1000)
 plot(neu_post_sim)
 testUniformity(neu_post_sim)
@@ -870,6 +875,8 @@ emm_neu_pre <- emmeans(neu_pre,
                        by = "strain",
                        type = "response")
 
+pairs(emm_neu_pre)
+
 kable(pairs(emm_neu_pre),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -879,6 +886,8 @@ emm_neu_during <- emmeans(neu_during,
                           by = "strain",
                           type = "response")
 
+pairs(emm_neu_during)
+
 kable(pairs(emm_neu_during),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -887,6 +896,8 @@ emm_neu_post <- emmeans(neu_post,
                         specs = c("t_muris_dose", "lab_or_rw"),
                         by = "strain",
                         type = "response")
+
+pairs(emm_neu_post)
 
 kable(pairs(emm_neu_post),
       digits = 3) %>%
@@ -967,6 +978,7 @@ lym_pre <- lmer(log(lym_number) ~ t_muris_dose * strain +
 
 tab_model(lym_pre, show.stat = TRUE)
 # statistic is t-value btw
+summary(lym_pre)
 lym_pre_sim <- simulateResiduals(fittedModel = lym_pre, n = 1000)
 plot(lym_pre_sim)
 testUniformity(lym_pre_sim)
@@ -982,6 +994,7 @@ lym_during <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(lym_during, show.stat = TRUE)
 # statistic is t-value btw
+summary(lym_during)
 lym_during_sim <- simulateResiduals(fittedModel = lym_during, n = 1000)
 plot(lym_during_sim)
 testUniformity(lym_during_sim)
@@ -998,6 +1011,7 @@ lym_post <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(lym_post, show.stat = TRUE)
 # statistic is t-value btw
+summary(lym_post)
 lym_post_sim <- simulateResiduals(fittedModel = lym_post, n = 1000)
 plot(lym_post_sim)
 testUniformity(lym_post_sim)
@@ -1017,6 +1031,8 @@ emm_lym_pre <- emmeans(lym_pre,
                        by = "strain",
                        type = "response")
 
+pairs(emm_lym_pre)
+
 kable(pairs(emm_lym_pre),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1026,6 +1042,8 @@ emm_lym_during <- emmeans(lym_during,
                           by = "strain",
                           type = "response")
 
+pairs(emm_lym_during)
+
 kable(pairs(emm_lym_during),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1034,6 +1052,8 @@ emm_lym_post <- emmeans(lym_post,
                         specs = c("t_muris_dose", "lab_or_rw"),
                         by = "strain",
                         type = "response")
+
+pairs(emm_lym_post)
 
 kable(pairs(emm_lym_post),
       digits = 3) %>%
@@ -1113,6 +1133,7 @@ mon_pre <- lmer(log(mon_number) ~ t_muris_dose * strain +
 
 tab_model(mon_pre, show.stat = TRUE)
 # statistic is t-value btw
+summary(mon_pre)
 mon_pre_sim <- simulateResiduals(fittedModel = mon_pre, n = 1000)
 plot(mon_pre_sim)
 testUniformity(mon_pre_sim)
@@ -1128,6 +1149,7 @@ mon_during <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(mon_during, show.stat = TRUE)
 # statistic is t-value btw
+summary(mon_during)
 mon_during_sim <- simulateResiduals(fittedModel = mon_during, n = 1000)
 plot(mon_during_sim)
 testUniformity(mon_during_sim)
@@ -1144,6 +1166,7 @@ mon_post <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(mon_post, show.stat = TRUE)
 # statistic is t-value btw
+summary(mon_post)
 mon_post_sim <- simulateResiduals(fittedModel = mon_post, n = 1000)
 plot(mon_post_sim)
 testUniformity(mon_post_sim)
@@ -1163,6 +1186,8 @@ emm_mon_pre <- emmeans(mon_pre,
                        by = "strain",
                        type = "response")
 
+pairs(emm_mon_pre)
+
 kable(pairs(emm_mon_pre),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1172,6 +1197,8 @@ emm_mon_during <- emmeans(mon_during,
                           by = "strain",
                           type = "response")
 
+pairs(emm_mon_during)
+
 kable(pairs(emm_mon_during),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1180,6 +1207,8 @@ emm_mon_post <- emmeans(mon_post,
                         specs = c("t_muris_dose", "lab_or_rw"),
                         by = "strain",
                         type = "response")
+
+pairs(emm_mon_post)
 
 kable(pairs(emm_mon_post),
       digits = 3) %>%
@@ -1259,6 +1288,7 @@ eos_pre <- lmer(log1p(eos_number) ~ t_muris_dose * strain +
 
 tab_model(eos_pre, show.stat = TRUE)
 # statistic is t-value btw
+summary(eos_pre)
 eos_pre_sim <- simulateResiduals(fittedModel = eos_pre, n = 1000)
 plot(eos_pre_sim)
 testUniformity(eos_pre_sim)
@@ -1274,6 +1304,7 @@ eos_during <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(eos_during, show.stat = TRUE)
 # statistic is t-value btw
+summary(eos_during)
 eos_during_sim <- simulateResiduals(fittedModel = eos_during, n = 1000)
 plot(eos_during_sim)
 testUniformity(eos_during_sim)
@@ -1290,6 +1321,7 @@ eos_post <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(eos_post, show.stat = TRUE)
 # statistic is t-value btw
+summary(eos_post)
 eos_post_sim <- simulateResiduals(fittedModel = eos_post, n = 1000)
 plot(eos_post_sim)
 testUniformity(eos_post_sim)
@@ -1308,6 +1340,8 @@ emm_eos_pre <- emmeans(eos_pre,
                        specs = "t_muris_dose",
                        by = "strain")
 
+pairs(emm_eos_pre)
+
 kable(pairs(emm_eos_pre),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1316,6 +1350,8 @@ emm_eos_during <- emmeans(eos_during,
                           specs = c("t_muris_dose", "lab_or_rw"),
                           by = "strain")
 
+pairs(emm_eos_during)
+
 kable(pairs(emm_eos_during),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1323,6 +1359,8 @@ kable(pairs(emm_eos_during),
 emm_eos_post <- emmeans(eos_post,
                         specs = c("t_muris_dose", "lab_or_rw"),
                         by = "strain")
+
+pairs(emm_eos_post)
 
 kable(pairs(emm_eos_post),
       digits = 3) %>%
@@ -1413,6 +1451,7 @@ bas_pre <- lmer(log1p(bas_number) ~ t_muris_dose * strain +
 
 tab_model(bas_pre, show.stat = TRUE)
 # statistic is t-value btw
+summary(bas_pre)
 bas_pre_sim <- simulateResiduals(fittedModel = bas_pre, n = 1000)
 plot(bas_pre_sim)
 testUniformity(bas_pre_sim)
@@ -1428,6 +1467,7 @@ bas_during <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(bas_during, show.stat = TRUE)
 # statistic is t-value btw
+summary(bas_during)
 bas_during_sim <- simulateResiduals(fittedModel = bas_during, n = 1000)
 plot(bas_during_sim)
 testUniformity(bas_during_sim)
@@ -1447,6 +1487,7 @@ bas_post <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
 
 tab_model(bas_post, show.stat = TRUE)
 # statistic is t-value btw
+summary(bas_post)
 bas_post_sim <- simulateResiduals(fittedModel = bas_post, n = 1000)
 plot(bas_post_sim)
 testUniformity(bas_post_sim)
@@ -1468,6 +1509,8 @@ emm_bas_pre <- emmeans(bas_pre,
                        specs = "t_muris_dose",
                        by = "strain")
 
+pairs(emm_bas_pre)
+
 kable(pairs(emm_bas_pre),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1476,6 +1519,8 @@ emm_bas_during <- emmeans(bas_during,
                           specs = c("t_muris_dose", "lab_or_rw"),
                           by = "strain")
 
+pairs(emm_bas_during)
+
 kable(pairs(emm_bas_during),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1483,6 +1528,8 @@ kable(pairs(emm_bas_during),
 emm_bas_post <- emmeans(bas_post,
                         specs = c("t_muris_dose", "lab_or_rw"),
                         by = "strain")
+
+pairs(emm_bas_post)
 
 kable(pairs(emm_bas_post),
       digits = 3) %>%

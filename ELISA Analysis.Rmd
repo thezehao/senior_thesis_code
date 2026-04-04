@@ -272,6 +272,9 @@ plate2_map <- read_xlsx(file.path(data_path,
 meta_data <- read_csv(file.path(clean_data_path,
                                 "clean_meta_data.csv"))
 
+clean_worm_burden <- read_csv(file.path(clean_data_path,
+                                        "clean_worm_burden.csv"))
+
 ```
 
 # data cleaning and organization
@@ -876,6 +879,7 @@ ifn_glmer <- glmer(mean_concentration ~ lab_or_rw *
 
 tab_model(ifn_glmer, show.stat = TRUE)
 # statistic is t-value btw
+summary(ifn_glmer)
 
 ```
 
@@ -912,6 +916,8 @@ emm_ifn <- emmeans(ifn_glmer,
                    type = "response")
 emm_ifn
 
+pairs(emm_ifn)
+
 kable(pairs(emm_ifn),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -920,6 +926,8 @@ emm_ifn_trt <- emmeans(ifn_glmer,
                        specs = "treatment",
                        by = c("t_muris_dose", "lab_or_rw"),
                        type = "response")
+
+pairs(emm_ifn_trt)
 
 kable(pairs(emm_ifn_trt),
       digits = 3) %>%
@@ -962,6 +970,8 @@ tnf_glmer <- glmer(mean_concentration ~ lab_or_rw *
 tab_model(tnf_glmer, show.stat = TRUE)
 # statistic is t-value btw
 
+summary(tnf_glmer)
+
 ```
 
 # Diagnostics for tnf
@@ -996,6 +1006,8 @@ emm_tnf <- emmeans(tnf_glmer,
 
 emm_tnf
 
+pairs(emm_tnf)
+
 kable(pairs(emm_tnf),
       digits = 3) %>%
   kable_styling(full_width = FALSE)
@@ -1004,6 +1016,8 @@ emm_tnf_trt <- emmeans(tnf_glmer,
                        specs = "treatment",
                        by = c("t_muris_dose", "lab_or_rw"),
                        type = "response")
+
+pairs(emm_tnf_trt)
 
 kable(pairs(emm_tnf_trt),
       digit = 3) %>%
@@ -1690,6 +1704,18 @@ plot_saver("ifn_tnf_combined_plot.png",
            width = 10,
            height = 6)
 
+ifn_tnf_combined <- ifn_tnf_combined %>%
+  mutate(lab_or_rw = relevel(factor(lab_or_rw), ref = "Lab"),
+         treatment = relevel(factor(treatment), ref = "IgG"))
+
+ifn_tnf_lm <- lm(mean_concentration_tnf ~ mean_concentration_ifn + 
+                   lab_or_rw * 
+                   treatment,
+                 data = ifn_tnf_combined)
+
+tab_model(ifn_tnf_lm)
+
+
 # Highest IFN
 ifn_tnf_combined %>% 
   slice_max(mean_concentration_ifn, n = 10) %>% 
@@ -1699,4 +1725,93 @@ ifn_tnf_combined %>%
 ifn_tnf_combined %>% 
   slice_max(mean_concentration_tnf, n = 10) %>% 
   select(mouse_id, mean_concentration_tnf)
+```
+
+Worm burden and IFN release???
+
+```{r}
+
+worm_ifn_df <- ifn_glmer_input %>%
+  left_join(clean_worm_burden,
+            by = "mouse_id") %>%
+  select(mouse_id,
+         treatment,
+         t_muris_dose,
+         mean_concentration,
+         total_worms,
+         lab_or_rw) %>%
+  filter(treatment == "CD28",
+         t_muris_dose == "High") %>%
+  mutate(lab_or_rw = factor(lab_or_rw,
+                            levels = c("Lab",
+                                       "RW")))
+
+worm_ifn_plot <- ggplot(worm_ifn_df,
+                        aes(x = total_worms,
+                            y = mean_concentration,
+                            fill = lab_or_rw,
+                            color = lab_or_rw,
+                            group = lab_or_rw)) +
+  geom_point(size = 2,
+             alpha = 0.6) +
+  geom_smooth(method = "lm",
+              se = TRUE,
+              alpha = 0.2,
+              linewidth = 0.8) +
+  scale_fill_manual(values = c("Lab" = color_grey,
+                               "RW" = color_green),
+                    name = "Environment") +
+  scale_color_manual(values = c("Lab" = color_grey,
+                               "RW" = color_green),
+                     name = "Environment") +
+  scale_x_continuous(name = expression(bold("Number of ") * 
+  bolditalic("T. muris"))) +
+  scale_y_continuous(name = expression(bold("IFN-"*gamma~"(pg mL"^"-1"*")")),
+                     trans = "log10",
+                     breaks = 10^seq(-1,
+                                     3),
+                     labels = expression(10^-1,
+                                         1,
+                                         10^1,
+                                         10^2,
+                                         10^3),
+                     limits = c(0.1,
+                                1000),
+                     guide = guide_axis_logticks(long = 1.8,
+                                                 mid = 1.3,
+                                                 short = 0.8,
+                                                 expanded = FALSE)) +
+  theme_minimal() +
+  theme(panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        axis.text = element_text(color = "black"),
+        axis.ticks = element_line(color = "black",
+                                  linewidth = 0.3),
+        axis.ticks.length = unit(0.1,
+                                 "cm"),
+        plot.title = element_text(hjust = 0.5,
+                                  face = "bold"),
+        panel.spacing = unit(0.6,
+                             "cm")) +
+  ggtitle(expression(bold("Worm Burden vs. IFN-"*gamma~"Concentration")))
+
+
+worm_ifn_plot
+
+plot_saver("worm_ifn_plot.png",
+           worm_ifn_plot,
+           width = 10,
+           height = 6)
+
+worm_ifn_lm <- lm(mean_concentration ~ total_worms * lab_or_rw,
+                  data = worm_ifn_df)
+
+summary(worm_ifn_lm)
+
+tab_model(worm_ifn_lm)
+
 ```
