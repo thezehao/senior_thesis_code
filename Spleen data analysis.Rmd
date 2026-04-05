@@ -77,6 +77,20 @@ plot_saver <- function(filename,
          dpi = dpi)
 }
 
+svg_saver <- function(filename,
+                      plot,
+                      path = spleen_figure_path,
+                      width = 6,
+                      height = 4) {
+  ggsave(filename = filename,
+         plot = plot,
+         path = path,
+         width = width,
+         height = height,
+         units = "in",
+         device = "svg")
+}
+
 ```
 
 # Loading the data
@@ -420,6 +434,8 @@ spleen_mass_ratio_plot
 
 plot_saver("smr_general.png",
            spleen_mass_ratio_plot)
+svg_saver("smr_general.svg",
+          spleen_mass_ratio_plot)
 
 ```
 
@@ -514,6 +530,8 @@ emm_smr_plot
 
 plot_saver("emm_smr_plot.png",
            emm_smr_plot)
+svg_saver("emm_smr_plot.svg",
+          emm_smr_plot)
 
 ```
 
@@ -630,6 +648,8 @@ emm_spleen_mass_plot
 
 plot_saver("emm_spleen_mass_plot.png",
            emm_spleen_mass_plot)
+svg_saver("emm_spleen_mass_plot.svg",
+          emm_spleen_mass_plot)
 
 ```
 
@@ -693,6 +713,8 @@ spleen_mass_reg
 
 plot_saver("spleen_vs_body_mass_reg.png",
            spleen_mass_reg)
+svg_saver("spleen_vs_body_mass_reg.svg",
+          spleen_mass_reg)
 
 ```
 
@@ -803,6 +825,8 @@ emm_adj_spleen_plot
 
 plot_saver("emm_adj_spleen_plot.png",
            emm_adj_spleen_plot)
+svg_saver("emm_adj_spleen_plot.svg",
+          emm_adj_spleen_plot)
 
 ```
 
@@ -894,6 +918,10 @@ plot_saver("spleen_mass_lymphocyte.png",
            spleen_mass_lym_count_plot,
            width = 8,
            height = 6)
+svg_saver("spleen_mass_lymphocyte.svg",
+          spleen_mass_lym_count_plot,
+          width = 8,
+          height = 6)
 ```
 
 # CBC lym count and spleen mass at final time point regression
@@ -954,6 +982,8 @@ spleen_cbc_reg
 
 plot_saver("spleen_cbc_reg.png",
            spleen_cbc_reg)
+svg_saver("spleen_cbc_reg.svg",
+          spleen_cbc_reg)
 
 
 spleen_cbc <- spleen_cbc %>%

@@ -118,6 +118,20 @@ plot_saver <- function(filename,
          dpi = dpi)
 }
 
+svg_saver <- function(filename,
+                      plot,
+                      path = cbc_figure_path,
+                      width = 8,
+                      height = 6) {
+  ggsave(filename = filename,
+         plot = plot,
+         path = path,
+         width = width,
+         height = height,
+         units = "in",
+         device = "svg")
+}
+
 cbc_summarizer <- function(data,
                            group_name) {
   data %>%
@@ -667,6 +681,8 @@ comparative_cbc
 
 plot_saver("cbc_composition_plot.png",
            plot = comparative_cbc)
+svg_saver("cbc_composition_plot.svg",
+          plot = comparative_cbc)
 
 ```
 
@@ -693,6 +709,7 @@ lym_plot <- cbc_plotter(lym_plot_data,
 lym_plot
 
 plot_saver("lym_number.png", plot = lym_plot)
+svg_saver("lym_number.svg", plot = lym_plot)
 
 ```
 
@@ -717,6 +734,7 @@ neu_plot <- cbc_plotter(neu_plot_data,
 neu_plot
 
 plot_saver("neu_number.png", plot = neu_plot)
+svg_saver("neu_number.svg", plot = neu_plot)
 
 ```
 
@@ -741,6 +759,7 @@ mon_plot <- cbc_plotter(mon_plot_data,
 mon_plot
 
 plot_saver("mon_number.png", plot = mon_plot)
+svg_saver("mon_number.svg", plot = mon_plot)
 
 ```
 
@@ -765,6 +784,7 @@ eos_plot <- cbc_plotter(eos_plot_data,
 eos_plot
 
 plot_saver("eos_number.png", plot = eos_plot)
+svg_saver("eos_number.svg", plot = eos_plot)
 
 ```
 
@@ -789,6 +809,7 @@ bas_plot <- cbc_plotter(bas_plot_data,
 bas_plot
 
 plot_saver("bas_number.png", plot = bas_plot)
+svg_saver("bas_number.svg", plot = bas_plot)
 
 ```
 
@@ -964,6 +985,7 @@ emm_neu_plot <- emm_plotter(
 emm_neu_plot
 
 plot_saver("emm_neu_number.png", emm_neu_plot)
+svg_saver("emm_neu_number.svg", emm_neu_plot)
 
 ```
 
@@ -1119,6 +1141,7 @@ emm_lym_plot <- emm_plotter(
 emm_lym_plot
 
 plot_saver("emm_lym_number.png", emm_lym_plot)
+svg_saver("emm_lym_number.svg", emm_lym_plot)
 
 ```
 
@@ -1274,6 +1297,7 @@ emm_mon_plot <- emm_plotter(
 emm_mon_plot
 
 plot_saver("emm_mon_number.png", emm_mon_plot)
+svg_saver("emm_mon_number.svg", emm_mon_plot)
 
 ```
 
@@ -1437,6 +1461,7 @@ emm_eos_plot <- emm_plotter(
 emm_eos_plot
 
 plot_saver("emm_eos_number.png", emm_eos_plot)
+svg_saver("emm_eos_number.svg", emm_eos_plot)
 
 ```
 
@@ -1606,5 +1631,6 @@ emm_bas_plot <- emm_plotter(
 emm_bas_plot
 
 plot_saver("emm_bas_number.png", emm_bas_plot)
+svg_saver("emm_bas_number.svg", emm_bas_plot)
 
 ```

@@ -227,16 +227,30 @@ elisa_treatment_plotter <- function(input_data,
 plot_saver <- function(filename,
                             plot,
                             path = elisa_figure_path,
-                            width = 6, 
-                            height = 4, 
+                            width = 6,
+                            height = 4,
                             dpi = 300) {
-  ggsave(filename = filename, 
-       plot = plot, 
+  ggsave(filename = filename,
+       plot = plot,
        path = path,
-       width = width, 
-       height = height, 
-       units = "in", 
+       width = width,
+       height = height,
+       units = "in",
        dpi = dpi)
+}
+
+svg_saver <- function(filename,
+                      plot,
+                      path = elisa_figure_path,
+                      width = 6,
+                      height = 4) {
+  ggsave(filename = filename,
+         plot = plot,
+         path = path,
+         width = width,
+         height = height,
+         units = "in",
+         device = "svg")
 }
 
 ```
@@ -449,6 +463,8 @@ ifn_plot
 
 plot_saver("general_ifn_plot.png",
            ifn_plot)
+svg_saver("general_ifn_plot.svg",
+          ifn_plot)
 
 ```
 
@@ -468,6 +484,8 @@ tnf_plot
 
 plot_saver("general_tnf_plot.png",
            tnf_plot)
+svg_saver("general_tnf_plot.svg",
+          tnf_plot)
 
 ```
 
@@ -533,6 +551,8 @@ ifn_dose_facet_plot
 
 plot_saver("ifn_dose_facet_plot.png",
            ifn_dose_facet_plot)
+svg_saver("ifn_dose_facet_plot.svg",
+          ifn_dose_facet_plot)
 
 ```
 
@@ -598,6 +618,8 @@ tnf_dose_facet_plot
 
 plot_saver("tnf_dose_facet_plot.png",
            tnf_dose_facet_plot)
+svg_saver("tnf_dose_facet_plot.svg",
+          tnf_dose_facet_plot)
 
 ```
 
@@ -665,6 +687,8 @@ ifn_env_facet_plot
 
 plot_saver("ifn_env_facet_plot.png",
            ifn_env_facet_plot)
+svg_saver("ifn_env_facet_plot.svg",
+          ifn_env_facet_plot)
 
 ```
 
@@ -732,6 +756,8 @@ tnf_env_facet_plot
 
 plot_saver("tnf_env_facet_plot.png",
            tnf_env_facet_plot)
+svg_saver("tnf_env_facet_plot.svg",
+          tnf_env_facet_plot)
 
 ```
 
@@ -750,6 +776,8 @@ ifn_cd28_plot
 
 plot_saver("ifn_cd28_treatment_plot.png",
            ifn_cd28_plot)
+svg_saver("ifn_cd28_treatment_plot.svg",
+          ifn_cd28_plot)
 
 ```
 
@@ -768,6 +796,8 @@ tnf_cd28_plot
 
 plot_saver("tnf_cd28_treatment_plot.png",
            tnf_cd28_plot)
+svg_saver("tnf_cd28_treatment_plot.svg",
+          tnf_cd28_plot)
 
 ```
 
@@ -786,6 +816,8 @@ ifn_lps_plot
 
 plot_saver("ifn_lps_treatment_plot.png",
            ifn_lps_plot)
+svg_saver("ifn_lps_treatment_plot.svg",
+          ifn_lps_plot)
 
 ```
 
@@ -805,6 +837,8 @@ tnf_lps_plot
 
 plot_saver("tnf_lps_treatment_plot.png",
            tnf_lps_plot)
+svg_saver("tnf_lps_treatment_plot.svg",
+          tnf_lps_plot)
 
 ```
 
@@ -823,6 +857,8 @@ ifn_igg_plot
 
 plot_saver("ifn_igg_treatment_plot.png",
            ifn_igg_plot)
+svg_saver("ifn_igg_treatment_plot.svg",
+          ifn_igg_plot)
 
 ```
 
@@ -842,6 +878,8 @@ tnf_igg_plot
 
 plot_saver("tnf_igg_treatment_plot.png",
            tnf_igg_plot)
+svg_saver("tnf_igg_treatment_plot.svg",
+          tnf_igg_plot)
 
 ```
 
@@ -1145,6 +1183,8 @@ emm_ifn_plot
 
 plot_saver("emm_ifn_plot.png",
            emm_ifn_plot)
+svg_saver("emm_ifn_plot.svg",
+          emm_ifn_plot)
 
 ```
 
@@ -1233,6 +1273,8 @@ emm_ifn_dose_plot
 
 plot_saver("emm_ifn_dose_plot.png",
            emm_ifn_dose_plot)
+svg_saver("emm_ifn_dose_plot.svg",
+          emm_ifn_dose_plot)
 
 ```
 
@@ -1317,6 +1359,8 @@ emm_ifn_treatment_plot
 
 plot_saver("emm_ifn_treatment_plot.png",
            emm_ifn_treatment_plot)
+svg_saver("emm_ifn_treatment_plot.svg",
+          emm_ifn_treatment_plot)
 
 ```
 
@@ -1400,6 +1444,8 @@ emm_tnf_plot
 
 plot_saver("emm_tnf_plot.png",
            emm_tnf_plot)
+svg_saver("emm_tnf_plot.svg",
+          emm_tnf_plot)
 
 ```
 
@@ -1487,6 +1533,8 @@ emm_tnf_dose_plot
 
 plot_saver("emm_tnf_dose_plot.png",
            emm_tnf_dose_plot)
+svg_saver("emm_tnf_dose_plot.svg",
+          emm_tnf_dose_plot)
 
 ```
 
@@ -1570,6 +1618,8 @@ emm_tnf_treatment_plot
 
 plot_saver("emm_tnf_treatment_plot.png",
            emm_tnf_treatment_plot)
+svg_saver("emm_tnf_treatment_plot.svg",
+          emm_tnf_treatment_plot)
 
 ```
 
@@ -1703,6 +1753,10 @@ plot_saver("ifn_tnf_combined_plot.png",
            ifn_tnf_combined_plot,
            width = 10,
            height = 6)
+svg_saver("ifn_tnf_combined_plot.svg",
+          ifn_tnf_combined_plot,
+          width = 10,
+          height = 6)
 
 ifn_tnf_combined <- ifn_tnf_combined %>%
   mutate(lab_or_rw = relevel(factor(lab_or_rw), ref = "Lab"),
@@ -1806,6 +1860,10 @@ plot_saver("worm_ifn_plot.png",
            worm_ifn_plot,
            width = 10,
            height = 6)
+svg_saver("worm_ifn_plot.svg",
+          worm_ifn_plot,
+          width = 10,
+          height = 6)
 
 worm_ifn_lm <- lm(mean_concentration ~ total_worms * lab_or_rw,
                   data = worm_ifn_df)
