@@ -686,6 +686,131 @@ svg_saver("cbc_composition_plot.svg",
 
 ```
 
+Running models and emmeans for each cell type
+
+```{r}
+
+mouse_cbc <- cbc_endpoint %>% 
+  mutate(group = paste(strain, 
+                       lab_or_rw, 
+                       case_when(
+                         t_muris_dose == "Zero" ~ "Zero Dose",
+                         t_muris_dose == "Low" ~ "Low Dose",
+                         t_muris_dose == "High" ~ "High Dose"))) %>%
+  select(all_of(cbc_percent), 
+         group,
+         strain,
+         lab_or_rw,
+         t_muris_dose) %>%
+  mutate(species = "Mouse")
+  
+human_cbc <- bind_rows(cleaned_nhanes_data_2017_18 %>% 
+                         mutate(nhanes_year = "2017_18"),
+                       cleaned_nhanes_data_2021_23 %>%
+                         mutate(nhanes_year = "2021_23")) %>%
+  select(all_of(cbc_percent), nhanes_year) %>%
+  mutate(species = "human",
+         group = "Human")
+
+human_mice_cbc <- bind_rows(mouse_cbc,
+                            human_cbc) %>%
+  mutate(group = factor(group,
+                        levels = c("Human",
+                                   "C57BL/6J Lab Zero Dose",
+                                   "C57BL/6J Lab Low Dose",
+                                   "C57BL/6J Lab High Dose",
+                                   "C57BL/6J RW Zero Dose",
+                                   "C57BL/6J RW Low Dose",
+                                   "C57BL/6J RW High Dose",
+                                   "B10.BR Lab Zero Dose",
+                                   "B10.BR Lab Low Dose",
+                                   "B10.BR Lab High Dose",
+                                   "B10.BR RW Zero Dose",
+                                   "B10.BR RW Low Dose",
+                                   "B10.BR RW High Dose")))
+
+lym_lm <- lm(lym_percent ~ group,
+             data = human_mice_cbc)
+
+tab_model(lym_lm,
+          show.stat = TRUE)
+
+lym_emm <- emmeans(lym_lm, 
+                   specs = "group")
+
+kable(pairs(lym_emm),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+```
+```{r}
+
+neu_lm <- lm(neu_percent ~ group,
+             data = human_mice_cbc)
+
+tab_model(neu_lm,
+          show.stat = TRUE)
+
+neu_emm <- emmeans(neu_lm, 
+                   specs = "group")
+
+kable(pairs(neu_emm),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
+```{r}
+
+mon_lm <- lm(mon_percent ~ group,
+             data = human_mice_cbc)
+
+tab_model(mon_lm,
+          show.stat = TRUE)
+
+mon_emm <- emmeans(mon_lm,
+                   specs = "group")
+
+kable(pairs(mon_emm),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
+```{r}
+
+eos_lm <- lm(eos_percent ~ group,
+             data = human_mice_cbc)
+
+tab_model(eos_lm,
+          show.stat = TRUE)
+
+eos_emm <- emmeans(eos_lm,
+                   specs = "group")
+
+kable(pairs(eos_emm),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
+```{r}
+
+bas_lm <- lm(bas_percent ~ group,
+             data = human_mice_cbc)
+
+tab_model(bas_lm,
+          show.stat = TRUE)
+
+bas_emm <- emmeans(bas_lm,
+                   specs = "group")
+
+kable(pairs(bas_emm),
+      digits = 3) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
 # Plotting the data as it is, looking at over time changes.
 
 ```{r}

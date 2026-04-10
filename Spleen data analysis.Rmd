@@ -242,14 +242,26 @@ write_csv(clean_meta_data,
                     "clean_meta_data.csv"))
 
 ```
+
 Cleaning worm burden data
 
 ```{r}
 
+day_map <- c("2025-07-22" = 1L,
+             "2025-07-23" = 2L,
+             "2025-07-29" = 3L,
+             "2025-07-30" = 4L,
+             "2025-08-04" = 5L)
+
+
 clean_worm_burden <- worm_burden %>%
   clean_names() %>%
   select(mouse_id,
-         total_worms)
+         total_worms,
+         count_date) %>%
+  select(mouse_id, total_worms, count_date) %>%
+  mutate(experiment_day = day_map[as.character(count_date)])
+
 
 write_csv(clean_worm_burden,
           file.path(clean_data_path,
@@ -944,13 +956,13 @@ spleen_cbc_reg <- ggplot(spleen_cbc,
   facet_grid(lab_or_rw ~ strain,
              labeller = labeller(lab_or_rw = c("Lab" = "Lab",
                                                "RW" = "Rewilded"))) +
-  scale_color_manual(values = c("Zero" = color_purple,
-                                "Low" = color_green,
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "Low" = color_mustard,
                                 "High" = color_orange),
                      name = expression(bolditalic("T. muris") ~
                                          bold("Dose"))) +
-  scale_fill_manual(values = c("Zero" = color_purple,
-                                "Low" = color_green,
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                                "Low" = color_mustard,
                                 "High" = color_orange),
                      name = expression(bolditalic("T. muris") ~
                                          bold("Dose"))) +
@@ -994,14 +1006,15 @@ spleen_cbc <- spleen_cbc %>%
          t_muris_dose = relevel(factor(t_muris_dose),
                                 ref = "Zero"))
 
-spleen_cbc_lm <- lm(spleen_mass_g ~ lym_number + 
-                      lab_or_rw + 
-                      strain + 
-                      t_muris_dose,
-                    data = spleen_cbc)
+spleen_cbc_lmer <- lmer(spleen_mass_g ~ lym_number * lab_or_rw * 
+                        t_muris_dose +
+                        strain +
+                        (1 | cage_wedge),
+                      data = spleen_cbc)
 
-summary(spleen_cbc_lm)
+summary(spleen_cbc_lmer)
 
-tab_model(spleen_cbc_lm)
+tab_model(spleen_cbc_lmer,
+          show.stat = TRUE)
 
 ```

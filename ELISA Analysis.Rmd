@@ -1058,7 +1058,7 @@ emm_tnf_trt <- emmeans(tnf_glmer,
 pairs(emm_tnf_trt)
 
 kable(pairs(emm_tnf_trt),
-      digit = 3) %>%
+      digits = 3) %>%
   kable_styling(full_width = FALSE)
 
 ```
@@ -1793,7 +1793,8 @@ worm_ifn_df <- ifn_glmer_input %>%
          t_muris_dose,
          mean_concentration,
          total_worms,
-         lab_or_rw) %>%
+         lab_or_rw,
+         experiment_day = experiment_day.x) %>%
   filter(treatment == "CD28",
          t_muris_dose == "High") %>%
   mutate(lab_or_rw = factor(lab_or_rw,
@@ -1814,10 +1815,14 @@ worm_ifn_plot <- ggplot(worm_ifn_df,
               linewidth = 0.8) +
   scale_fill_manual(values = c("Lab" = color_grey,
                                "RW" = color_green),
-                    name = "Environment") +
+                    name = expression(bold("Environment")),
+                    labels = c("Lab" = "Lab",
+                               "RW" = "Rewilded")) +
   scale_color_manual(values = c("Lab" = color_grey,
                                "RW" = color_green),
-                     name = "Environment") +
+                     name = expression(bold("Environment")),
+                     labels = c("Lab" = "Lab",
+                                "RW" = "Rewilded")) +
   scale_x_continuous(name = expression(bold("Number of ") * 
   bolditalic("T. muris"))) +
   scale_y_continuous(name = expression(bold("IFN-"*gamma~"(pg mL"^"-1"*")")),
@@ -1865,11 +1870,14 @@ svg_saver("worm_ifn_plot.svg",
           width = 10,
           height = 6)
 
-worm_ifn_lm <- lm(mean_concentration ~ total_worms * lab_or_rw,
-                  data = worm_ifn_df)
+worm_ifn_glmer <- glmer(mean_concentration ~ total_worms * lab_or_rw + (1 | experiment_day),
+                        data = worm_ifn_df,
+                        family = Gamma(link = "log"),
+                        control = glmerControl(optimizer = "bobyqa",
+                                               optCtrl = list(maxfun = 2e5)))
 
-summary(worm_ifn_lm)
+summary(worm_ifn_glmer)
 
-tab_model(worm_ifn_lm)
+tab_model(worm_ifn_glmer)
 
 ```
