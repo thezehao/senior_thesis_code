@@ -516,7 +516,7 @@ ifn_dose_facet_plot <- ggplot(ifn_input %>%
   facet_wrap(~ t_muris_dose,
              labeller = as_labeller(c("Zero" = "Zero Dose",
                                       "High" = "High Dose"))) +
-  scale_fill_manual(values = c("Lab" = color_purple,
+  scale_fill_manual(values = c("Lab" = color_grey,
                                "RW"  = color_green),
                     labels = c("Lab" = "Lab",
                                "RW"  = "Rewilded"),
@@ -583,7 +583,7 @@ tnf_dose_facet_plot <- ggplot(tnf_input %>%
   facet_wrap(~ t_muris_dose,
              labeller = as_labeller(c("Zero" = "Zero Dose",
                                       "High" = "High Dose"))) +
-  scale_fill_manual(values = c("Lab" = color_purple,
+  scale_fill_manual(values = c("Lab" = color_grey,
                                "RW"  = color_green),
                     labels = c("Lab" = "Lab",
                                "RW"  = "Rewilded"),
@@ -1093,8 +1093,7 @@ emm_tnf_df <- as.data.frame(emm_tnf) %>%
 
 ```
 
-# EMM IFN-gamma: #1 — Facet = Treatment, x = Environment, Color = Dose
-# "Within each treatment, how does infection shift the response across environments?"
+# Plotting IFN faceted by treatment
 
 ```{r}
 
@@ -1188,8 +1187,7 @@ svg_saver("emm_ifn_plot.svg",
 
 ```
 
-# EMM IFN-gamma: #5 — Facet = Dose, x = Treatment, Color = Environment
-# "Among infected (or uninfected) mice, which treatment shows the biggest environment effect?"
+# Plotting IFN faceted by dose
 
 ```{r}
 
@@ -1221,12 +1219,12 @@ emm_ifn_dose_plot <- ggplot(emm_ifn_df) +
              size = 3,
              shape = 21,
              color = "black") +
-  scale_fill_manual(values = c("Lab" = color_purple,
+  scale_fill_manual(values = c("Lab" = color_grey,
                                "RW"  = color_green),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",
                                "RW"  = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_purple,
+  scale_color_manual(values = c("Lab" = color_grey,
                                 "RW"  = color_green),
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Lab",
@@ -1277,9 +1275,7 @@ svg_saver("emm_ifn_dose_plot.svg",
           emm_ifn_dose_plot)
 
 ```
-
-# EMM IFN-gamma: #3 — Facet = Environment, x = Treatment, Color = Dose
-# "Within Lab (or RW), which treatment shows the strongest infection effect?"
+# Plotting IFN faceted by environment
 
 ```{r}
 
@@ -1363,8 +1359,7 @@ svg_saver("emm_ifn_treatment_plot.svg",
           emm_ifn_treatment_plot)
 
 ```
-
-# EMM TNF-alpha: #1 — Facet = Treatment, x = Environment, Color = Dose
+# Plotting TNF faceted by treatment
 
 ```{r}
 
@@ -1449,7 +1444,83 @@ svg_saver("emm_tnf_plot.svg",
 
 ```
 
-# EMM TNF-alpha: #5 — Facet = Dose, x = Treatment, Color = Environment
+# Plotting TNF emm in linear y axis. But, the log10 scale axis might be more consistent.
+
+```{r}
+
+emm_tnf_plot_linear <- ggplot(emm_tnf_df) +
+  geom_point(data = tnf_glmer_input %>%
+               mutate(treatment = factor(treatment,
+                                         levels = c("IgG", "LPS", "CD28")),
+                      lab_or_rw = factor(lab_or_rw, levels = c("Lab", "RW")),
+                      t_muris_dose = factor(t_muris_dose, levels = c("Zero", "High"))),
+             aes(x = lab_or_rw,
+                 y = mean_concentration,
+                 color = t_muris_dose),
+             position = position_jitterdodge(jitter.width = 0.1,
+                                             dodge.width = 0.5),
+             alpha = 0.3,
+             size = 1.5) +
+  geom_errorbar(aes(x = lab_or_rw,
+                    ymin = asymp.LCL,
+                    ymax = asymp.UCL,
+                    color = t_muris_dose),
+                width = 0.3,
+                position = position_dodge(width = 0.5),
+                alpha = 0.8) +
+  geom_point(aes(x = lab_or_rw,
+                 y = response,
+                 fill = t_muris_dose),
+             position = position_dodge(width = 0.5),
+             alpha = 1,
+             size = 3,
+             shape = 21,
+             color = "black") +
+  scale_fill_manual(values = c("Zero" = color_dark_blue,
+                               "High" = color_orange),
+                    name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
+  scale_color_manual(values = c("Zero" = color_dark_blue,
+                                "High" = color_orange),
+                     name = expression(bolditalic("T. muris") ~ bold("Dose"))) +
+  scale_y_continuous(name = expression(bold("TNF-" * alpha ~
+                                              "(pg mL"^"-1" * ")")),
+                     expand = expansion(mult = c(0.05, 0.3))) +
+  scale_x_discrete(name = expression(bold("Environment")),
+                   labels = c("Lab" = "Lab",
+                              "RW"  = "Rewilded")) +
+  facet_wrap(~ treatment,
+             labeller = as_labeller(c("CD28" = "CD28SA",
+                                      "LPS" = "LPS",
+                                      "IgG" = "IgG1"))) +
+  theme_minimal() +
+  theme(strip.background = element_rect(fill = "white",
+                                        color = "black",
+                                        linewidth = 0.8),
+        strip.text = element_text(size = 10,
+                                  face = "bold"),
+        panel.border = element_rect(color = "black",
+                                    fill = NA,
+                                    linewidth = 0.8),
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        axis.text = element_text(color = "black"),
+        axis.ticks = element_line(color = "black",
+                                  linewidth = 0.3),
+        axis.ticks.length = unit(0.1, "cm")) +
+  ggtitle(expression(bold("Marginal Means of TNF-" * alpha ~ "(95% CI)")))
+
+emm_tnf_plot_linear
+
+plot_saver("emm_tnf_plot_linear.png",
+           emm_tnf_plot_linear)
+svg_saver("emm_tnf_plot_linear.svg",
+          emm_tnf_plot_linear)
+
+```
+
+# Plotting TNF faceted by dose
 
 ```{r}
 
@@ -1481,12 +1552,12 @@ emm_tnf_dose_plot <- ggplot(emm_tnf_df) +
              size = 3,
              shape = 21,
              color = "black") +
-  scale_fill_manual(values = c("Lab" = color_purple,
+  scale_fill_manual(values = c("Lab" = color_grey,
                                "RW"  = color_green),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",
                                "RW"  = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_purple,
+  scale_color_manual(values = c("Lab" = color_grey,
                                 "RW"  = color_green),
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Lab",
@@ -1538,7 +1609,7 @@ svg_saver("emm_tnf_dose_plot.svg",
 
 ```
 
-# EMM TNF-alpha: #3 — Facet = Environment, x = Treatment, Color = Dose
+# Plotting TNF faceted by environment
 
 ```{r}
 
