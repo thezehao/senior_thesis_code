@@ -429,6 +429,26 @@ tnf_input <- mean_calculator(total_tnf,
 
 I wonder if I should use the original data points instead of the mean data.
 
+# Sample sizes per group
+
+```{r}
+
+ifn_sample_counts <- ifn_input %>%
+  group_by(strain, lab_or_rw, t_muris_dose, treatment) %>%
+  summarise(n = n(), .groups = "drop")
+
+kable(ifn_sample_counts) %>%
+  kable_styling(full_width = FALSE)
+
+tnf_sample_counts <- tnf_input %>%
+  group_by(strain, lab_or_rw, t_muris_dose, treatment) %>%
+  summarise(n = n(), .groups = "drop")
+
+kable(tnf_sample_counts) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
 # Filter the data for treatment specific plots
 
 ```{r}
@@ -1833,12 +1853,20 @@ ifn_tnf_combined <- ifn_tnf_combined %>%
   mutate(lab_or_rw = relevel(factor(lab_or_rw), ref = "Lab"),
          treatment = relevel(factor(treatment), ref = "IgG"))
 
-ifn_tnf_lm <- lm(mean_concentration_tnf ~ mean_concentration_ifn + 
-                   lab_or_rw * 
-                   treatment,
-                 data = ifn_tnf_combined)
+ifn_tnf_combined <- ifn_tnf_combined %>%
+  mutate(mean_concentration_ifn_scaled = scale(mean_concentration_ifn))
 
-tab_model(ifn_tnf_lm)
+ifn_tnf_glmer <- glmer(mean_concentration_tnf ~ mean_concentration_ifn_scaled +
+                         lab_or_rw *
+                         treatment +
+                         (1 | mouse_id) +
+                         (1 | experiment_day),
+                       family = Gamma(link = "log"),
+                       control = glmerControl(optimizer = "bobyqa",
+                                              optCtrl = list(maxfun = 2e5)),
+                       data = ifn_tnf_combined)
+
+tab_model(ifn_tnf_glmer)
 
 
 # Highest IFN
@@ -1941,7 +1969,9 @@ svg_saver("worm_ifn_plot.svg",
           width = 10,
           height = 6)
 
-worm_ifn_glmer <- glmer(mean_concentration ~ total_worms * lab_or_rw + (1 | experiment_day),
+worm_ifn_glmer <- glmer(mean_concentration ~ total_worms * 
+                          lab_or_rw + 
+                          (1 | experiment_day),
                         data = worm_ifn_df,
                         family = Gamma(link = "log"),
                         control = glmerControl(optimizer = "bobyqa",

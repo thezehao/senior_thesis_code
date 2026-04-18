@@ -7,7 +7,7 @@ output:
   pdf_document: default
 ---
 
-# First time run order: Spleen → CBC → Spleen
+# First time run order: Spleen → CBC → ELISA
 This markdown produces clean_meta_data.csv used by CBC and ELISA analysis.
 The section looking at the correlation between spleen size and lymphocyte counts
 at the bottom requires cleaned_combined_cbc_data.csv from CBC. That's why CBC
@@ -345,6 +345,19 @@ spleen_mass_compiled_data <- clean_meta_data %>%
 
 ```
 
+# Sample sizes per group
+
+```{r}
+
+spleen_sample_counts <- spleen_mass_compiled_data %>%
+  group_by(strain, lab_or_rw, t_muris_dose) %>%
+  summarise(n = n(), .groups = "drop")
+
+kable(spleen_sample_counts) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
 Now I will calculate the spleen-mass ratio (SMR) and make a plot. Still thinking whether this is the correct way to do this. See the last plot.
 
 # Calculating spleen-mass ratio (SMR)
@@ -411,12 +424,12 @@ spleen_mass_ratio_plot <- ggplot(spleen_mass_compiled_data,
              color = "black") + 
   facet_wrap(~ strain) + 
   scale_fill_manual(values = c("RW" = color_green,
-                               "Lab" = color_purple),
+                               "Lab" = color_grey),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",
                                "RW" = "Rewilded")) +
   scale_color_manual(values = c("RW" = color_green,
-                                "Lab" = color_purple),
+                                "Lab" = color_grey),
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Lab",
                                 "RW" = "Rewilded")) +
@@ -508,12 +521,12 @@ emm_smr_plot <- ggplot(emm_smr_df) +
   scale_y_continuous(name = expression(bold("Spleen to Body Mass Ratio (SMR)")),
                      expand = expansion(mult = c(0.05, 0.3))) +
   scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
-  scale_fill_manual(values = c("Lab" = color_purple,
+  scale_fill_manual(values = c("Lab" = color_grey,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",
                               "RW" = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_purple,
+  scale_color_manual(values = c("Lab" = color_grey,
                                 "RW" = color_green),
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Lab",
@@ -626,12 +639,12 @@ emm_spleen_mass_plot <- ggplot(emm_spleen_mass_df) +
   scale_y_continuous(name = expression(bold("Spleen Mass (g)")),
                      expand = expansion(mult = c(0.05, 0.3))) +
   scale_x_discrete(name = expression(bolditalic("T. muris")~bold("Dose"))) +
-  scale_fill_manual(values = c("Lab" = color_purple,
+  scale_fill_manual(values = c("Lab" = color_grey,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",
                               "RW" = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_purple,
+  scale_color_manual(values = c("Lab" = color_grey,
                                 "RW" = color_green),
                      name = expression(bold("Environment")),
                      labels = c("Lab" = "Lab",
@@ -683,12 +696,12 @@ spleen_mass_reg <- ggplot(spleen_mass_compiled_data,
               alpha = 0.15,
               linewidth = 0.8) +
   facet_wrap(~ strain) + 
-  scale_fill_manual(values = c("Lab" = color_purple,
+  scale_fill_manual(values = c("Lab" = color_grey,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",
                                "RW" = "Rewilded")) +
-  scale_color_manual(values = c("Lab" = color_purple,
+  scale_color_manual(values = c("Lab" = color_grey,
                                "RW" = color_green),
                     name = expression(bold("Environment")),
                     labels = c("Lab" = "Lab",

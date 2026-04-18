@@ -456,8 +456,21 @@ cbc_endpoint <- cleaned_combined_cbc_data %>%
 ```{r}
 
 data_saver(data_name = cleaned_combined_cbc_data,
-           path = file.path(clean_data_path, 
+           path = file.path(clean_data_path,
                             "cleaned_combined_cbc_data.csv"))
+
+```
+
+# Sample sizes per time point
+
+```{r}
+
+cbc_sample_counts <- cleaned_combined_cbc_data %>%
+  group_by(phase, strain, lab_or_rw, t_muris_dose) %>%
+  summarise(n = n(), .groups = "drop")
+
+kable(cbc_sample_counts) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 
@@ -516,6 +529,63 @@ data_saver(data_name = cleaned_nhanes_data_2021_23,
 
 ```
 
+# Pairwise comparison of human NHANES year-cohorts (justification for pooling)
+
+```{r}
+
+human_year_comparison <- bind_rows(
+  cleaned_nhanes_data_2017_18 %>% mutate(nhanes_year = "2017_18"),
+  cleaned_nhanes_data_2021_23 %>% mutate(nhanes_year = "2021_23")
+) %>%
+  mutate(nhanes_year = factor(nhanes_year))
+
+# Neutrophil
+neu_year_lm <- lm(neu_percent ~ nhanes_year,
+                   data = human_year_comparison)
+
+kable(pairs(emmeans(neu_year_lm, specs = "nhanes_year")),
+      digits = 3,
+      caption = "Neutrophil %: NHANES 2017-18 vs 2021-23") %>%
+  kable_styling(full_width = FALSE)
+
+# Lymphocyte
+lym_year_lm <- lm(lym_percent ~ nhanes_year,
+                   data = human_year_comparison)
+
+kable(pairs(emmeans(lym_year_lm, specs = "nhanes_year")),
+      digits = 3,
+      caption = "Lymphocyte %: NHANES 2017-18 vs 2021-23") %>%
+  kable_styling(full_width = FALSE)
+
+# Monocyte
+mon_year_lm <- lm(mon_percent ~ nhanes_year,
+                   data = human_year_comparison)
+
+kable(pairs(emmeans(mon_year_lm, specs = "nhanes_year")),
+      digits = 3,
+      caption = "Monocyte %: NHANES 2017-18 vs 2021-23") %>%
+  kable_styling(full_width = FALSE)
+
+# Eosinophil
+eos_year_lm <- lm(eos_percent ~ nhanes_year,
+                   data = human_year_comparison)
+
+kable(pairs(emmeans(eos_year_lm, specs = "nhanes_year")),
+      digits = 3,
+      caption = "Eosinophil %: NHANES 2017-18 vs 2021-23") %>%
+  kable_styling(full_width = FALSE)
+
+# Basophil
+bas_year_lm <- lm(bas_percent ~ nhanes_year,
+                   data = human_year_comparison)
+
+kable(pairs(emmeans(bas_year_lm, specs = "nhanes_year")),
+      digits = 3,
+      caption = "Basophil %: NHANES 2017-18 vs 2021-23") %>%
+  kable_styling(full_width = FALSE)
+
+```
+
 # Making long-form mouse CBC data to be plotted
 
 ```{r}
@@ -538,43 +608,37 @@ data_saver(data_name = cleaned_combined_cbc_data_long,
 
 ```{r}
 
-human_17_18 <- cbc_summarizer(cleaned_nhanes_data_2017_18, 
-                              "Human_2017_18") %>%
-  mutate(strain = "Human")
-
-human_21_23 <- cbc_summarizer(cleaned_nhanes_data_2021_23, 
-                              "Human_2021_23") %>%
+human_summary <- cbc_summarizer(cleaned_nhanes_data_2021_23,
+                                "Human") %>%
   mutate(strain = "Human")
 
 mean_mouse <- cbc_endpoint %>%
-  group_by(strain, 
-           t_muris_dose, 
+  group_by(strain,
+           t_muris_dose,
            lab_or_rw) %>%
-  summarise(neu_percent = mean(neu_percent, 
+  summarise(neu_percent = mean(neu_percent,
                                na.rm = TRUE) / 100,
-            lym_percent = mean(lym_percent, 
+            lym_percent = mean(lym_percent,
                                na.rm = TRUE) / 100,
-            mon_percent = mean(mon_percent, 
+            mon_percent = mean(mon_percent,
                                na.rm = TRUE) / 100,
-            eos_percent = mean(eos_percent, 
+            eos_percent = mean(eos_percent,
                                na.rm = TRUE) / 100,
-            bas_percent = mean(bas_percent, 
+            bas_percent = mean(bas_percent,
                                na.rm = TRUE) / 100,
             .groups = "drop") %>%
-  mutate(group = paste(strain, 
-                       t_muris_dose, 
+  mutate(group = paste(strain,
+                       t_muris_dose,
                        lab_or_rw)) %>%
   pivot_longer(cols = neu_percent:bas_percent,
                names_to = "cell_type",
                values_to = "cbc_percent")
 
-bar_plot_input <- bind_rows(human_17_18,
-                            human_21_23,
+bar_plot_input <- bind_rows(human_summary,
                             mean_mouse) %>%
   mutate(group = factor(group,
                         levels = c(
-                          "Human_2017_18",
-                          "Human_2021_23",
+                          "Human",
                           "C57BL/6J Zero Lab",
                           "B10.BR Zero Lab",
                           "C57BL/6J Low Lab",
@@ -628,8 +692,7 @@ comparative_cbc <- ggplot(bar_plot_input,
   scale_y_continuous(expand = expansion(mult = c(0, 
                                                  0.05)),
                      name = "CBC Composition") +
-  scale_x_discrete(limits = c("Human_2017_18",
-                              "Human_2021_23",
+  scale_x_discrete(limits = c("Human",
                               "C57BL/6J Zero Lab",
                               "C57BL/6J Low Lab",
                               "C57BL/6J High Lab",
@@ -642,8 +705,7 @@ comparative_cbc <- ggplot(bar_plot_input,
                               "B10.BR Zero RW",
                               "B10.BR Low RW",
                               "B10.BR High RW"),
-                   labels = c("Human_2017_18" = "2017-18",
-                              "Human_2021_23" = "2021-23",
+                   labels = c("Human" = "Human",
                               "C57BL/6J Zero Lab" = "Zero",
                               "C57BL/6J Low Lab" = "Low",
                               "C57BL/6J High Lab" = "High",
@@ -704,11 +766,8 @@ mouse_cbc <- cbc_endpoint %>%
          t_muris_dose) %>%
   mutate(species = "Mouse")
   
-human_cbc <- bind_rows(cleaned_nhanes_data_2017_18 %>% 
-                         mutate(nhanes_year = "2017_18"),
-                       cleaned_nhanes_data_2021_23 %>%
-                         mutate(nhanes_year = "2021_23")) %>%
-  select(all_of(cbc_percent), nhanes_year) %>%
+human_cbc <- cleaned_nhanes_data_2021_23 %>%
+  select(all_of(cbc_percent)) %>%
   mutate(species = "human",
          group = "Human")
 
