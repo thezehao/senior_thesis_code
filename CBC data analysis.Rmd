@@ -520,16 +520,24 @@ cleaned_nhanes_data_2021_23 <- nhanes_data_2021_23 %>%
                          cbc_percent)), ~ as.numeric(.)))
 
 data_saver(data_name = cleaned_nhanes_data_2017_18,
-           path = file.path(clean_data_path, 
+           path = file.path(clean_data_path,
                             "cleaned_nhanes_data_2017_18.csv"))
 
 data_saver(data_name = cleaned_nhanes_data_2021_23,
-           path = file.path(clean_data_path, 
+           path = file.path(clean_data_path,
                             "cleaned_nhanes_data_2021_23.csv"))
 
 ```
 
-# Pairwise comparison of human NHANES year-cohorts (justification for pooling)
+# Sample size of NHANES 2021-23 data
+
+```{r}
+
+nrow(cleaned_nhanes_data_2021_23)
+
+```
+
+# Pairwise comparison of human NHANES data (justification for pooling)
 
 ```{r}
 
@@ -583,6 +591,8 @@ kable(pairs(emmeans(bas_year_lm, specs = "nhanes_year")),
       digits = 3,
       caption = "Basophil %: NHANES 2017-18 vs 2021-23") %>%
   kable_styling(full_width = FALSE)
+
+# it seems that there are significant differences between the years. Let's pick 2021 and 2023.
 
 ```
 
