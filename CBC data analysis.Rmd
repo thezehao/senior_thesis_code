@@ -614,7 +614,7 @@ data_saver(data_name = cleaned_combined_cbc_data_long,
 
 ```
 
-# Composition Plot for Human vs. Mouse understanding
+# Composition Plot for Human vs. Mouse
 
 ```{r}
 
@@ -1023,8 +1023,6 @@ svg_saver("bas_number.svg", plot = bas_plot)
 ## Neutrophil
 
 ```{r}
-
-# Pre-RW: dose x strain (no environment — all mice are lab-housed)
 neu_pre <- lmer(log(neu_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data,
@@ -1044,7 +1042,6 @@ plotResiduals(neu_pre_sim, form = filter(cleaned_combined_cbc_data,
 plotResiduals(neu_pre_sim, form = filter(cleaned_combined_cbc_data, 
                                          phase == "Pre-RW")$strain)
 
-# During RW: environment x dose x strain
 neu_during <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
@@ -1064,7 +1061,6 @@ plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data,
 plotResiduals(neu_during_sim, form = filter(cleaned_combined_cbc_data, 
                                             phase == "During RW")$strain)
 
-# Post-RW: environment x infection x strain
 neu_post <- lmer(log(neu_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
@@ -1084,7 +1080,7 @@ plotResiduals(neu_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 ```
 
 ```{r}
-# Pre-RW (no environment effect yet)
+
 emm_neu_pre <- emmeans(neu_pre,
                        specs = "t_muris_dose",
                        by = "strain",
@@ -1187,7 +1183,6 @@ svg_saver("emm_neu_number.svg", emm_neu_plot)
 
 ```{r}
 
-# Pre-RW: dose x strain (no environment — all mice are lab-housed)
 lym_pre <- lmer(log(lym_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
@@ -1203,7 +1198,6 @@ testOutliers(lym_pre_sim)
 plotResiduals(lym_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
 plotResiduals(lym_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
-# During RW: environment x dose x strain
 lym_during <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
@@ -1220,7 +1214,7 @@ plotResiduals(lym_during_sim, form = filter(cleaned_combined_cbc_data, phase == 
 plotResiduals(lym_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
 plotResiduals(lym_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
 
-# Post-RW: environment x infection x strain
+
 lym_post <- lmer(log(lym_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
@@ -1241,7 +1235,6 @@ plotResiduals(lym_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 
 ```{r}
 
-# Pre-RW (no environment effect yet)
 emm_lym_pre <- emmeans(lym_pre,
                        specs = "t_muris_dose",
                        by = "strain",
@@ -1343,7 +1336,6 @@ svg_saver("emm_lym_number.svg", emm_lym_plot)
 
 ```{r}
 
-# Pre-RW: dose x strain (no environment — all mice are lab-housed)
 mon_pre <- lmer(log(mon_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
@@ -1359,7 +1351,6 @@ testOutliers(mon_pre_sim)
 plotResiduals(mon_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
 plotResiduals(mon_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
-# During RW: environment x dose x strain
 mon_during <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
@@ -1376,7 +1367,6 @@ plotResiduals(mon_during_sim, form = filter(cleaned_combined_cbc_data, phase == 
 plotResiduals(mon_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
 plotResiduals(mon_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
 
-# Post-RW: environment x infection x strain
 mon_post <- lmer(log(mon_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
@@ -1397,7 +1387,6 @@ plotResiduals(mon_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 
 ```{r}
 
-# Pre-RW (no environment effect yet)
 emm_mon_pre <- emmeans(mon_pre,
                        specs = "t_muris_dose",
                        by = "strain",
@@ -1499,7 +1488,6 @@ svg_saver("emm_mon_number.svg", emm_mon_plot)
 
 ```{r}
 
-# Pre-RW: dose x strain (log1p for zeros, no environment — all mice are lab-housed)
 eos_pre <- lmer(log1p(eos_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
@@ -1515,7 +1503,6 @@ testOutliers(eos_pre_sim)
 plotResiduals(eos_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
 plotResiduals(eos_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
-# During RW: environment x dose x strain
 eos_during <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
@@ -1532,7 +1519,6 @@ plotResiduals(eos_during_sim, form = filter(cleaned_combined_cbc_data, phase == 
 plotResiduals(eos_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$t_muris_dose)
 plotResiduals(eos_during_sim, form = filter(cleaned_combined_cbc_data, phase == "During RW")$strain)
 
-# Post-RW: environment x infection x strain
 eos_post <- lmer(log1p(eos_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
@@ -1553,7 +1539,6 @@ plotResiduals(eos_post_sim, form = filter(cleaned_combined_cbc_data, phase == "P
 
 ```{r}
 
-# Pre-RW (no environment effect yet)
 emm_eos_pre <- emmeans(eos_pre,
                        specs = "t_muris_dose",
                        by = "strain")
@@ -1588,7 +1573,6 @@ kable(pairs(emm_eos_post),
 
 ```{r}
 
-# log1p back-transform: expm1() reverses log1p()
 emm_eos_pre_df <- as.data.frame(emm_eos_pre) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
@@ -1663,7 +1647,6 @@ svg_saver("emm_eos_number.svg", emm_eos_plot)
 
 ```{r}
 
-# Pre-RW: dose x strain (log1p for zeros, no environment — all mice are lab-housed)
 bas_pre <- lmer(log1p(bas_number) ~ t_muris_dose * strain +
                   (1 | cage_wedge) + (1 | cohort),
                 data = filter(cleaned_combined_cbc_data, phase == "Pre-RW"))
@@ -1679,7 +1662,6 @@ testOutliers(bas_pre_sim)
 plotResiduals(bas_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$t_muris_dose)
 plotResiduals(bas_pre_sim, form = filter(cleaned_combined_cbc_data, phase == "Pre-RW")$strain)
 
-# During RW: environment x dose x strain
 bas_during <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
                      (1 | cage_wedge) + (1 | cohort),
                    data = filter(cleaned_combined_cbc_data, phase == "During RW"))
@@ -1699,7 +1681,6 @@ plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data,
 plotResiduals(bas_during_sim, form = filter(cleaned_combined_cbc_data, 
                                             phase == "During RW")$strain)
 
-# Post-RW: environment x infection x strain
 bas_post <- lmer(log1p(bas_number) ~ lab_or_rw * t_muris_dose * strain +
                    (1 | cage_wedge) + (1 | cohort),
                  data = filter(cleaned_combined_cbc_data, phase == "Post-RW"))
@@ -1723,7 +1704,6 @@ plotResiduals(bas_post_sim, form = filter(cleaned_combined_cbc_data,
 
 ```{r}
 
-# Pre-RW (no environment effect yet)
 emm_bas_pre <- emmeans(bas_pre,
                        specs = "t_muris_dose",
                        by = "strain")
@@ -1758,7 +1738,6 @@ kable(pairs(emm_bas_post),
 
 ```{r}
 
-# log1p back-transform: expm1() reverses log1p()
 emm_bas_pre_df <- as.data.frame(emm_bas_pre) %>%
   mutate(response = expm1(emmean),
          lower.CL = expm1(lower.CL),
